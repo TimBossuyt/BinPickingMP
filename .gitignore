@@ -1,0 +1,8 @@
+PointCloudImages/
+
+venv/
+.venv/
+
+Archive - prevVersions/
+
+Input/
