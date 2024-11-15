@@ -7,9 +7,11 @@ from IPython.core.display_functions import display
 from scipy.spatial.transform import Rotation
 import time
 import os
+import csv
 
 from utils import display_point_clouds, extract_square_region, PoseEstimator
 
+o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Warning)
 ########## Parameters ##########
 xDebugLoading = False
 xDebugSurfaceReconstruction = False
@@ -25,15 +27,19 @@ sProcessingFolder = "Processing"
 sModelName = "model.ply"
 sSceneName = "scene.ply"
 
-## Image resolution: 1920x1080
-iWidthImage = 1920
-iHeightImage = 1080
+## Training
+iRelativeSamplingStepModel = 0.05
+iRelativeDistanceStepModel = 0.025
+iNumOfAngles = 25
 
-## ROI Parameters (manual using matplotlib image)
-iLocX = 930
-iLocY = 490
-iModelDiameter = 200
+## Surface reconstruction
+iVoxelSize = 2
+iPoissonDepth = 9
+iLaplaceSmoothingIter = 200
 
+## Matching
+iRelativeSceneSampleStep = 0.01
+iRelativeSceneDistance = 0.01
 
 ########## 1. Load model and scene ##########
 ## Loading model as mesh
@@ -50,11 +56,29 @@ if xDebugLoading:
     display_point_clouds([pcdSceneRaw], "Input scene", False)
     display_point_clouds([pcdModel], "Input model", True)
 
-########## 2. Preprocessing of the scene ##########
+
+########## 2. Train model / calculate PPF ##########
+estimator = PoseEstimator(iRelativeSamplingStepModel, iRelativeDistanceStepModel, iNumOfAngles)
+
+estimator.loadModel(os.path.join(sProcessingFolder, sModelName), 1)
+estimator.loadScene(os.path.join(sProcessingFolder, sSceneName), 1)
+
+tTrainingStart = time.time()
+
+estimator.trainModel()
+
+tTrainingEnd = time.time()
+
+print(f"Training took {tTrainingEnd - tTrainingStart:.4f} seconds to execute.")
+
+## Saving the ply files to use with surface matching
+o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sModelName), pcdModel, write_ascii=True)
+
+########## 3. Preprocessing of the scene ##########
 tProcessingStart = time.time()
 
 ## Voxel down scene
-pcdSceneDown = pcdSceneRaw.voxel_down_sample(voxel_size=2)
+pcdSceneDown = pcdSceneRaw.voxel_down_sample(voxel_size=iVoxelSize)
 
 if xDebugProcessing:
     display_point_clouds([pcdSceneDown], "Input scene - voxel down", False)
@@ -120,7 +144,7 @@ if xDebugSurfaceReconstruction:
 ## Smoothing
 print('run Poisson surface reconstruction')
 with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
-    mshSurfRec, arrDensities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd=pcdSceneROI, depth=9)
+    mshSurfRec, arrDensities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd=pcdSceneROI, depth=iPoissonDepth)
 
 arrDensities = np.asarray(arrDensities)
 
@@ -146,7 +170,7 @@ if xDebugSurfaceReconstruction:
     display_point_clouds([mshSurfRec], "Mesh - removed low density", False)
 
 ## Smoothing mesh with laplacian filter
-mshSurfRecSmooth = mshSurfRec.filter_smooth_laplacian(number_of_iterations=200)
+mshSurfRecSmooth = mshSurfRec.filter_smooth_laplacian(number_of_iterations=iLaplaceSmoothingIter)
 mshSurfRecSmooth.compute_vertex_normals()
 if xDebugSurfaceReconstruction:
     display_point_clouds([mshSurfRecSmooth], "Mesh - removed low density + laplacian smooth", False)
@@ -162,34 +186,17 @@ if xDebugSurfaceReconstruction:
     display_point_clouds([pcdSceneROI], "Input scene - ROI - Final pointcloud", True)
 
 ## Saving the ply files to use with surface matching
-o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sModelName), pcdModel, write_ascii=True)
 o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sSceneName), pcdSceneROI, write_ascii=True)
 
 tProcessingEnd = time.time()
 
 print(f"Processing took {tProcessingEnd - tProcessingStart:.4f} seconds to execute.")
 
-########## 3. Train model / calculate PPF ##########
-estimator = PoseEstimator(0.04, 1)
-
-estimator.loadModel(os.path.join(sProcessingFolder, sModelName), 1)
-estimator.loadScene(os.path.join(sProcessingFolder, sSceneName), 1)
-
-tTrainingStart = time.time()
-
-estimator.trainModel()
-
-tTrainingEnd = time.time()
-
-print(f"Training took {tTrainingEnd - tTrainingStart:.4f} seconds to execute.")
-
-## Saving model
-# estimator.savePPF("PointCloudImages", "model")
 
 ########## 4. Match model to scene ##########
 tMatchingStart = time.time()
 
-estimator.match(0.05, 0.05)
+estimator.match(iRelativeSceneSampleStep, iRelativeSceneDistance)
 
 tMatchingEnd = time.time()
 

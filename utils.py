@@ -52,8 +52,8 @@ def extract_square_region(array, center, side_length):
 
 
 class PoseEstimator:
-    def __init__(self, iRelativeSamplingStepModel, iRelativeDistanceStepModel):
-        self.oDetector = cv2.ppf_match_3d_PPF3DDetector(iRelativeSamplingStepModel, iRelativeDistanceStepModel, 20)
+    def __init__(self, iRelativeSamplingStepModel, iRelativeDistanceStepModel, iNumOfAngles):
+        self.oDetector = cv2.ppf_match_3d_PPF3DDetector(iRelativeSamplingStepModel, iRelativeDistanceStepModel, iNumOfAngles)
         self.xModelLoaded = False
         self.xModelTrained = False
         self.xSceneLoaded = False

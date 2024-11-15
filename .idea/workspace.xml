@@ -5,32 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/BinPickingMP.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Archive - prevVersions/main-manual-roi.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/ScrewModel.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/astronaut-adjusted-origin.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/astronaut-mesh-ok.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/astronaut-origin.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/astronaut.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/nut_250.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/scene-astronaut-ransac.ply" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/scene-astronaut.ply" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/scene-high-accuracy.ply" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/scene-nut.ply" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Input/scene.ply" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Processing/model.ply" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Processing/scene.ply" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/camera-save.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ransac.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gridsearch_failed.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Processing/model.ply" beforeDir="false" afterPath="$PROJECT_DIR$/Processing/model.ply" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Processing/scene.ply" beforeDir="false" afterPath="$PROJECT_DIR$/Processing/scene.ply" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,6 +38,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;TimBossuyt&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/TimBossuyt/BinPickingMP.git&quot;,
+    &quot;accountId&quot;: &quot;2b8e451e-beab-46ac-bc84-7f294642a526&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -116,7 +108,9 @@
       <workItem from="1731343389557" duration="2273000" />
       <workItem from="1731397279584" duration="6422000" />
       <workItem from="1731419562064" duration="6109000" />
-      <workItem from="1731533925160" duration="1570000" />
+      <workItem from="1731533925160" duration="2603000" />
+      <workItem from="1731572168902" duration="2272000" />
+      <workItem from="1731657905336" duration="21937000" />
     </task>
     <servers />
   </component>
@@ -136,7 +130,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/BinPickingMP$ransac.coverage" NAME="ransac Coverage Results" MODIFIED="1731183706477" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$main.coverage" NAME="main Coverage Results" MODIFIED="1731424373620" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$main.coverage" NAME="main Coverage Results" MODIFIED="1731681992831" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BinPickingMP$camera_save.coverage" NAME="camera-save Coverage Results" MODIFIED="1731422444251" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
