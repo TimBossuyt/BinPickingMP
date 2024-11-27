@@ -4,13 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/gridsearch_failed.py" afterDir="false" />
+    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="Week 8 - Parameter check">
+      <change afterPath="$PROJECT_DIR$/ppf/bolt_model.pcd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ppf/ppf.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ppf/test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ppf/udtHashTable.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ppf/viz.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ppf/voting.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/BinPickingMP.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BinPickingMP.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Processing/model.ply" beforeDir="false" afterPath="$PROJECT_DIR$/Processing/model.ply" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Processing/scene.ply" beforeDir="false" afterPath="$PROJECT_DIR$/Processing/scene.ply" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Processing/model.ply" beforeDir="false" afterPath="$PROJECT_DIR$/ppf/model.ply" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Processing/scene.ply" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera-save.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera-save.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gridsearch_failed.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,6 +57,9 @@
     &quot;accountId&quot;: &quot;2b8e451e-beab-46ac-bc84-7f294642a526&quot;
   }
 }</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/.venv/Lib/site-packages/cv2/ppf_match_3d/__init__.pyi" root0="FORCE_HIGHLIGHTING" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -61,28 +71,37 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Python.Test.executor&quot;: &quot;Run&quot;,
     &quot;Python.camera-save.executor&quot;: &quot;Run&quot;,
+    &quot;Python.hashtable.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ppf.executor&quot;: &quot;Run&quot;,
     &quot;Python.ransac.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.udtHashTable.executor&quot;: &quot;Run&quot;,
+    &quot;Python.voting.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/timbo/PycharmProjects/BinPickingMP/Archive - prevVersions&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/timbo/PycharmProjects/BinPickingMP/ppf&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;PyScientificConfigurable&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\ppf" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Archive - prevVersions" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Input" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\ppf" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Input" />
+      <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Archive - prevVersions" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\scene-astronaut" />
     </key>
   </component>
@@ -110,8 +129,26 @@
       <workItem from="1731419562064" duration="6109000" />
       <workItem from="1731533925160" duration="2603000" />
       <workItem from="1731572168902" duration="2272000" />
-      <workItem from="1731657905336" duration="21937000" />
+      <workItem from="1731657905336" duration="22523000" />
+      <workItem from="1731941218486" duration="798000" />
+      <workItem from="1732267959978" duration="7505000" />
+      <workItem from="1732275773239" duration="9695000" />
+      <workItem from="1732365954211" duration="9699000" />
+      <workItem from="1732378702130" duration="1588000" />
+      <workItem from="1732380978921" duration="2425000" />
+      <workItem from="1732451226429" duration="7817000" />
+      <workItem from="1732463697430" duration="984000" />
+      <workItem from="1732731084114" duration="687000" />
     </task>
+    <task id="LOCAL-00001" summary="Week 8 - Parameter check">
+      <option name="closed" value="true" />
+      <created>1731682300969</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1731682300969</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -128,9 +165,19 @@
       </map>
     </option>
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Week 8 - Parameter check" />
+    <option name="LAST_COMMIT_MESSAGE" value="Week 8 - Parameter check" />
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/BinPickingMP$Test.coverage" NAME="Test Coverage Results" MODIFIED="1732371505801" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\timbo\PycharmProjects\BinPickingMP\ppf" />
     <SUITE FILE_PATH="coverage/BinPickingMP$ransac.coverage" NAME="ransac Coverage Results" MODIFIED="1731183706477" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$main.coverage" NAME="main Coverage Results" MODIFIED="1731681992831" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$camera_save.coverage" NAME="camera-save Coverage Results" MODIFIED="1731422444251" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$voting.coverage" NAME="voting Coverage Results" MODIFIED="1732371006767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$main.coverage" NAME="main Coverage Results" MODIFIED="1732463823607" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$ppf.coverage" NAME="ppf Coverage Results" MODIFIED="1732292692480" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$udtHashTable.coverage" NAME="udtHashTable Coverage Results" MODIFIED="1732271269994" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$camera_save.coverage" NAME="camera-save Coverage Results" MODIFIED="1732452831983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$hashtable.coverage" NAME="hashtable Coverage Results" MODIFIED="1732269287037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$test.coverage" NAME="test Coverage Results" MODIFIED="1732370886902" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
   </component>
 </project>

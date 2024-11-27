@@ -4,8 +4,8 @@ import open3d as o3d
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from IPython.core.display_functions import display
-from scipy.spatial.transform import Rotation
 import time
+from scipy.spatial.transform import Rotation
 import os
 import csv
 
@@ -19,35 +19,36 @@ xDebugPlaneSegmenting = False
 xDebugClustering = False
 xDebugProcessing = False
 
-sModelPath = os.path.join("Input", "astronaut-mesh-ok.stl")
-sScenePath = os.path.join("PointCloudImages/PointClouds_2024-11-12_15-40-48/2024-11-12_15-40-59/PointCloud_2024-11-12_15-40-59.ply")
+sModelPath = os.path.join("Input", "screw-removed-thread.stl")
+sScenePath = os.path.join("PointCloudImages/PointClouds_2024-11-24_13-53-56/2024-11-24_13-54-12/PointCloud_2024-11-24_13-54-12.ply")
 
 ## For saving ply files
 sProcessingFolder = "Processing"
 sModelName = "model.ply"
 sSceneName = "scene.ply"
+sSceneROIName = "sceneROI.ply"
 
 ## Training
-iRelativeSamplingStepModel = 0.05
-iRelativeDistanceStepModel = 0.025
+iRelativeSamplingStepModel = 0.03
+iRelativeDistanceStepModel = 0.05
 iNumOfAngles = 25
 
 ## Surface reconstruction
-iVoxelSize = 2
+iVoxelSize = 5
 iPoissonDepth = 9
-iLaplaceSmoothingIter = 200
+iLaplaceSmoothingIter = 500
 
 ## Matching
-iRelativeSceneSampleStep = 0.01
-iRelativeSceneDistance = 0.01
+iRelativeSceneSampleStep = 1.0/4.0
+iRelativeSceneDistance = 0.05
 
 ########## 1. Load model and scene ##########
 ## Loading model as mesh
 mshModel = o3d.io.read_triangle_mesh(sModelPath)
 
 ## Sample mesh to create point cloud using poisson disk sampling
-pcdModel = mshModel.sample_points_poisson_disk(number_of_points=5000)
-pcdModel.scale(0.1, [0, 0, 0])
+pcdModel = mshModel.sample_points_poisson_disk(number_of_points=3000)
+# pcdModel.scale(0.1, [0, 0, 0])
 
 ## Loading scene
 pcdSceneRaw = o3d.io.read_point_cloud(sScenePath)
@@ -56,20 +57,6 @@ if xDebugLoading:
     display_point_clouds([pcdSceneRaw], "Input scene", False)
     display_point_clouds([pcdModel], "Input model", True)
 
-
-########## 2. Train model / calculate PPF ##########
-estimator = PoseEstimator(iRelativeSamplingStepModel, iRelativeDistanceStepModel, iNumOfAngles)
-
-estimator.loadModel(os.path.join(sProcessingFolder, sModelName), 1)
-estimator.loadScene(os.path.join(sProcessingFolder, sSceneName), 1)
-
-tTrainingStart = time.time()
-
-estimator.trainModel()
-
-tTrainingEnd = time.time()
-
-print(f"Training took {tTrainingEnd - tTrainingStart:.4f} seconds to execute.")
 
 ## Saving the ply files to use with surface matching
 o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sModelName), pcdModel, write_ascii=True)
@@ -90,7 +77,7 @@ pcdSceneFiltered, _ = pcdSceneDown.remove_statistical_outlier(nb_neighbors=30, s
 if xDebugProcessing:
     display_point_clouds([pcdSceneFiltered], "Input scene - filtered", False)
 
-oFittedPlane, arrInliersIndex = pcdSceneFiltered.segment_plane(distance_threshold=20,
+oFittedPlane, arrInliersIndex = pcdSceneFiltered.segment_plane(distance_threshold=30,
                                                                ransac_n=100,
                                                                num_iterations=1000,
                                                                probability=0.9999)
@@ -163,19 +150,19 @@ if xDebugSurfaceReconstruction:
     display_point_clouds([density_mesh], "Density mesh visualization", False)
 
 ## Removing points with low density
-arrVerticesToRemove = arrDensities < np.quantile(arrDensities, 0.1)
+arrVerticesToRemove = arrDensities < np.quantile(arrDensities, 0.5)
 mshSurfRec.remove_vertices_by_mask(arrVerticesToRemove)
 
 if xDebugSurfaceReconstruction:
     display_point_clouds([mshSurfRec], "Mesh - removed low density", False)
 
 ## Smoothing mesh with laplacian filter
-mshSurfRecSmooth = mshSurfRec.filter_smooth_laplacian(number_of_iterations=iLaplaceSmoothingIter)
+mshSurfRecSmooth = mshSurfRec.filter_smooth_taubin(number_of_iterations=iLaplaceSmoothingIter)
 mshSurfRecSmooth.compute_vertex_normals()
 if xDebugSurfaceReconstruction:
-    display_point_clouds([mshSurfRecSmooth], "Mesh - removed low density + laplacian smooth", False)
+    display_point_clouds([mshSurfRecSmooth], "Mesh - removed low density + taubin smooth", False)
 
-pcdSceneROI = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=3000)
+pcdSceneROI = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=2000)
 
 # pcdSceneROI = pcdSceneROI.voxel_down_sample(voxel_size=4)
 
@@ -186,12 +173,26 @@ if xDebugSurfaceReconstruction:
     display_point_clouds([pcdSceneROI], "Input scene - ROI - Final pointcloud", True)
 
 ## Saving the ply files to use with surface matching
-o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sSceneName), pcdSceneROI, write_ascii=True)
+o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sSceneROIName), pcdSceneROI, write_ascii=True)
 
 tProcessingEnd = time.time()
 
 print(f"Processing took {tProcessingEnd - tProcessingStart:.4f} seconds to execute.")
 
+########## 2. Train model / calculate PPF ##########
+estimator = PoseEstimator(iRelativeSamplingStepModel, iRelativeDistanceStepModel, iNumOfAngles)
+
+estimator.loadModel(os.path.join(sProcessingFolder, sModelName), 1)
+tTrainingStart = time.time()
+
+estimator.trainModel()
+
+tTrainingEnd = time.time()
+
+print(f"Training took {tTrainingEnd - tTrainingStart:.4f} seconds to execute.")
+
+
+estimator.loadScene(os.path.join(sProcessingFolder, sSceneROIName), 1)
 
 ########## 4. Match model to scene ##########
 tMatchingStart = time.time()
@@ -210,9 +211,10 @@ arrPotentialPoses = estimator.getNPoses(5)
 for pose in arrPotentialPoses:
     pose.printPose()
 
-    pcdModelTransformed = o3d.geometry.PointCloud()
-    pcdModelTransformed.points = pcdModel.points
-    pcdModelTransformed.transform(np.asarray(pose.pose))
-    pcdModelTransformed.paint_uniform_color([0, 1, 0])
+    pcdModelEstimator = o3d.geometry.PointCloud()
+    pcdModelEstimator.points = pcdModel.points
+    pcdModelEstimator.transform(np.asarray(pose.pose))
+    pcdModelEstimator.paint_uniform_color([0, 1, 0])
 
-    display_point_clouds([pcdModelTransformed, pcdSceneFiltered], "Result", False)
+
+    display_point_clouds([pcdModelEstimator, pcdSceneFiltered], "Result", False)

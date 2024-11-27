@@ -10,7 +10,6 @@ import open3d as o3d
 FPS = 10
 SAVE_INTERVAL = 5  # Time interval to save point cloud files (in seconds)
 
-
 class FPSCounter:
     def __init__(self):
         self.frameCount = 0
@@ -68,14 +67,17 @@ monoRight.setResolution(dai.MonoCameraProperties.SensorResolution.THE_800_P)
 monoRight.setCamera("right")
 monoRight.setFps(FPS)
 
+
+
+## Stereodepth configuration
+depth.setLeftRightCheck(True)
+# depth.setExtendedDisparity(True)
+depth.setSubpixel(True)
+depth.setDepthAlign(dai.CameraBoardSocket.CAM_A)
+
 depth.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)
 depth.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_5x5)
 
-
-depth.setLeftRightCheck(True)
-depth.setExtendedDisparity(True)
-depth.setSubpixel(True)
-depth.setDepthAlign(dai.CameraBoardSocket.CAM_A)
 
 monoLeft.out.link(depth.left)
 monoRight.out.link(depth.right)
