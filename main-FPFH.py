@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 import os
 import csv
 
-from utils import display_point_clouds, extract_square_region, PoseEstimator
+from utils import display_point_clouds
 
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Warning)
 ########## Parameters ##########
@@ -19,28 +19,13 @@ xDebugPlaneSegmenting = False
 xDebugClustering = False
 xDebugProcessing = False
 
-sModelPath = os.path.join("Input", "screw-removed-thread.stl")
-sScenePath = os.path.join("PointCloudImages/PointClouds_2024-11-24_13-53-56/2024-11-24_13-54-12/PointCloud_2024-11-24_13-54-12.ply")
-
-## For saving ply files
-sProcessingFolder = "Processing"
-sModelName = "model.ply"
-sSceneName = "scene.ply"
-sSceneROIName = "sceneROI.ply"
-
-## Training
-iRelativeSamplingStepModel = 0.03
-iRelativeDistanceStepModel = 0.05
-iNumOfAngles = 25
+sModelPath = os.path.join("Input", "T-stuk-filled.stl")
+sScenePath = os.path.join("PointCloudImages/PointClouds_2024-11-27_19-41-14/2024-11-27_19-41-31/PointCloud_2024-11-27_19-41-31.ply")
 
 ## Surface reconstruction
-iVoxelSize = 5
+iVoxelSize = 2
 iPoissonDepth = 9
 iLaplaceSmoothingIter = 500
-
-## Matching
-iRelativeSceneSampleStep = 1.0/4.0
-iRelativeSceneDistance = 0.05
 
 ########## 1. Load model and scene ##########
 ## Loading model as mesh
@@ -58,10 +43,7 @@ if xDebugLoading:
     display_point_clouds([pcdModel], "Input model", True)
 
 
-## Saving the ply files to use with surface matching
-o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sModelName), pcdModel, write_ascii=True)
-
-########## 3. Preprocessing of the scene ##########
+########## 2. Preprocessing of the scene ##########
 tProcessingStart = time.time()
 
 ## Voxel down scene
@@ -150,7 +132,7 @@ if xDebugSurfaceReconstruction:
     display_point_clouds([density_mesh], "Density mesh visualization", False)
 
 ## Removing points with low density
-arrVerticesToRemove = arrDensities < np.quantile(arrDensities, 0.5)
+arrVerticesToRemove = arrDensities < np.quantile(arrDensities, 0.2)
 mshSurfRec.remove_vertices_by_mask(arrVerticesToRemove)
 
 if xDebugSurfaceReconstruction:
@@ -164,57 +146,98 @@ if xDebugSurfaceReconstruction:
 
 pcdSceneROI = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=2000)
 
-# pcdSceneROI = pcdSceneROI.voxel_down_sample(voxel_size=4)
-
-# pcdSceneROI.estimate_normals()
-
 ## Visualize final ROI pointcloud
 if xDebugSurfaceReconstruction:
     display_point_clouds([pcdSceneROI], "Input scene - ROI - Final pointcloud", True)
-
-## Saving the ply files to use with surface matching
-o3d.io.write_point_cloud(os.path.join(sProcessingFolder, sSceneROIName), pcdSceneROI, write_ascii=True)
 
 tProcessingEnd = time.time()
 
 print(f"Processing took {tProcessingEnd - tProcessingStart:.4f} seconds to execute.")
 
-########## 2. Train model / calculate PPF ##########
-estimator = PoseEstimator(iRelativeSamplingStepModel, iRelativeDistanceStepModel, iNumOfAngles)
+########## 3. Global registration using Open3D ##########
 
-estimator.loadModel(os.path.join(sProcessingFolder, sModelName), 1)
-tTrainingStart = time.time()
+### Initial transformation
+arrROIPoints = np.asarray(pcdSceneROI.points)
+meanROI= np.mean(arrROIPoints, axis=0)
 
-estimator.trainModel()
+arrModelPoints = np.asarray(pcdModel.points)
+meanModel = np.mean(arrModelPoints, axis=0)
 
-tTrainingEnd = time.time()
+arrInitTranslation = meanROI - meanModel
 
-print(f"Training took {tTrainingEnd - tTrainingStart:.4f} seconds to execute.")
+transformation_init = np.eye(4)
+transformation_init[:3, 3] = arrInitTranslation
 
+print(transformation_init)
 
-estimator.loadScene(os.path.join(sProcessingFolder, sSceneROIName), 1)
+pcdModelInitTransformed = pcdModel.transform(transformation_init)
 
-########## 4. Match model to scene ##########
+#display_point_clouds([pcdModelInitTransformed, pcdSceneROI], "Initial transformation", False)
+
+## Downsample both pointclouds to match the density
+iVoxelMatching = 4
+
+pcdModelInitTransformed = pcdModelInitTransformed.voxel_down_sample(iVoxelMatching)
+pcdSceneROI = pcdSceneROI.voxel_down_sample(iVoxelMatching)
+
+display_point_clouds([pcdModelInitTransformed, pcdSceneROI], "Initial transformation - voxel down", False)
+
+iRadiusFeature = iVoxelMatching * 5
+oModelFPFH = o3d.pipelines.registration.compute_fpfh_feature(pcdModelInitTransformed,
+                                                             o3d.geometry.KDTreeSearchParamHybrid(radius=iRadiusFeature, max_nn=500))
+
+oSceneFPFH = o3d.pipelines.registration.compute_fpfh_feature(pcdSceneROI,
+                                                             o3d.geometry.KDTreeSearchParamHybrid(radius=iRadiusFeature, max_nn=500))
+
+iDistanceThreshold = iVoxelMatching * 2
+print(":: RANSAC registration on downsampled point clouds.")
+print("   we use a liberal distance threshold %.3f." % iDistanceThreshold)
 tMatchingStart = time.time()
 
-estimator.match(iRelativeSceneSampleStep, iRelativeSceneDistance)
+result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+    source=pcdModelInitTransformed,
+    target=pcdSceneROI,
+    source_feature=oModelFPFH,
+    target_feature=oSceneFPFH,
+    mutual_filter=False,
+    max_correspondence_distance=iDistanceThreshold,
+    estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+    ransac_n=3,
+    checkers=[
+            o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+                iDistanceThreshold),
+    ],
+    criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999)
+)
 
 tMatchingEnd = time.time()
 
 print(f"Matching took {tMatchingEnd - tMatchingStart:.4f} seconds to execute.")
 
-########## 5. Show results ##########
+print(result)
+print(result.transformation)
 
-### Show resulting pose on original scene
-arrPotentialPoses = estimator.getNPoses(5)
+pcdModelTransformed = pcdModelInitTransformed.transform(result.transformation)
 
-for pose in arrPotentialPoses:
-    pose.printPose()
+display_point_clouds([pcdModelTransformed, pcdSceneROI], "Result", False)
 
-    pcdModelEstimator = o3d.geometry.PointCloud()
-    pcdModelEstimator.points = pcdModel.points
-    pcdModelEstimator.transform(np.asarray(pose.pose))
-    pcdModelEstimator.paint_uniform_color([0, 1, 0])
+########## 4. Local registration using Open3D ##########
+distance = [0.001, 0.005]
+
+for iDistance in distance:
+    print("Apply point-to-point ICP")
+    resultICP = o3d.pipelines.registration.registration_icp(
+        source=pcdModelTransformed,
+        target=pcdSceneROI,
+        max_correspondence_distance=iDistance,
+        init=result.transformation,
+        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+        criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000)
+    )
+    print(resultICP)
+    print("Transformation is:")
+    print(resultICP.transformation)
 
 
-    display_point_clouds([pcdModelEstimator, pcdSceneFiltered], "Result", False)
+    display_point_clouds([pcdModelTransformed.transform(resultICP.transformation), pcdSceneROI], "Result", False)
+
