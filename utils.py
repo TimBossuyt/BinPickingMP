@@ -5,6 +5,31 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 import os
 
+
+def extract_translation_rotation(transform_matrix):
+    # Extract the translation part (x, y, z) from the 4th column of the matrix
+    translation = transform_matrix[:3, 3]
+    x, y, z = translation[0], translation[1], translation[2]
+
+    # Extract the rotation matrix (upper-left 3x3 sub-matrix)
+    rotation_matrix = transform_matrix[:3, :3]
+
+    # Use scipy to get Euler angles from the rotation matrix (in degrees)
+    rotation = R.from_matrix(rotation_matrix)
+    anglex, angley, anglez = rotation.as_euler('xyz', degrees=True)
+
+    # Print the results nicely to the terminal
+    print("Translation (x, y, z):")
+    print(f"x: {x:.2f}, y: {y:.2f}, z: {z:.2f}")
+
+    print("\nRotation angles (degrees):")
+    print(f"Angle around x-axis: {anglex:.2f}°")
+    print(f"Angle around y-axis: {angley:.2f}°")
+    print(f"Angle around z-axis: {anglez:.2f}°")
+
+    return x, y, z, anglex, angley, anglez
+
+
 def display_point_clouds(point_clouds, window_title, show_normals=False):
     """
     Displays a list of Open3D point clouds in a single visualization window.

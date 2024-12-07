@@ -68,7 +68,6 @@ monoRight.setCamera("right")
 monoRight.setFps(FPS)
 
 
-
 ## Stereodepth configuration
 depth.setLeftRightCheck(True)
 # depth.setExtendedDisparity(True)

@@ -1,0 +1,73 @@
+import numpy as np
+import open3d as o3d
+import matplotlib.pyplot as plt
+import time
+import os
+
+def mean_to_mean_transformation(pcdModel, pcdScene):
+    arrScenePoints = np.asarray(pcdScene.points)
+    arrModelPoints = np.asarray(pcdModel.points)
+
+    arrMeanScene = np.mean(arrScenePoints, axis=0)
+    arrMeanModel = np.mean(arrModelPoints, axis=0)
+
+    arrInitTranslation = arrMeanScene - arrMeanModel
+
+    transformation_init = np.eye(4)
+    transformation_init[:3, 3] = arrInitTranslation
+
+    return transformation_init
+
+class PoseEstimator:
+    def __init__(self, pcdModel, pcdScene, iVoxelSize):
+        self.pcdModel = pcdModel
+        self.pcdScene = pcdScene
+        self.iVoxelSize = iVoxelSize
+
+        ## Initial transformation
+        self.pcdModel = pcdModel.transform(mean_to_mean_transformation(self.pcdModel, self.pcdScene))
+
+        ## Downsample both pointclouds to get the same density
+        self.pcdModel = self.pcdModel.voxel_down_sample(self.iVoxelSize)
+        self.pcdScene = self.pcdScene.voxel_down_sample(self.iVoxelSize)
+
+        self.oModelFPFH = None
+        self.oSceneFPFH = None
+
+        self.oMatchingResults = None
+
+
+    def calculate_features(self, iFeatureFactor, iMaxNN):
+        iRadiusFeature = self.iVoxelSize * iFeatureFactor
+
+        self.oModelFPFH = o3d.pipelines.registration.compute_fpfh_feature(self.pcdModel,
+                                                                     o3d.geometry.KDTreeSearchParamHybrid(
+                                                                         radius=iRadiusFeature, max_nn=iMaxNN))
+
+        self.oSceneFPFH = o3d.pipelines.registration.compute_fpfh_feature(self.pcdScene,
+                                                                     o3d.geometry.KDTreeSearchParamHybrid(
+                                                                         radius=iRadiusFeature, max_nn=iMaxNN))
+
+    def match(self, iDistanceFactor):
+        iDistanceThreshold = self.iVoxelSize * iDistanceFactor
+
+        self.oMatchingResults = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+            source=self.pcdModel,
+            target=self.pcdScene,
+            source_feature=self.oModelFPFH,
+            target_feature=self.oSceneFPFH,
+            mutual_filter=False,
+            max_correspondence_distance=iDistanceThreshold,
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+            ransac_n=3,
+            checkers=[
+                o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+                    iDistanceThreshold),
+            ],
+            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999)
+        )
+
+        self.oTransformation = self.oMatchingResults.transformation
+
+    def get_transformation_mat(self):
+        return np.array(self.oTransformation, copy=True)

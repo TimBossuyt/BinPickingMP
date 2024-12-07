@@ -4,10 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="Week 9 - PPF Parameters">
-      <change afterPath="$PROJECT_DIR$/main-PPF.py" afterDir="false" />
+    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="Week 10 - FPFH implementatie">
+      <change afterPath="$PROJECT_DIR$/ExtrinsicTransformationAruco.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PointCloudManager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PoseEstimator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/aruco_generator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/aruco_test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/aruco_test_v2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera-params.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main-FPFH.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera-save.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera-save.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main-FPFH.py" beforeDir="false" afterPath="$PROJECT_DIR$/main-FPFH.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main-PPF.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ransac.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +72,13 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.ExtrinsicTransformationAruco.executor": "Run",
+    "Python.PoseEstimator.executor": "Run",
     "Python.Test.executor": "Run",
+    "Python.aruco_generator.executor": "Run",
+    "Python.aruco_test.executor": "Run",
+    "Python.aruco_test_v2.executor": "Run",
+    "Python.camera-params.executor": "Run",
     "Python.camera-save.executor": "Run",
     "Python.hashtable.executor": "Run",
     "Python.main-FPFH.executor": "Run",
@@ -74,35 +91,92 @@
     "Python.voting.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/timbo/PycharmProjects/BinPickingMP",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/timbo/PycharmProjects/BinPickingMP/Input/T-scenes",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "settings.editor.selected.configurable": "preferences.pathVariables",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Input\T-scenes" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\ppf" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Archive - prevVersions" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Input" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Archive - prevVersions" />
+      <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Input\T-scenes" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\ppf" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Input" />
-      <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\Archive - prevVersions" />
       <recent name="C:\Users\timbo\PycharmProjects\BinPickingMP\scene-astronaut" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="aruco_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="BinPickingMP" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/aruco_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="BinPickingMP" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.aruco_test" />
+        <item itemvalue="Python.main" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.23726.102" />
-        <option value="bundled-python-sdk-5e1850174b45-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.23726.102" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.24807.21" />
+        <option value="bundled-python-sdk-00717045f1d3-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.24807.21" />
       </set>
     </attachedChunks>
   </component>
@@ -132,6 +206,14 @@
       <workItem from="1732451226429" duration="7817000" />
       <workItem from="1732463697430" duration="984000" />
       <workItem from="1732731084114" duration="8592000" />
+      <workItem from="1732777549248" duration="2108000" />
+      <workItem from="1732867670315" duration="13143000" />
+      <workItem from="1732885010511" duration="7959000" />
+      <workItem from="1732972012594" duration="34000" />
+      <workItem from="1733481868515" duration="14377000" />
+      <workItem from="1733575985052" duration="14190000" />
+      <workItem from="1733596061172" duration="355000" />
+      <workItem from="1733596547408" duration="5614000" />
     </task>
     <task id="LOCAL-00001" summary="Week 8 - Parameter check">
       <option name="closed" value="true" />
@@ -149,7 +231,15 @@
       <option name="project" value="LOCAL" />
       <updated>1732732631427</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Week 10 - FPFH implementatie">
+      <option name="closed" value="true" />
+      <created>1732777581288</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1732777581288</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -169,19 +259,26 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Week 8 - Parameter check" />
     <MESSAGE value="Week 9 - PPF Parameters" />
-    <option name="LAST_COMMIT_MESSAGE" value="Week 9 - PPF Parameters" />
+    <MESSAGE value="Week 10 - FPFH implementatie" />
+    <option name="LAST_COMMIT_MESSAGE" value="Week 10 - FPFH implementatie" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/BinPickingMP$Test.coverage" NAME="Test Coverage Results" MODIFIED="1732371505801" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\timbo\PycharmProjects\BinPickingMP\ppf" />
     <SUITE FILE_PATH="coverage/BinPickingMP$ransac.coverage" NAME="ransac Coverage Results" MODIFIED="1731183706477" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$main_FPFH.coverage" NAME="main-FPFH Coverage Results" MODIFIED="1732739880490" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$aruco_generator.coverage" NAME="aruco_generator Coverage Results" MODIFIED="1733577771265" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BinPickingMP$voting.coverage" NAME="voting Coverage Results" MODIFIED="1732371006767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$main.coverage" NAME="main Coverage Results" MODIFIED="1732463823607" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$main_PPF.coverage" NAME="main-PPF Coverage Results" MODIFIED="1732736307405" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$ppf.coverage" NAME="ppf Coverage Results" MODIFIED="1732292692480" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$udtHashTable.coverage" NAME="udtHashTable Coverage Results" MODIFIED="1732271269994" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$camera_save.coverage" NAME="camera-save Coverage Results" MODIFIED="1732732870634" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$main_PPF.coverage" NAME="main-PPF Coverage Results" MODIFIED="1732872816039" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$ExtrinsicTransformationAruco.coverage" NAME="ExtrinsicTransformationAruco Coverage Results" MODIFIED="1733598258747" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$PoseEstimator.coverage" NAME="PoseEstimator Coverage Results" MODIFIED="1732892726584" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$camera_save.coverage" NAME="camera-save Coverage Results" MODIFIED="1733602928424" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BinPickingMP$hashtable.coverage" NAME="hashtable Coverage Results" MODIFIED="1732269287037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
     <SUITE FILE_PATH="coverage/BinPickingMP$test.coverage" NAME="test Coverage Results" MODIFIED="1732370886902" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$Test.coverage" NAME="Test Coverage Results" MODIFIED="1732371505801" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\timbo\PycharmProjects\BinPickingMP\ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$main_FPFH.coverage" NAME="main-FPFH Coverage Results" MODIFIED="1732888293091" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$main.coverage" NAME="main Coverage Results" MODIFIED="1733602965686" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$ppf.coverage" NAME="ppf Coverage Results" MODIFIED="1732292692480" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$udtHashTable.coverage" NAME="udtHashTable Coverage Results" MODIFIED="1732271269994" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$aruco_test.coverage" NAME="aruco_test Coverage Results" MODIFIED="1733598250212" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$aruco_test_v2.coverage" NAME="aruco_test_v2 Coverage Results" MODIFIED="1733592939991" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$camera_params.coverage" NAME="camera-params Coverage Results" MODIFIED="1733492619837" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

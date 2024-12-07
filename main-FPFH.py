@@ -8,24 +8,25 @@ import time
 from scipy.spatial.transform import Rotation
 import os
 import csv
+import copy
 
-from utils import display_point_clouds
+from utils import display_point_clouds, extract_translation_rotation
 
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Warning)
 ########## Parameters ##########
 xDebugLoading = False
-xDebugSurfaceReconstruction = False
+xDebugSurfaceReconstruction = True
 xDebugPlaneSegmenting = False
 xDebugClustering = False
 xDebugProcessing = False
 
 sModelPath = os.path.join("Input", "T-stuk-filled.stl")
-sScenePath = os.path.join("PointCloudImages/PointClouds_2024-11-27_19-41-14/2024-11-27_19-41-31/PointCloud_2024-11-27_19-41-31.ply")
+sScenePath = os.path.join("Input/T-scenes/pc4-tape.ply")
 
 ## Surface reconstruction
-iVoxelSize = 2
+iVoxelSize = 5
 iPoissonDepth = 9
-iLaplaceSmoothingIter = 500
+iLaplaceSmoothingIter = 100
 
 ########## 1. Load model and scene ##########
 ## Loading model as mesh
@@ -54,7 +55,7 @@ if xDebugProcessing:
 
 
 ## Remove outliers
-pcdSceneFiltered, _ = pcdSceneDown.remove_statistical_outlier(nb_neighbors=30, std_ratio=0.01)
+pcdSceneFiltered, _ = pcdSceneDown.remove_statistical_outlier(nb_neighbors=20, std_ratio=1)
 
 if xDebugProcessing:
     display_point_clouds([pcdSceneFiltered], "Input scene - filtered", False)
@@ -71,7 +72,7 @@ if xDebugPlaneSegmenting:
     pcdBackground = pcdBackground.paint_uniform_color([1.0, 0, 0]) ## Paint red
     display_point_clouds([pcdBackground, pcdSceneNoBackground], "Input scene - plane segmenting", False)
 
-## DBSCAN Clustering
+## DBSCAN Clustering20
 ## Get label by index of XYZ-point
 arrLabels = np.array(pcdSceneNoBackground.cluster_dbscan(eps=10, min_points=10, print_progress=True))
 clusters = {}
@@ -105,7 +106,8 @@ pcdSceneROI.points = o3d.utility.Vector3dVector(arrLargestCluster)
 ## Calculating normals
 pcdSceneROI.estimate_normals() # Point cloud needs to have normals in order to point them towards the camera
 pcdSceneROI.orient_normals_towards_camera_location([0, 0, 0])
-pcdSceneROI.estimate_normals()
+search_param = o3d.geometry.KDTreeSearchParamRadius(radius=10)
+pcdSceneROI.estimate_normals(search_param)
 
 if xDebugSurfaceReconstruction:
     display_point_clouds([pcdSceneROI], "Input scene - ROI - Before smoothing", True)
@@ -132,7 +134,7 @@ if xDebugSurfaceReconstruction:
     display_point_clouds([density_mesh], "Density mesh visualization", False)
 
 ## Removing points with low density
-arrVerticesToRemove = arrDensities < np.quantile(arrDensities, 0.2)
+arrVerticesToRemove = arrDensities < np.quantile(arrDensities, 0.5)
 mshSurfRec.remove_vertices_by_mask(arrVerticesToRemove)
 
 if xDebugSurfaceReconstruction:
@@ -140,11 +142,13 @@ if xDebugSurfaceReconstruction:
 
 ## Smoothing mesh with laplacian filter
 mshSurfRecSmooth = mshSurfRec.filter_smooth_taubin(number_of_iterations=iLaplaceSmoothingIter)
+
 mshSurfRecSmooth.compute_vertex_normals()
 if xDebugSurfaceReconstruction:
     display_point_clouds([mshSurfRecSmooth], "Mesh - removed low density + taubin smooth", False)
 
 pcdSceneROI = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=2000)
+
 
 ## Visualize final ROI pointcloud
 if xDebugSurfaceReconstruction:
@@ -175,23 +179,29 @@ pcdModelInitTransformed = pcdModel.transform(transformation_init)
 #display_point_clouds([pcdModelInitTransformed, pcdSceneROI], "Initial transformation", False)
 
 ## Downsample both pointclouds to match the density
-iVoxelMatching = 4
+iVoxelMatching = 3
 
 pcdModelInitTransformed = pcdModelInitTransformed.voxel_down_sample(iVoxelMatching)
 pcdSceneROI = pcdSceneROI.voxel_down_sample(iVoxelMatching)
 
 display_point_clouds([pcdModelInitTransformed, pcdSceneROI], "Initial transformation - voxel down", False)
 
-iRadiusFeature = iVoxelMatching * 5
+
+# 6 en 3
+iFeatureFactor = 10
+iDistanceFactor = 3
+
+iRadiusFeature = iVoxelMatching * iFeatureFactor
 oModelFPFH = o3d.pipelines.registration.compute_fpfh_feature(pcdModelInitTransformed,
                                                              o3d.geometry.KDTreeSearchParamHybrid(radius=iRadiusFeature, max_nn=500))
 
 oSceneFPFH = o3d.pipelines.registration.compute_fpfh_feature(pcdSceneROI,
                                                              o3d.geometry.KDTreeSearchParamHybrid(radius=iRadiusFeature, max_nn=500))
 
-iDistanceThreshold = iVoxelMatching * 2
+iDistanceThreshold = iVoxelMatching * iDistanceFactor
 print(":: RANSAC registration on downsampled point clouds.")
 print("   we use a liberal distance threshold %.3f." % iDistanceThreshold)
+
 tMatchingStart = time.time()
 
 result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
@@ -201,7 +211,7 @@ result = o3d.pipelines.registration.registration_ransac_based_on_feature_matchin
     target_feature=oSceneFPFH,
     mutual_filter=False,
     max_correspondence_distance=iDistanceThreshold,
-    estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+    estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
     ransac_n=3,
     checkers=[
             o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
@@ -215,29 +225,12 @@ tMatchingEnd = time.time()
 print(f"Matching took {tMatchingEnd - tMatchingStart:.4f} seconds to execute.")
 
 print(result)
-print(result.transformation)
+
+extract_translation_rotation(np.array(result.transformation, copy=True))
 
 pcdModelTransformed = pcdModelInitTransformed.transform(result.transformation)
 
-display_point_clouds([pcdModelTransformed, pcdSceneROI], "Result", False)
-
-########## 4. Local registration using Open3D ##########
-distance = [0.001, 0.005]
-
-for iDistance in distance:
-    print("Apply point-to-point ICP")
-    resultICP = o3d.pipelines.registration.registration_icp(
-        source=pcdModelTransformed,
-        target=pcdSceneROI,
-        max_correspondence_distance=iDistance,
-        init=result.transformation,
-        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-        criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000)
-    )
-    print(resultICP)
-    print("Transformation is:")
-    print(resultICP.transformation)
-
-
-    display_point_clouds([pcdModelTransformed.transform(resultICP.transformation), pcdSceneROI], "Result", False)
+display_point_clouds([pcdModelTransformed, pcdSceneROI, pcdSceneFiltered],
+                     f"Result: feature: {iFeatureFactor}, distance: {iDistanceFactor}",
+                     False)
 
