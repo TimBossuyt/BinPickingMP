@@ -4,45 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="Week 11 - CCO to WCO">
-      <change afterPath="$PROJECT_DIR$/README.MD" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scripts/calibrate_extrinsics.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pose_estimation/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pose_estimation/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/BinPickingMP.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BinPickingMP.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Archive - prevVersions/main-manual-roi.py" beforeDir="false" afterPath="$PROJECT_DIR$/Archive/main-manual-roi.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ExtrinsicTransformationAruco.py" beforeDir="false" afterPath="$PROJECT_DIR$/pose_estimation/extrinsics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/ScrewModel.stl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/astronaut-adjusted-origin.stl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/astronaut-mesh-ok.stl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/astronaut-origin.stl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/astronaut.stl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/nut_250.stl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/scene-astronaut-ransac.ply" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/scene-astronaut.ply" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/scene-high-accuracy.ply" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/scene-nut.ply" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Input/scene.ply" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PointCloudManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/pose_estimation/pointcloudmanager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PoseEstimator.py" beforeDir="false" afterPath="$PROJECT_DIR$/pose_estimation/pose_estimator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/aruco_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/ArucoMarkers/aruco_generator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/aruco_test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/aruco_test_v2.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera-params.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/camera-params.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera-save.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/camera-save.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main-FPFH.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Tests/pose_estimation_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ppf/bolt_model.pcd" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ppf/model.ply" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ppf/ppf.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ppf/test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ppf/udtHashTable.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ppf/viz.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ppf/voting.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" />
-    </list>
+    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="Week 11 - pose_estimation package" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -240,7 +202,7 @@
       <workItem from="1733575985052" duration="14190000" />
       <workItem from="1733596061172" duration="355000" />
       <workItem from="1733596547408" duration="6048000" />
-      <workItem from="1733607927997" duration="3784000" />
+      <workItem from="1733607927997" duration="4085000" />
     </task>
     <task id="LOCAL-00001" summary="Week 8 - Parameter check">
       <option name="closed" value="true" />
@@ -274,7 +236,31 @@
       <option name="project" value="LOCAL" />
       <updated>1733603160330</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Week 11 - pose_estimation package">
+      <option name="closed" value="true" />
+      <created>1733611801470</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1733611801470</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Week 11 - pose_estimation package">
+      <option name="closed" value="true" />
+      <created>1733611949801</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1733611949801</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Week 11 - pose_estimation package">
+      <option name="closed" value="true" />
+      <created>1733612015759</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1733612015759</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -296,7 +282,8 @@
     <MESSAGE value="Week 9 - PPF Parameters" />
     <MESSAGE value="Week 10 - FPFH implementatie" />
     <MESSAGE value="Week 11 - CCO to WCO" />
-    <option name="LAST_COMMIT_MESSAGE" value="Week 11 - CCO to WCO" />
+    <MESSAGE value="Week 11 - pose_estimation package" />
+    <option name="LAST_COMMIT_MESSAGE" value="Week 11 - pose_estimation package" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/BinPickingMP$ransac.coverage" NAME="ransac Coverage Results" MODIFIED="1731183706477" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
