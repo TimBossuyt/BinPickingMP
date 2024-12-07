@@ -2,3 +2,5 @@ PointCloudImages/
 .venv/
 Archive/
 Input/
+__pycache__/
+CalibrationData/
