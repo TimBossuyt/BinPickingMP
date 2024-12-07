@@ -1,5 +1,9 @@
-## CAD Based pose estimation for bin-picking
+# CAD Based pose estimation for bin-picking
 
 Tim Bossuyt
 
-Using FPFH
+
+### To-Do
+* Extrinsics using multiple Aruco markers
+* Define picking poses
+* Creating camera-node (ROS?)
