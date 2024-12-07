@@ -24,7 +24,7 @@ iMarkerSize = 200
 ## Generate marker image
 oMarkerImage = cv2.aruco.generateImageMarker(aruco_dict, iMarkerID, iMarkerSize)
 
-cv2.imwrite(f"ArUco_6x6_50_{iMarkerID}.png", oMarkerImage)
+cv2.imwrite(f"../ArucoMarkers/ArUco_6x6_50_{iMarkerID}", oMarkerImage)
 
 # Display the marker
 cv2.imshow("ArUco Marker", oMarkerImage)

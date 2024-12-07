@@ -47,6 +47,9 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/.venv/Lib/site-packages/cv2/ppf_match_3d/__init__.pyi" root0="FORCE_HIGHLIGHTING" />
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -202,7 +205,7 @@
       <workItem from="1733575985052" duration="14190000" />
       <workItem from="1733596061172" duration="355000" />
       <workItem from="1733596547408" duration="6048000" />
-      <workItem from="1733607927997" duration="4085000" />
+      <workItem from="1733607927997" duration="4504000" />
     </task>
     <task id="LOCAL-00001" summary="Week 8 - Parameter check">
       <option name="closed" value="true" />
@@ -260,7 +263,39 @@
       <option name="project" value="LOCAL" />
       <updated>1733612015759</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Week 11 - pose_estimation package">
+      <option name="closed" value="true" />
+      <created>1733612092110</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1733612092110</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Week 11 - pose_estimation package">
+      <option name="closed" value="true" />
+      <created>1733612153392</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1733612153392</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Week 11 - pose_estimation package">
+      <option name="closed" value="true" />
+      <created>1733612347800</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1733612347800</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Week 11 - pose_estimation package">
+      <option name="closed" value="true" />
+      <created>1733612429639</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1733612429639</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

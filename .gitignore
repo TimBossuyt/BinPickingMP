@@ -7,7 +7,7 @@ CalibrationData/
 
 **/__pycache__/
 
-.idea/
+.idea/*
 
 # Byte-compiled / optimized / DLL files
 *.py[cod]
