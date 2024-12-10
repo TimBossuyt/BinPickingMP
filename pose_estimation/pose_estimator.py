@@ -27,10 +27,12 @@ class PoseEstimatorFPFH:
     def calculate_features(self, iFeatureFactor, iMaxNN):
         iRadiusFeature = self.iVoxelSize * iFeatureFactor
 
+        ## Calculate model features (FPFH)
         self.oModelFPFH = o3d.pipelines.registration.compute_fpfh_feature(self.pcdModel,
                                                                      o3d.geometry.KDTreeSearchParamHybrid(
                                                                          radius=iRadiusFeature, max_nn=iMaxNN))
 
+        ## Calculate scene/object features (FPFH)
         self.oSceneFPFH = o3d.pipelines.registration.compute_fpfh_feature(self.pcdScene,
                                                                      o3d.geometry.KDTreeSearchParamHybrid(
                                                                          radius=iRadiusFeature, max_nn=iMaxNN))

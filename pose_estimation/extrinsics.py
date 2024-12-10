@@ -5,10 +5,22 @@ import numpy as np
 
 class ExtrinsicTransformationAruco:
     def __init__(self, pcdScene, iHeightImage, iWidthImage, oArUcoDict):
+        """
+        Initialize the ExtrinsicTransformationAruco object.
+
+        Parameters:
+            pcdScene: Point cloud scene containing ArUco markers
+            iHeightImage (int): Height of the image
+            iWidthImage (int): Width of the image
+            oArUcoDict: ArUco dictionary for marker detection
+        """
+
         self.pcdScene = pcdScene
 
+        ## Load points as 2D array
         self.arrPoints = np.asarray(self.pcdScene.points).reshape(iHeightImage, iWidthImage, 3)
 
+        ## Load colors as 2D array to use as image for Aruco Detection
         self.arrColors = np.asarray(self.pcdScene.colors).reshape(iHeightImage, iWidthImage, 3)  # (1920, 1080, 3), RGB
         self.arrColors = (self.arrColors * 255).astype(np.uint8)
         self.arrColorsBGR = cv2.cvtColor(self.arrColors, cv2.COLOR_RGB2BGR)
@@ -26,6 +38,12 @@ class ExtrinsicTransformationAruco:
 
 
     def estimateTransformation(self):
+        """
+        Estimate the transformation matrix between camera and world coordinates.
+
+        Returns:
+            np.array: 4x4 transformation matrix
+        """
         retval, out, inliers = cv2.estimateAffine3D(self.arrCamPoints, self.arrWorldPoints)
 
         trans_mat = np.vstack((out, [0, 0, 0, 1]))
@@ -34,6 +52,13 @@ class ExtrinsicTransformationAruco:
 
 
     def getCameraPointsWithDepth(self):
+        """
+        Get camera points with depth information.
+
+        Returns:
+            np.array: Array of camera points with depth
+        """
+
         ## Getting corners from ID0
         #0: Y-axis
         #1: Diagonal
@@ -49,6 +74,15 @@ class ExtrinsicTransformationAruco:
         return arrCamPoints
 
     def getWorldPointsWithDepth(self, bInvertDepth):
+        """
+        Get world points with depth information.
+
+        Parameters:
+            bInvertDepth (bool): Whether to invert the depth direction
+
+        Returns:
+            np.array: Array of world points with depth
+        """
 
         iDir = 1
         if bInvertDepth:
@@ -73,6 +107,18 @@ class ExtrinsicTransformationAruco:
         return arrWorldPoints
 
     def getPlaneNormalUnit(self, iDistanceThreshold=10, iRansacN=100, iNumIter=1000, iProb=0.999):
+        """
+        Get the unit normal vector of the plane in the point cloud.
+
+        Parameters:
+            iDistanceThreshold (int): Distance threshold for RANSAC
+            iRansacN (int): Number of random samples for RANSAC
+            iNumIter (int): Number of iterations for RANSAC
+            iProb (float): Probability of success for RANSAC
+
+        Returns:
+            np.array: Unit normal vector of the plane
+        """
         oFittedPlane, arrInliersIndex = self.pcdScene.segment_plane(
             distance_threshold=iDistanceThreshold,
             ransac_n=iRansacN,
@@ -87,6 +133,16 @@ class ExtrinsicTransformationAruco:
 
 
     def getCamCornersByID(self, iID):
+        """
+        Get camera corners for a specific ArUco marker ID.
+
+        Parameters:
+            iID (int): ID of the ArUco marker
+
+        Returns:
+            np.array: Array of camera corners for the specified ArUco marker
+        """
+
         markerCorners, markerIds, _ = self.detector.detectMarkers(self.arrColorsBGR)
 
         image_with_markers = cv2.aruco.drawDetectedMarkers(self.arrColorsBGR.copy(), markerCorners, markerIds)
