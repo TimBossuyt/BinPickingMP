@@ -4,7 +4,7 @@ from pose_estimation import PointCloudManager, display_point_clouds
 from pose_estimation import PoseEstimatorFPFH
 import numpy as np
 
-sModelPath = os.path.join("../Input", "T-stuk-filled.stl")
+sModelPath = os.path.join("../Input", "T-stuk-half.stl")
 sScenePath = os.path.join(
     "../PointCloudImages/PointClouds_2024-12-09_15-31-59/2024-12-09_15-32-10/PointCloud_2024-12-09_15-32-10.ply")
 
@@ -15,7 +15,7 @@ oPointCloudManager = PointCloudManager()
 ########## Loading and displaying model ##########
 oPointCloudManager.loadModelMesh(
     sModelPath=sModelPath,
-    iPoints=1000
+    iPoints=2000
 )
 
 oPointCloudManager.displayModel()
@@ -53,20 +53,17 @@ oPointCloudManager.displayClusters()
 
 oPointCloudManager.surfaceReconstructionObjects(
     bVisualize=False,
-    iRawNormalRadius=10,
+    iRawNormalRadius=5,
     iPoissonDepth=9,
-    iDensityThreshold=0.4,
+    iDensityThreshold=0.2,
     iTaubinIter=100,
-    iPoints=1000
+    iPoints=700
 )
 
 oPointCloudManager.displayReconstructedObjects()
 
 ### Matching
 arrPcdReconstructedObjects = oPointCloudManager.arrPcdObjectsReconstructed
-
-print(len(arrPcdReconstructedObjects))
-
 
 for pcdReconstructed in arrPcdReconstructedObjects:
     oPoseEstimator = PoseEstimatorFPFH(oPointCloudManager.pcdModel, pcdReconstructed, 3)

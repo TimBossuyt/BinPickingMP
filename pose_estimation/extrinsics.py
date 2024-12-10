@@ -44,7 +44,9 @@ class ExtrinsicTransformationAruco:
         Returns:
             np.array: 4x4 transformation matrix
         """
-        retval, out, inliers = cv2.estimateAffine3D(self.arrCamPoints, self.arrWorldPoints)
+        # force_rotation=true --> to just get a rigid transformation
+
+        retval, out, inliers = cv2.estimateAffine3D(self.arrCamPoints, self.arrWorldPoints, True)
 
         trans_mat = np.vstack((out, [0, 0, 0, 1]))
 
