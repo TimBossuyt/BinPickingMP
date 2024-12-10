@@ -6,19 +6,19 @@ import numpy as np
 
 sModelPath = os.path.join("../Input", "T-stuk-filled.stl")
 sScenePath = os.path.join(
-    "../PointCloudImages/PointClouds_2024-12-07_22-48-37/2024-12-07_22-48-53/PointCloud_2024-12-07_22-48-53.ply")
+    "../PointCloudImages/PointClouds_2024-12-09_15-31-59/2024-12-09_15-32-10/PointCloud_2024-12-09_15-32-10.ply")
 
-sExtrinsicsPath = "../Scripts/camera_extrinsics.npy"
+sExtrinsicsPath = "../CalibrationData/arrTransMat.npy"
 
 oPointCloudManager = PointCloudManager()
 
 ########## Loading and displaying model ##########
 oPointCloudManager.loadModelMesh(
     sModelPath=sModelPath,
-    iPoints=2000
+    iPoints=1000
 )
 
-# oPointCloudManager.displayModel()
+oPointCloudManager.displayModel()
 
 ## Loading and displaying scene
 
@@ -34,14 +34,14 @@ oPointCloudManager.loadScenePointCloud(
     arrWCTransform=arrTransMat,
 )
 
-# oPointCloudManager.displayScene()
+oPointCloudManager.displayScene()
 
 ########## Processing the scene ##########
 oPointCloudManager.removeSceneBackgroundPlane(
     iPlaneDistance=25
 )
 
-# oPointCloudManager.displayNoBackgroundScene()
+oPointCloudManager.displayNoBackgroundScene()
 
 oPointCloudManager.clusterScene(
     iEpsilon=10,
@@ -49,7 +49,7 @@ oPointCloudManager.clusterScene(
     iPointsValidObject=300
 )
 
-# oPointCloudManager.displayClusters()
+oPointCloudManager.displayClusters()
 
 oPointCloudManager.surfaceReconstructionObjects(
     bVisualize=False,
@@ -57,7 +57,7 @@ oPointCloudManager.surfaceReconstructionObjects(
     iPoissonDepth=9,
     iDensityThreshold=0.4,
     iTaubinIter=100,
-    iPoints=2000
+    iPoints=1000
 )
 
 oPointCloudManager.displayReconstructedObjects()
@@ -72,7 +72,7 @@ for pcdReconstructed in arrPcdReconstructedObjects:
     oPoseEstimator = PoseEstimatorFPFH(oPointCloudManager.pcdModel, pcdReconstructed, 3)
     oPoseEstimator.calculate_features(20, 100)
 
-    oPoseEstimator.match(3, 2)
+    oPoseEstimator.match(2, 1)
 
     trans_mat = oPoseEstimator.get_transformation_mat()
 

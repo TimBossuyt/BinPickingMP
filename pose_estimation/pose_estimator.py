@@ -64,7 +64,8 @@ class PoseEstimatorFPFH:
                 target=self.pcdScene,
                 max_correspondence_distance=iICPThreshold,
                 init=self.oTransformation,
-                estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint()
+                estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+                criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=30)
             )
 
             # Update the transformation with the refined ICP result
