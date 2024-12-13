@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="Week 12 - Added documentation">
+    <list default="true" id="3f6aaa1c-34ee-4f61-9a71-0d5da7a6d152" name="Changes" comment="Week 12 - Changed CAD-model interpretation">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tests/pose_estimation_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Tests/pose_estimation_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pose_estimation/extrinsics.py" beforeDir="false" afterPath="$PROJECT_DIR$/pose_estimation/extrinsics.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -159,7 +157,9 @@
       <workItem from="1733607927997" duration="5552000" />
       <workItem from="1733754624640" duration="1391000" />
       <workItem from="1733813719678" duration="7648000" />
-      <workItem from="1733861263862" duration="389000" />
+      <workItem from="1733861263862" duration="776000" />
+      <workItem from="1733913039079" duration="38000" />
+      <workItem from="1733935892507" duration="142000" />
     </task>
     <task id="LOCAL-00001" summary="Week 8 - Parameter check">
       <option name="closed" value="true" />
@@ -297,7 +297,15 @@
       <option name="project" value="LOCAL" />
       <updated>1733825816055</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Week 12 - Changed CAD-model interpretation">
+      <option name="closed" value="true" />
+      <created>1733861997465</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1733861997465</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -322,13 +330,14 @@
     <MESSAGE value="Week 11 - pose_estimation package" />
     <MESSAGE value="Week 11 - Changed README" />
     <MESSAGE value="Week 12 - Added documentation" />
-    <option name="LAST_COMMIT_MESSAGE" value="Week 12 - Added documentation" />
+    <MESSAGE value="Week 12 - Changed CAD-model interpretation" />
+    <option name="LAST_COMMIT_MESSAGE" value="Week 12 - Changed CAD-model interpretation" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/BinPickingMP$ransac.coverage" NAME="ransac Coverage Results" MODIFIED="1731183706477" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BinPickingMP$aruco_generator.coverage" NAME="aruco_generator Coverage Results" MODIFIED="1733577771265" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BinPickingMP$voting.coverage" NAME="voting Coverage Results" MODIFIED="1732371006767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ppf" />
-    <SUITE FILE_PATH="coverage/BinPickingMP$pose_estimation_test.coverage" NAME="pose_estimation_test Coverage Results" MODIFIED="1733861649464" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Tests" />
+    <SUITE FILE_PATH="coverage/BinPickingMP$pose_estimation_test.coverage" NAME="pose_estimation_test Coverage Results" MODIFIED="1733935894334" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Tests" />
     <SUITE FILE_PATH="coverage/BinPickingMP$main_PPF.coverage" NAME="main-PPF Coverage Results" MODIFIED="1732872816039" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BinPickingMP$ExtrinsicTransformationAruco.coverage" NAME="ExtrinsicTransformationAruco Coverage Results" MODIFIED="1733598258747" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BinPickingMP$PoseEstimator.coverage" NAME="PoseEstimator Coverage Results" MODIFIED="1732892726584" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
