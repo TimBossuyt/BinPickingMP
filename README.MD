@@ -1,9 +1,9 @@
 # CAD Based pose estimation for bin-picking
-
 Tim Bossuyt
 
 ## To-Do
 * Define picking poses
+* Use multiple AruCo markers instead of 1 for transformation estimation
 * Update pose_estimation docs
 
 ## Notes
