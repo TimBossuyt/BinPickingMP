@@ -1,7 +1,7 @@
-import threading
 import depthai as dai
 from datetime import timedelta
-import time
+import open3d as o3d
+import threading
 
 class Camera:
     def __init__(self, iFPS):
@@ -12,26 +12,87 @@ class Camera:
         self.arrPoints = None
         self.arrColors = None
 
+        self.cvImageFrame = None
+        self.cvVideoPreview = None
+
+        ## Threading stuff
+        self.evStop = threading.Event()
+        self.condition = threading.Condition()
+        self.pendingRequest = None
+
         ## Configure pipeline
         self._configurePipeline()
 
-    def runCamera(self):
+    def getColoredPointCloud(self):
+        ## Launch request
+        with self.condition:
+            self.pendingRequest = "get_point_cloud"
+            self.condition.notify() # notify 'run' thread of new request
+            self.condition.wait() ## Wait for the result
+
+            ## Create pointcloud once available
+            oPointCloud = o3d.geometry.PointCloud()
+            oPointCloud.points = o3d.utility.Vector3dVector(self.arrPoints)
+            oPointCloud.colors = o3d.utility.Vector3dVector(self.arrColors)
+
+            return oPointCloud
+
+    def getCvVideoPreview(self):
+        return self.cvVideoPreview
+
+    def getCvImageFrame(self):
+        ## Launch request
+        with self.condition:
+            self.pendingRequest = "get_img_frame"
+            self.condition.notify()  # notify 'run' thread of new request
+            self.condition.wait()  ## Wait for the result
+
+            return self.cvImageFrame
+
+    def stop(self):
+        self.evStop.set()
+
+    def run(self):
         with dai.Device(self.oPipeline) as device:
-            ## Create queue object
-            q = device.getOutputQueue(name="out", maxSize=50000,
+            ## Create queue objects
+            qOut = device.getOutputQueue(name="out", maxSize=5,
                                       blocking=False)  # blocking False --> no pipeline freezing
 
-            while True:
-                inMessageGroup = q.get()  # depthai.MessageGroup object
+            qRgbPreview = device.getOutputQueue(name="rgb", maxSize=5,
+                                         blocking=False)
 
-                inColor = inMessageGroup["color"]  # Get message object
-                inPointCloud = inMessageGroup["pcl"]  # Get message object
+            ## Empty output buffer
+            while not self.evStop.is_set():
+                inMessageGroup = qOut.get()  # depthai.MessageGroup object
+                inRgbPreview = qRgbPreview.get()
 
-                if inColor and inPointCloud:
-                    cvBGRFrame = inColor.getCvFrame()
+                ## Always read video preview (smaller format)
+                cvBGRFramePreview = inRgbPreview.getCvFrame()
+                self.cvVideoPreview = cvBGRFramePreview
 
-                    self.arrPoints = inPointCloud.getPoints()  ## numpy.ndarray[numpy.float32]
-                    self.arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
+                ## Check for requests
+                with self.condition:
+                    if self.pendingRequest == "get_point_cloud":
+                        inColor = inMessageGroup["color"]  # Get message object
+                        inPointCloud = inMessageGroup["pcl"]  # Get message object
+
+                        cvBGRFrame = inColor.getCvFrame()
+                        self.cvImageFrame = cvBGRFrame
+                        self.arrPoints = inPointCloud.getPoints()  ## numpy.ndarray[numpy.float32]
+                        self.arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
+
+                        ## Reset request and notify
+                        self.pendingRequest = None
+                        self.condition.notify()
+
+                    if self.pendingRequest == "get_img_frame":
+                        inColor = inMessageGroup["color"]  # Get message object
+                        cvBGRFrame = inColor.getCvFrame()
+                        self.cvImageFrame = cvBGRFrame
+
+                        ## Reset request and notify
+                        self.pendingRequest = None
+                        self.condition.notify()
 
     def _configurePipeline(self):
         ##### Cameras #####
@@ -75,27 +136,18 @@ class Camera:
         nodeCamColor.isp.link(nodeSync.inputs["color"])
         nodePointCloud.outputPointCloud.link(nodeSync.inputs["pcl"])
 
-        ## xOut node ##
-        # used to send data from OAK device to host
+        ## xOut node for PointCloud ##
+        # send pointcloud data from OAK device to host
         nodeXOut = self.oPipeline.create(dai.node.XLinkOut)
         nodeSync.out.link(nodeXOut.input)
         nodeXOut.setStreamName("out")
 
-# def run():
-#     while True:
-#         print("Test")
-#         time.sleep(2)
-#
-#
-# oCamera = Camera(5)
-#
-# t1 = threading.Thread(target=oCamera.runCamera)
-# t2 = threading.Thread(target=run)
-# t1.start()
-# t2.start()
-# t1.join()
-# t2.join()
-#
-#
-# while True:
-#     continue
+        ## xOut node for RGB Preview ##
+        # send rgb preview data from OAK device to host
+        nodeXOutRgbPreview = self.oPipeline.create(dai.node.XLinkOut)
+        nodeCamColor.preview.link(nodeXOutRgbPreview.input)
+        nodeXOutRgbPreview.setStreamName("rgb")
+
+
+
+

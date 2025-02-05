@@ -7,6 +7,14 @@ import os
 import sys
 import open3d as o3d
 
+"""
+This Python script captures RGB images and depth data using an OAK-D camera, 
+processes the depth data into a 3D point cloud, and visualizes it in real-time using Open3D. 
+
+It also saves the point cloud as a .ply file and the corresponding RGB image as a .png at regular intervals. 
+The visualization can be exited by pressing 'Q', and the camera's FPS is displayed on the RGB feed.
+"""
+
 FPS = 10
 SAVE_INTERVAL = 5  # Time interval to save point cloud files (in seconds)
 

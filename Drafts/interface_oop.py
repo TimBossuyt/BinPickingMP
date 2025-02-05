@@ -105,6 +105,7 @@ class ModelViewerApp:
             self.vis_model.destroy_window()
             self.visualization_open = False  # Mark visualization as closed
 
+
 # Run the application
 if __name__ == "__main__":
     root = tk.Tk()

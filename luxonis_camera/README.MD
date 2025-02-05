@@ -1,0 +1,3 @@
+# luxonis_camera package
+Under construction ...
+

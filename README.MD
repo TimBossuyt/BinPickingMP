@@ -2,10 +2,17 @@
 
 Tim Bossuyt
 
-### To-Do
-* Extrinsics using multiple Aruco markers
+## To-Do
 * Define picking poses
 * Update pose_estimation docs
 
-### Notes
+## Notes
 * Changed CAD-model to only upper half to remove dubious surface normals
+
+## Coordinate systems
+### Camera
+Defined by camera
+### World
+Defined by center of one AruCo marker (X,Y) and normal of the dominant plane (Z)
+### Cobot
+Defined by cobot
