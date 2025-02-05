@@ -26,7 +26,7 @@ Manages loading, preprocessing, clustering, and reconstructing point clouds for 
 Estimates the pose (transformation matrix) between a model and a scene point cloud using Fast Point Feature Histograms (FPFH) for feature matching and RANSAC-based registration, followed by ICP refinement.
 
 #### Features:
-- **Initial Transformation**: Aligns the model and scene point clouds using a mean-to-mean transformation to approximate the initial pose.
+- **Initial Transformation**: Aligns the model and scene point clouds using a centroid-to-centroid transformation to approximate the initial pose.
 - **Voxel Downsampling**: Downsamples both model and scene point clouds to reduce the number of points and ensure comparable density for feature calculation.
 - **FPFH Feature Calculation**: Computes FPFH features for both the model and scene point clouds to capture the local shape information around each point.
 - **Feature Matching with RANSAC**: Performs RANSAC-based feature matching to find the initial transformation between the model and scene based on FPFH features.
