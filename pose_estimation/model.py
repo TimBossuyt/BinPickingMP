@@ -19,6 +19,8 @@ class Model:
         self.optimizeModel()
 
     def optimizeModel(self):
+        ## Only select upper half of model (cause of symmetry plane)
+        # IS MODEL SPECIFIC!!!
         self.pcdModel = filter_points_by_x_range(self.pcdModel, 0, 300)
 
         ## Re-estimate surface normals

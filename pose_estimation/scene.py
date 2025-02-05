@@ -11,7 +11,7 @@ class Scene:
         self.arrPcdObjectsReconstructed = []
         self.pcdSceneNoBackground = None
 
-        ## Save camera extrinsics
+        ## Load camera extrinsics
         self.extrinsics = arrWCTransform
 
         ## Read raw point cloud data from file
@@ -25,6 +25,7 @@ class Scene:
         self.pcdScene, _ = self.pcdSceneDown.remove_statistical_outlier(
             nb_neighbors=iOutlierNeighbours, std_ratio=iStd
         )
+
 
     def transformAndCrop_(self, iXmin, iXmax, iYmin, iYmax):
         self.pcdScene = self.pcdScene.transform(self.extrinsics)
@@ -43,7 +44,7 @@ class Scene:
 
     def clusterScene_(self, iEpsilon, iMinPointsDensity, iPointsValidObject):
         """
-        Clusters the scene into objects using DBSCAN.
+        Clusters the scene (with already removed background) into objects using DBSCAN.
 
         Parameters:
         - iEpsilon: Neighborhood radius for clustering.

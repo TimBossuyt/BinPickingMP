@@ -26,7 +26,7 @@ def extract_translation_rotation(transform_matrix):
 
     return x, y, z, anglex, angley, anglez
 
-def mean_to_mean_transformation(pcdModel, pcdScene):
+def centroid_to_centroid_transformation(pcdModel, pcdScene):
     arrScenePoints = np.asarray(pcdScene.points)
     arrModelPoints = np.asarray(pcdModel.points)
 

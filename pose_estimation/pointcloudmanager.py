@@ -91,7 +91,6 @@ class PointCloudManager:
         """Displays reconstructed objects."""
         display_point_clouds(self.oScene.arrPcdObjectsReconstructed, "Reconstructed objects", True, True, 100)
 
-
     def displayModel(self):
         display_point_clouds([self.oModel.pcdModel], "Model", False, True, 20)
 

@@ -1,7 +1,8 @@
 import numpy as np
 import open3d as o3d
-from .utils import mean_to_mean_transformation
+from .utils import centroid_to_centroid_transformation
 
+## TODO: Update to make it work for an array of scene-objects
 
 class PoseEstimatorFPFH:
     def __init__(self, pcdModel, pcdScene, iVoxelSize):
@@ -10,7 +11,7 @@ class PoseEstimatorFPFH:
         self.iVoxelSize = iVoxelSize
 
         ## Initial transformation
-        self.pcdModel = pcdModel.transform(mean_to_mean_transformation(self.pcdModel, self.pcdScene))
+        self.pcdModel = pcdModel.transform(centroid_to_centroid_transformation(self.pcdModel, self.pcdScene))
 
         ## Downsample both pointclouds to get the same density
         self.pcdModel = self.pcdModel.voxel_down_sample(self.iVoxelSize)
@@ -61,6 +62,7 @@ class PoseEstimatorFPFH:
         if iICPDistanceFactor is not None:
             iICPThreshold = self.iVoxelSize * iICPDistanceFactor
 
+            ## Function requires an initial transformation!!
             icp_result = o3d.pipelines.registration.registration_icp(
                 source=self.pcdModel,
                 target=self.pcdScene,
