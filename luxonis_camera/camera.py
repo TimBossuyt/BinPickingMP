@@ -25,6 +25,7 @@ class Camera:
 
     def getColoredPointCloud(self):
         ## Launch request
+        ## TODO: Add deadlock protection in case condition.wait() takes too long or returned value is None
         with self.condition:
             self.pendingRequest = "get_point_cloud"
             self.condition.notify() # notify 'run' thread of new request
@@ -52,7 +53,16 @@ class Camera:
     def stop(self):
         self.evStop.set()
 
-    def run(self):
+    def Run(self):
+        """
+        Runs the camera in a separate thread from the main thread
+        """
+
+        ## Start run_ in separate thread
+        threading.Thread(target=self.run_, daemon=True).start()
+
+
+    def run_(self):
         with dai.Device(self.oPipeline) as device:
             ## Create queue objects
             qOut = device.getOutputQueue(name="out", maxSize=5,

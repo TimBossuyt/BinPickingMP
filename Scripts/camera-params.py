@@ -12,6 +12,7 @@ with dai.Device() as device:
   calibData = device.readCalibration()
 
   intrinsics = calibData.getCameraIntrinsics(dai.CameraBoardSocket.CAM_A)
+
   distortion = calibData.getDistortionCoefficients(dai.CameraBoardSocket.CAM_A)
 
   ## Print results to terminal

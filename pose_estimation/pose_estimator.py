@@ -2,7 +2,7 @@ import numpy as np
 import open3d as o3d
 from .utils import centroid_to_centroid_transformation
 
-## TODO: Update to make it work for an array of scene-objects
+## TODO: Make it work for an array of scene-objects
 
 class PoseEstimatorFPFH:
     def __init__(self, pcdModel, pcdScene, iVoxelSize):
