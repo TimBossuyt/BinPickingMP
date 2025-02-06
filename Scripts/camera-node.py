@@ -18,6 +18,7 @@ def preview_loop():
             # Break loop if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+
     finally:
         cv2.destroyAllWindows()
 
@@ -31,8 +32,8 @@ thrPreview = threading.Thread(target=preview_loop, daemon=True)
 thrPreview.start()
 
 input("Press enter to exit...")
-img = oCamera.getCvImageFrame()
-oCamera.getColoredPointCloud()
-cv2.imshow("Image", imutils.resize(img, width=500))
-
-cv2.waitKey(0)
+# img = oCamera.getCvImageFrame()
+# oCamera.getColoredPointCloud()
+# cv2.imshow("Image", imutils.resize(img, width=500))
+#
+# cv2.waitKey(0)

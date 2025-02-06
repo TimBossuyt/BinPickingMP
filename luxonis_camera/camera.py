@@ -49,6 +49,7 @@ class Camera:
     def getCvVideoPreview(self):
         return self.cvVideoPreview
 
+
     def getCvImageFrame(self):
         ## Launch a request to the Run thread
         self.request_queue.put(CV_IMG_REQUEST)
@@ -70,6 +71,7 @@ class Camera:
 
         ## Start run_ in separate thread
         threading.Thread(target=self.run_, daemon=True).start()
+        logger.debug("Started Run thread")
 
     def run_(self):
         with dai.Device(self.oPipeline) as device:
