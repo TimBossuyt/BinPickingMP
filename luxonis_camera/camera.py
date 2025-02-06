@@ -2,6 +2,9 @@ import depthai as dai
 from datetime import timedelta
 import open3d as o3d
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Camera:
     def __init__(self, iFPS):
@@ -26,6 +29,8 @@ class Camera:
     def getColoredPointCloud(self):
         ## Launch request
         ## TODO: Add deadlock protection in case condition.wait() takes too long or returned value is None
+        logging.info("Requested colored pointcloud")
+
         with self.condition:
             self.pendingRequest = "get_point_cloud"
             self.condition.notify() # notify 'run' thread of new request
@@ -42,6 +47,7 @@ class Camera:
         return self.cvVideoPreview
 
     def getCvImageFrame(self):
+        logging.info("Requested OpenCV image frame")
         ## Launch request
         with self.condition:
             self.pendingRequest = "get_img_frame"
@@ -50,7 +56,7 @@ class Camera:
 
             return self.cvImageFrame
 
-    def stop(self):
+    def Stop(self):
         self.evStop.set()
 
     def Run(self):

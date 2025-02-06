@@ -1,6 +1,11 @@
 import cv2
 import threading
 from luxonis_camera import Camera
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 
 def preview_loop():
     cv2.namedWindow("Camera Preview", cv2.WINDOW_AUTOSIZE)
