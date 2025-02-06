@@ -3,8 +3,13 @@ from datetime import timedelta
 import open3d as o3d
 import threading
 import logging
+import queue
 
 logger = logging.getLogger(__name__)
+
+## Defining commands
+CV_IMG_REQUEST = "cv-img-request"
+PCD_REQUEST = "pcd-request"
 
 class Camera:
     def __init__(self, iFPS):
@@ -20,41 +25,34 @@ class Camera:
 
         ## Threading stuff
         self.evStop = threading.Event()
-        self.condition = threading.Condition()
-        self.pendingRequest = None
+        self.request_queue = queue.Queue()
+        self.response_queue = queue.Queue()
 
         ## Configure pipeline
         self._configurePipeline()
 
     def getColoredPointCloud(self):
-        ## Launch request
-        ## TODO: Add deadlock protection in case condition.wait() takes too long or returned value is None
-        logging.info("Requested colored pointcloud")
+        self.request_queue.put(PCD_REQUEST)
+        logger.debug(f"Launched {PCD_REQUEST}")
+        arrPoints, arrColors = self.response_queue.get()
+        logger.debug(f"Received response for {PCD_REQUEST}")
 
-        with self.condition:
-            self.pendingRequest = "get_point_cloud"
-            self.condition.notify() # notify 'run' thread of new request
-            self.condition.wait() ## Wait for the result
+        ## Create pointcloud once available
+        oPointCloud = o3d.geometry.PointCloud()
+        oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
+        oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
 
-            ## Create pointcloud once available
-            oPointCloud = o3d.geometry.PointCloud()
-            oPointCloud.points = o3d.utility.Vector3dVector(self.arrPoints)
-            oPointCloud.colors = o3d.utility.Vector3dVector(self.arrColors)
-
-            return oPointCloud
+        return oPointCloud
 
     def getCvVideoPreview(self):
         return self.cvVideoPreview
 
     def getCvImageFrame(self):
-        logging.info("Requested OpenCV image frame")
-        ## Launch request
-        with self.condition:
-            self.pendingRequest = "get_img_frame"
-            self.condition.notify()  # notify 'run' thread of new request
-            self.condition.wait()  ## Wait for the result
-
-            return self.cvImageFrame
+        self.request_queue.put(CV_IMG_REQUEST)
+        logger.debug(f"Launched {CV_IMG_REQUEST}")
+        cv = self.response_queue.get()
+        logger.debug(f"Received response for {CV_IMG_REQUEST}")
+        return cv
 
     def Stop(self):
         self.evStop.set()
@@ -66,7 +64,6 @@ class Camera:
 
         ## Start run_ in separate thread
         threading.Thread(target=self.run_, daemon=True).start()
-
 
     def run_(self):
         with dai.Device(self.oPipeline) as device:
@@ -86,29 +83,34 @@ class Camera:
                 cvBGRFramePreview = inRgbPreview.getCvFrame()
                 self.cvVideoPreview = cvBGRFramePreview
 
-                ## Check for requests
-                with self.condition:
-                    if self.pendingRequest == "get_point_cloud":
+                try:
+                    sRequest = self.request_queue.get_nowait()
+
+                    if sRequest == CV_IMG_REQUEST:
+                        logger.debug("Image request received")
+
+                        inColor = inMessageGroup["color"]  # Get message object
+                        cvBGRFrame = inColor.getCvFrame()
+
+                        self.response_queue.put(cvBGRFrame)
+
+                    if sRequest == PCD_REQUEST:
+                        logger.debug("Pointcloud request received")
+
                         inColor = inMessageGroup["color"]  # Get message object
                         inPointCloud = inMessageGroup["pcl"]  # Get message object
 
                         cvBGRFrame = inColor.getCvFrame()
-                        self.cvImageFrame = cvBGRFrame
-                        self.arrPoints = inPointCloud.getPoints()  ## numpy.ndarray[numpy.float32]
-                        self.arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
+                        arrPoints = inPointCloud.getPoints()  ## numpy.ndarray[numpy.float32]
+                        arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
 
-                        ## Reset request and notify
-                        self.pendingRequest = None
-                        self.condition.notify()
+                        self.response_queue.put(
+                            (arrPoints, arrColors)
+                        )
 
-                    if self.pendingRequest == "get_img_frame":
-                        inColor = inMessageGroup["color"]  # Get message object
-                        cvBGRFrame = inColor.getCvFrame()
-                        self.cvImageFrame = cvBGRFrame
+                except queue.Empty:
+                    pass
 
-                        ## Reset request and notify
-                        self.pendingRequest = None
-                        self.condition.notify()
 
     def _configurePipeline(self):
         ##### Cameras #####
