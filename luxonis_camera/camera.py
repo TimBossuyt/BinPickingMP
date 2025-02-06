@@ -26,7 +26,11 @@ class Camera:
         ## Threading stuff
         self.evStop = threading.Event()
         self.request_queue = queue.Queue()
-        self.response_queue = queue.Queue()
+
+        self.response_queues = {
+            CV_IMG_REQUEST: queue.Queue(),
+            PCD_REQUEST: queue.Queue(),
+        }
 
         ## Configure pipeline
         self._configurePipeline()
@@ -34,7 +38,7 @@ class Camera:
     def getColoredPointCloud(self):
         self.request_queue.put(PCD_REQUEST)
         logger.debug(f"Launched {PCD_REQUEST}")
-        arrPoints, arrColors = self.response_queue.get()
+        arrPoints, arrColors = self.response_queues[PCD_REQUEST].get()
         logger.debug(f"Received response for {PCD_REQUEST}")
 
         ## Create pointcloud once available
@@ -50,7 +54,7 @@ class Camera:
     def getCvImageFrame(self):
         self.request_queue.put(CV_IMG_REQUEST)
         logger.debug(f"Launched {CV_IMG_REQUEST}")
-        cv = self.response_queue.get()
+        cv = self.response_queues[CV_IMG_REQUEST].get()
         logger.debug(f"Received response for {CV_IMG_REQUEST}")
         return cv
 
@@ -92,7 +96,7 @@ class Camera:
                         inColor = inMessageGroup["color"]  # Get message object
                         cvBGRFrame = inColor.getCvFrame()
 
-                        self.response_queue.put(cvBGRFrame)
+                        self.response_queues[CV_IMG_REQUEST].put(cvBGRFrame)
 
                     if sRequest == PCD_REQUEST:
                         logger.debug("Pointcloud request received")
@@ -104,7 +108,7 @@ class Camera:
                         arrPoints = inPointCloud.getPoints()  ## numpy.ndarray[numpy.float32]
                         arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
 
-                        self.response_queue.put(
+                        self.response_queues[PCD_REQUEST].put(
                             (arrPoints, arrColors)
                         )
 
