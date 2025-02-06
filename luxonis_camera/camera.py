@@ -16,17 +16,12 @@ class Camera:
         self.oPipeline = dai.Pipeline()
         self.iFPS = iFPS
 
-        ## Initialize
-        self.arrPoints = None
-        self.arrColors = None
-
-        self.cvImageFrame = None
         self.cvVideoPreview = None
 
         ## Threading stuff
         self.evStop = threading.Event()
+        # Queues for inter-thread communication
         self.request_queue = queue.Queue()
-
         self.response_queues = {
             CV_IMG_REQUEST: queue.Queue(),
             PCD_REQUEST: queue.Queue(),
@@ -36,12 +31,15 @@ class Camera:
         self._configurePipeline()
 
     def getColoredPointCloud(self):
+        ## Launch a request to the Run thread
         self.request_queue.put(PCD_REQUEST)
         logger.debug(f"Launched {PCD_REQUEST}")
+
+        ## Wait for a response in the dedicated response queue
         arrPoints, arrColors = self.response_queues[PCD_REQUEST].get()
         logger.debug(f"Received response for {PCD_REQUEST}")
 
-        ## Create pointcloud once available
+        ## Create and return pointcloud once available
         oPointCloud = o3d.geometry.PointCloud()
         oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
         oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
@@ -52,11 +50,15 @@ class Camera:
         return self.cvVideoPreview
 
     def getCvImageFrame(self):
+        ## Launch a request to the Run thread
         self.request_queue.put(CV_IMG_REQUEST)
         logger.debug(f"Launched {CV_IMG_REQUEST}")
-        cv = self.response_queues[CV_IMG_REQUEST].get()
+
+        ## Wait for a response in the dedicated response queue
+        cvImg = self.response_queues[CV_IMG_REQUEST].get()
         logger.debug(f"Received response for {CV_IMG_REQUEST}")
-        return cv
+
+        return cvImg
 
     def Stop(self):
         self.evStop.set()
@@ -88,14 +90,17 @@ class Camera:
                 self.cvVideoPreview = cvBGRFramePreview
 
                 try:
+                    ## Get request (FIFO) if any
                     sRequest = self.request_queue.get_nowait()
 
+                    ## Check for correct request type
                     if sRequest == CV_IMG_REQUEST:
                         logger.debug("Image request received")
 
                         inColor = inMessageGroup["color"]  # Get message object
                         cvBGRFrame = inColor.getCvFrame()
 
+                        ## Put response into dedicated queue
                         self.response_queues[CV_IMG_REQUEST].put(cvBGRFrame)
 
                     if sRequest == PCD_REQUEST:
@@ -105,14 +110,16 @@ class Camera:
                         inPointCloud = inMessageGroup["pcl"]  # Get message object
 
                         cvBGRFrame = inColor.getCvFrame()
-                        arrPoints = inPointCloud.getPoints()  ## numpy.ndarray[numpy.float32]
+                        arrPoints = inPointCloud.getPoints()  # numpy.ndarray[numpy.float32]
                         arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
 
+                        ## Put response into dedicated queue (as tuple)
                         self.response_queues[PCD_REQUEST].put(
                             (arrPoints, arrColors)
                         )
 
                 except queue.Empty:
+                    ## Skip if que is empty
                     pass
 
 
