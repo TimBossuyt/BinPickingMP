@@ -5,7 +5,7 @@ import threading
 import logging
 import queue
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Camera")
 
 ## Defining commands
 CV_IMG_REQUEST = "cv-img-request"
@@ -28,7 +28,7 @@ class Camera:
         }
 
         ## Configure pipeline
-        self._configurePipeline()
+        self.__configurePipeline()
 
     def getColoredPointCloud(self):
         ## Launch a request to the Run thread
@@ -48,7 +48,6 @@ class Camera:
 
     def getCvVideoPreview(self):
         return self.cvVideoPreview
-
 
     def getCvImageFrame(self):
         ## Launch a request to the Run thread
@@ -70,17 +69,17 @@ class Camera:
         """
 
         ## Start run_ in separate thread
-        threading.Thread(target=self.run_, daemon=True).start()
+        threading.Thread(target=self.__run, daemon=True).start()
         logger.debug("Started Run thread")
 
-    def run_(self):
+    def __run(self):
         with dai.Device(self.oPipeline) as device:
             ## Create queue objects
             qOut = device.getOutputQueue(name="out", maxSize=5,
-                                      blocking=False)  # blocking False --> no pipeline freezing
+                                         blocking=False)  # blocking False --> no pipeline freezing
 
             qRgbPreview = device.getOutputQueue(name="rgb", maxSize=5,
-                                         blocking=False)
+                                                blocking=False)
 
             ## Empty output buffer
             while not self.evStop.is_set():
@@ -124,8 +123,7 @@ class Camera:
                     ## Skip if que is empty
                     pass
 
-
-    def _configurePipeline(self):
+    def __configurePipeline(self):
         ##### Cameras #####
         ## Color camera (middle) ##
         nodeCamColor = self.oPipeline.create(dai.node.ColorCamera)
@@ -178,7 +176,3 @@ class Camera:
         nodeXOutRgbPreview = self.oPipeline.create(dai.node.XLinkOut)
         nodeCamColor.preview.link(nodeXOutRgbPreview.input)
         nodeXOutRgbPreview.setStreamName("rgb")
-
-
-
-

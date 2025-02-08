@@ -33,14 +33,14 @@ Stops the camera processing thread by setting a termination event.
 
 ### `Run()`
 Starts the camera processing in a separate thread.
-- Calls the internal `run_()` method.
+- Calls the internal `__run()` method.
 
-### `run_()`
+### `__run()`
 Processes incoming requests and captures data from the OAK-D device.
 - Retrieves synchronized RGB and depth data.
 - Handles queued requests for images and point clouds.
 
-### `_configurePipeline()`
+### `__configurePipeline()`
 Configures the DepthAI pipeline:
 - **Color Camera**: Captures 1080p images.
 - **Stereo Cameras**: Capture depth information with 800p resolution.
