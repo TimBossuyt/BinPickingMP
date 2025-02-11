@@ -5,18 +5,30 @@ import threading
 import logging
 import queue
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Camera")
 
 ## Defining commands
 CV_IMG_REQUEST = "cv-img-request"
 PCD_REQUEST = "pcd-request"
 
+def getConnectedDevices():
+    arrDevices = []
+    for device in dai.Device.getAllAvailableDevices():
+          arrDevices.append(device.getMxId())
+
+    return arrDevices
+
 class Camera:
     def __init__(self, iFPS):
         self.oPipeline = dai.Pipeline()
         self.iFPS = iFPS
+        self.sMxId = None
+
+        self.bConnected = False
 
         self.cvVideoPreview = None
+
+        self.thrCameraConnect = None
 
         ## Threading stuff
         self.evStop = threading.Event()
@@ -28,7 +40,7 @@ class Camera:
         }
 
         ## Configure pipeline
-        self._configurePipeline()
+        self.__configurePipeline()
 
     def getColoredPointCloud(self):
         ## Launch a request to the Run thread
@@ -49,7 +61,6 @@ class Camera:
     def getCvVideoPreview(self):
         return self.cvVideoPreview
 
-
     def getCvImageFrame(self):
         ## Launch a request to the Run thread
         self.request_queue.put(CV_IMG_REQUEST)
@@ -61,30 +72,47 @@ class Camera:
 
         return cvImg
 
-    def Stop(self):
+    def Disconnect(self):
         self.evStop.set()
+        ## Wait for thread to finish if still alive
+        if self.thrCameraConnect.is_alive():
+            logger.debug("Waiting for connection to be closed")
+            self.thrCameraConnect.join()
 
-    def Run(self):
+        logger.info("Camera disconnected")
+        self.bConnected = False
+
+        self.evStop.clear()
+
+    def Connect(self, sMxId):
         """
         Runs the camera in a separate thread from the main thread
         """
+        self.sMxId = sMxId
 
-        ## Start run_ in separate thread
-        threading.Thread(target=self.run_, daemon=True).start()
-        logger.debug("Started Run thread")
+        ## Re-initialize object to allow multiple restarts
+        self.thrCameraConnect = threading.Thread(target=self.__connect)
 
-    def run_(self):
-        with dai.Device(self.oPipeline) as device:
+        ## Start __connect in separate thread
+        self.thrCameraConnect.start()
+        logger.debug("Started Connect thread")
+
+    def __connect(self):
+        device_info = dai.DeviceInfo(self.sMxId)  # MXID
+        logger.info(f"Trying to connect to camera {self.sMxId}")
+        with dai.Device(self.oPipeline, device_info, dai.UsbSpeed.SUPER) as device:
+            logger.info("Camera connected")
+
+            self.bConnected = True
             ## Create queue objects
             qOut = device.getOutputQueue(name="out", maxSize=5,
-                                      blocking=False)  # blocking False --> no pipeline freezing
+                                         blocking=False)  # blocking False --> no pipeline freezing
 
             qRgbPreview = device.getOutputQueue(name="rgb", maxSize=5,
-                                         blocking=False)
+                                                blocking=False)
 
             ## Empty output buffer
             while not self.evStop.is_set():
-                inMessageGroup = qOut.get()  # depthai.MessageGroup object
                 inRgbPreview = qRgbPreview.get()
 
                 ## Always read video preview (smaller format)
@@ -95,10 +123,13 @@ class Camera:
                     ## Get request (FIFO) if any
                     sRequest = self.request_queue.get_nowait()
 
+
+
                     ## Check for correct request type
                     if sRequest == CV_IMG_REQUEST:
                         logger.debug("Image request received")
 
+                        inMessageGroup = qOut.get()  # depthai.MessageGroup object
                         inColor = inMessageGroup["color"]  # Get message object
                         cvBGRFrame = inColor.getCvFrame()
 
@@ -107,6 +138,7 @@ class Camera:
 
                     if sRequest == PCD_REQUEST:
                         logger.debug("Pointcloud request received")
+                        inMessageGroup = qOut.get()  # depthai.MessageGroup object
 
                         inColor = inMessageGroup["color"]  # Get message object
                         inPointCloud = inMessageGroup["pcl"]  # Get message object
@@ -124,8 +156,9 @@ class Camera:
                     ## Skip if que is empty
                     pass
 
+        logger.debug("Camera context manager ended")
 
-    def _configurePipeline(self):
+    def __configurePipeline(self):
         ##### Cameras #####
         ## Color camera (middle) ##
         nodeCamColor = self.oPipeline.create(dai.node.ColorCamera)
@@ -178,7 +211,3 @@ class Camera:
         nodeXOutRgbPreview = self.oPipeline.create(dai.node.XLinkOut)
         nodeCamColor.preview.link(nodeXOutRgbPreview.input)
         nodeXOutRgbPreview.setStreamName("rgb")
-
-
-
-
