@@ -28,14 +28,14 @@ Retrieves a high-resolution RGB image from the device.
 - **Sends a request** for an image frame.
 - **Receives the captured frame** from the processing thread.
 
-### `Stop()`
+### `Disconnect()`
 Stops the camera processing thread by setting a termination event.
 
-### `Run()`
+### `Connect()`
 Starts the camera processing in a separate thread.
-- Calls the internal `__run()` method.
+- Calls the internal `__connect()` method.
 
-### `__run()`
+### `__connect()`
 Processes incoming requests and captures data from the OAK-D device.
 - Retrieves synchronized RGB and depth data.
 - Handles queued requests for images and point clouds.

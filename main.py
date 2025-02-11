@@ -1,11 +1,7 @@
-import cv2
-import threading
-import imutils
 from luxonis_camera import Camera
-import logging
 import logging.config
-import sys
 import datetime
+from xmlrpc_server import RpcServer
 
 ########## Logging setup ##########
 ## Generate ISO 8601 timestamped filename
@@ -19,4 +15,31 @@ logging.config.fileConfig("logging.conf",
 logger = logging.getLogger("Main")
 ###################################
 
-oCamera = Camera(iFPS=5)
+########## Camera setup ##########
+oCamera = Camera(5)
+###################################
+
+########## XML-RPC setup ##########
+oServer = RpcServer(
+    oCamera = oCamera,
+    host="127.0.0.1",
+    port=8005
+)
+###################################
+
+def main():
+    oServer.Run()
+
+    ## Press enter to exit the program
+    input()
+    logger.debug("Main thread exit command")
+
+    logger.debug("Trying to stop server thread")
+    oServer.Stop()
+    logger.info("Everything finished nicely")
+
+if __name__ == "__main__":
+    main()
+
+
+

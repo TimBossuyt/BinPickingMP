@@ -38,7 +38,7 @@ def preview_loop():
 # Initialize camera
 logger.info("Initializing camera")
 oCamera = Camera(iFPS=5)
-oCamera.Run()
+oCamera.Connect()
 logger.info("Started camera thread")
 
 # Start preview loop in a separate thread
