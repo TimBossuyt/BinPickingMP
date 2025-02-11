@@ -55,6 +55,7 @@ class RpcServer:
         self.server.register_function(self.getCameraPreview)
         self.server.register_function(self.connectCameraByMxId)
         self.server.register_function(self.disconnectCamera)
+        self.server.register_function(self.getImageFrame)
 
     ################## ENDPOINTS ##################
     def connect(self):
@@ -72,6 +73,22 @@ class RpcServer:
         # logger.debug("Received getCameraPreview call")
         if self.oCamera.bConnected:
             cvFrame = self.oCamera.getCvVideoPreview()
+
+            if cvFrame is not None:
+                _, buff = cv2.imencode('.jpg', cvFrame)
+
+                enc_data = base64.b64encode(buff)
+                return enc_data
+        else:
+            cvFrame = cv2.imread("no-camera.jpg")
+            _, buff = cv2.imencode('.jpg', cvFrame)
+
+            enc_data = base64.b64encode(buff)
+            return enc_data
+
+    def getImageFrame(self):
+        if self.oCamera.bConnected:
+            cvFrame = self.oCamera.getCvImageFrame()
 
             if cvFrame is not None:
                 _, buff = cv2.imencode('.jpg', cvFrame)
