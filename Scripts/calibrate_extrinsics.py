@@ -2,7 +2,7 @@ import cv2
 import open3d as o3d
 import numpy as np
 
-from pose_estimation import ExtrinsicTransformationAruco
+from pose_estimation_old import ExtrinsicTransformationAruco
 
 """
 Getting transformation matrix (camera to world) from .ply scene with 3 visible AruCo markers
