@@ -1,4 +1,5 @@
 from luxonis_camera import Camera
+from pose_estimation import PoseEstimator
 import logging.config
 import datetime
 from xmlrpc_server import RpcServer
@@ -19,9 +20,15 @@ logger = logging.getLogger("Main")
 oCamera = Camera(5)
 ###################################
 
+########## Pose estimator setup ##########
+oPoseEstimator = PoseEstimator()
+###################################
+
+
 ########## XML-RPC setup ##########
 oServer = RpcServer(
     oCamera = oCamera,
+    oPoseEstimator = oPoseEstimator,
     host="127.0.0.1",
     port=8005
 )

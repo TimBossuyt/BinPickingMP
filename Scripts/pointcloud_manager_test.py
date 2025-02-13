@@ -1,4 +1,4 @@
-from pose_estimation_old import Model, Scene, PointCloudManager, PoseEstimatorFPFH
+from Archive.pose_estimation_old import Model, Scene, PointCloudManager, PoseEstimatorFPFH
 from utils import display_point_clouds
 import numpy as np
 

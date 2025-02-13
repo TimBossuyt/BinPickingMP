@@ -4,7 +4,7 @@
 ## M = grid size, number of IDs that can be generated with that dictionary
 
 ##### Ideal settings #####
-## 1. Low number of unique IDs that need to be generated and read
+## 1. Low number of unique IDs that need to be generated and read (increase hamming distance)
 ## 2. High-quality image input containing ArUco markers
 ## 3. Larger NxN grid size, balanced with low number of unique ArUcoIDs,
 #     such that the inter-marker distance can be used to correct misread markers

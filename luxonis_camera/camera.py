@@ -4,6 +4,7 @@ import open3d as o3d
 import threading
 import logging
 import queue
+from pathlib import Path
 
 logger = logging.getLogger("Camera")
 
@@ -104,6 +105,11 @@ class Camera:
             logger.info("Camera connected")
 
             self.bConnected = True
+
+            ## Read and save calibration data
+            calibData = device.readCalibration()
+            calibData.eepromToJsonFile(Path("cam-calibration-data.json"))
+
             ## Create queue objects
             qOut = device.getOutputQueue(name="out", maxSize=5,
                                          blocking=False)  # blocking False --> no pipeline freezing
@@ -123,7 +129,7 @@ class Camera:
                     ## Get request (FIFO) if any
                     sRequest = self.request_queue.get_nowait()
 
-
+                    ## TODO: https://docs.luxonis.com/software/depthai/examples/latency_measurement/
 
                     ## Check for correct request type
                     if sRequest == CV_IMG_REQUEST:
