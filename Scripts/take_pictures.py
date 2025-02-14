@@ -6,6 +6,8 @@ import imutils
 from datetime import datetime
 import os
 
+
+
 oCamera = Camera(iFPS=5)
 sMxId = "1844301011B546F500"
 # print(getConnectedDevices())
