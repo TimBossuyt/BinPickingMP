@@ -226,7 +226,7 @@ class CameraCalibrator:
         Add depth information to the points to get a non-zero z-transformation
         """
 
-        # TODO: Remove hardcoding
+        # TODO: Automate the included depth information
         # Point along z-axis with offset 50 from surface
         self.dictWorldPoints[100] = [0, 0, 50]
 

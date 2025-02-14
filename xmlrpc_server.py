@@ -59,6 +59,7 @@ class RpcServer:
         self.server.register_function(self.disconnectCamera)
         self.server.register_function(self.getImageFrame)
         self.server.register_function(self.runCalibration)
+        self.server.register_function(self.getCalibrationImage)
 
 
     ################## ENDPOINTS ##################
@@ -119,9 +120,17 @@ class RpcServer:
 
         self.oCamera.calibrateCamera(dictWorldPoints)
 
-
-
         return 0
+
+    def getCalibrationImage(self):
+        img = self.oCamera.imgCalibration
+
+        _, buff = cv2.imencode('.jpg', img)
+
+        enc_data = base64.b64encode(buff)
+
+        return enc_data
+
 
     def disconnectCamera(self):
         logger.debug(f"Received disconnectCamera call")

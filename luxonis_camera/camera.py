@@ -190,16 +190,23 @@ class Camera:
         logger.debug("Camera context manager ended")
 
     def calibrateCamera(self, dictWorldPoints):
+        ## TODO: Add error handling
+        ## Initialize calibrator object
         self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
 
+        ## Request an image where board is visible
         image = self.getCvImageFrame()
 
+        ## Find the transformation matrix from the calibrator object
         trans_mat = self.oCalibrator.runCalibration(image, dictWorldPoints)
 
+        ## Save as attribute of the camera
         self.arrCamToWorldMatrix = trans_mat
 
+        ## Flag calibration is done
         self.bIsCalibrated = True
 
+        ## Save annotated image where corners are highlighted
         self.imgCalibration = self.oCalibrator.showDetectedBoard()
 
         logger.debug("Calibrating done")
