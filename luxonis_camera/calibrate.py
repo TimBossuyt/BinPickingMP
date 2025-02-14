@@ -52,7 +52,9 @@ class BoardDetector:
 
 
 class CameraCalibrator:
-    def __init__(self, arrCameraMatrix, arrDistortionCoeffs):
+    def __init__(self, arrCameraMatrix, arrDistortionCoeffs=None):
+        if arrDistortionCoeffs is None:
+            arrDistortionCoeffs = [0, 0, 0, 0, 0]
         logger.debug("CameraCalibrator initializing")
         self.arrCameraMatrix = np.asarray(arrCameraMatrix)
         self.arrDistortionCoeffs = np.asarray(arrDistortionCoeffs)

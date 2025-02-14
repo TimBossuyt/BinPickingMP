@@ -1,5 +1,5 @@
 import numpy as np
-from luxonis_camera import CameraCalibrator
+from luxonis_camera.calibrate import CameraCalibrator
 import cv2
 
 ## ---------------------------------------

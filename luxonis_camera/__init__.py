@@ -1,2 +1,2 @@
 from .camera import Camera, getConnectedDevices
-from .calibrate import CameraCalibrator, BoardDetector, drawDetectedCorners
+from .calibrate import BoardDetector, drawDetectedCorners

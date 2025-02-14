@@ -12,17 +12,15 @@ with dai.Device() as device:
   ## Read calibration data
   calibData = device.readCalibration()
 
-  eeprom_json = calibData.eepromToJsonFile(Path("params_default.json"))
+  intrinsics4K = calibData.getCameraIntrinsics(dai.CameraBoardSocket.CAM_A)
 
-  # intrinsics = calibData.getCameraIntrinsics(dai.CameraBoardSocket.CAM_A)
-  #
-  # distortion = calibData.getDistortionCoefficients(dai.CameraBoardSocket.CAM_A)
-  #
-  # eeprom = calibData.getEepromData()
-  #
-  # ## Print results to terminal
-  # print(intrinsics)
-  # print(distortion)
-  #
-  # print(f"EEPROM: {eeprom.boardConf}")
+  intrinsics1080p = calibData.getCameraIntrinsics(
+    cameraId=dai.CameraBoardSocket.CAM_A,
+    resizeWidth=1920,
+    resizeHeight=1080,
+    keepAspectRatio=True
+  )
 
+
+  print(intrinsics4K)
+  print(intrinsics1080p)

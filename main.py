@@ -20,7 +20,6 @@ oCamera = Camera(5)
 ###################################
 
 
-
 ########## XML-RPC setup ##########
 oServer = RpcServer(
     oCamera = oCamera,

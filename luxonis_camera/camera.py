@@ -6,6 +6,8 @@ import logging
 import queue
 from pathlib import Path
 
+from .calibrate import CameraCalibrator
+
 logger = logging.getLogger("Camera")
 
 ## Defining commands
@@ -42,6 +44,16 @@ class Camera:
 
         ## Configure pipeline
         self.__configurePipeline()
+
+        self.oCalibrator = None
+
+        self.bIsCalibrated = False
+
+        self.imgCalibration = None
+
+        ## Camera parameters
+        self.arrCameraMatrix = None
+        self.arrCamToWorldMatrix = None
 
     def getColoredPointCloud(self):
         ## Launch a request to the Run thread
@@ -110,6 +122,19 @@ class Camera:
             calibData = device.readCalibration()
             calibData.eepromToJsonFile(Path("cam-calibration-data.json"))
 
+            ## Read camera intrinsics for selected resolution
+            intrinsics1080p = calibData.getCameraIntrinsics(
+                cameraId=dai.CameraBoardSocket.CAM_A,
+                resizeWidth=1920,
+                resizeHeight=1080,
+                keepAspectRatio=True
+            )
+
+            self.arrCameraMatrix = intrinsics1080p
+
+            ## Create calibration object
+            self.oCalibrator = CameraCalibrator(intrinsics1080p)
+
             ## Create queue objects
             qOut = device.getOutputQueue(name="out", maxSize=5,
                                          blocking=False)  # blocking False --> no pipeline freezing
@@ -163,6 +188,26 @@ class Camera:
                     pass
 
         logger.debug("Camera context manager ended")
+
+    def calibrateCamera(self, dictWorldPoints):
+        self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
+
+        image = self.getCvImageFrame()
+
+        trans_mat = self.oCalibrator.runCalibration(image, dictWorldPoints)
+
+        self.arrCamToWorldMatrix = trans_mat
+
+        self.bIsCalibrated = True
+
+        self.imgCalibration = self.oCalibrator.showDetectedBoard()
+
+        logger.debug("Calibrating done")
+
+        return trans_mat
+
+    def getCalibrationImageAnnot(self):
+        return self.imgCalibration
 
     def __configurePipeline(self):
         ##### Cameras #####

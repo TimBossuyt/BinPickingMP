@@ -4,12 +4,14 @@ from luxonis_camera import getConnectedDevices, Camera
 import logging
 import cv2
 import threading
+import json
 
 logger = logging.getLogger("RPC-server")
 
 class RpcServer:
     def __init__(self, oCamera: Camera, host="127.0.0.1", port=8005):
         self.oCamera = oCamera
+
 
         self.host = host
         self.port = port
@@ -56,6 +58,8 @@ class RpcServer:
         self.server.register_function(self.connectCameraByMxId)
         self.server.register_function(self.disconnectCamera)
         self.server.register_function(self.getImageFrame)
+        self.server.register_function(self.runCalibration)
+
 
     ################## ENDPOINTS ##################
     def connect(self):
@@ -108,10 +112,26 @@ class RpcServer:
         self.oCamera.Connect(sMxId)
         return 0
 
+    def runCalibration(self, sWorldPointsJson):
+        logger.debug(f"Received runCalibration call")
+
+        dictWorldPoints = self.__deserializeWorldPointsJson(sWorldPointsJson)
+
+        self.oCamera.calibrateCamera(dictWorldPoints)
+
+
+
+        return 0
+
     def disconnectCamera(self):
         logger.debug(f"Received disconnectCamera call")
         self.oCamera.Disconnect()
         return 0
 
+    ################## UTILS ##################
+    def __deserializeWorldPointsJson(self, dict_serialized):
+        dict_world_points = json.loads(dict_serialized)
 
+        dict_world_points = {int(k): v for k, v in dict_world_points.items()}
 
+        return dict_world_points
