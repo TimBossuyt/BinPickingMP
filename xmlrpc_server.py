@@ -1,7 +1,6 @@
 import base64
 from xmlrpc.server import SimpleXMLRPCServer
 from luxonis_camera import getConnectedDevices, Camera
-from pose_estimation import PoseEstimator
 import logging
 import cv2
 import threading
@@ -9,9 +8,8 @@ import threading
 logger = logging.getLogger("RPC-server")
 
 class RpcServer:
-    def __init__(self, oCamera: Camera, oPoseEstimator: PoseEstimator, host="127.0.0.1", port=8005):
+    def __init__(self, oCamera: Camera, host="127.0.0.1", port=8005):
         self.oCamera = oCamera
-        self.oPoseEstimator = oPoseEstimator
 
         self.host = host
         self.port = port
@@ -58,7 +56,6 @@ class RpcServer:
         self.server.register_function(self.connectCameraByMxId)
         self.server.register_function(self.disconnectCamera)
         self.server.register_function(self.getImageFrame)
-        self.server.register_function(self.getArucoDetection)
 
     ################## ENDPOINTS ##################
     def connect(self):
@@ -116,26 +113,5 @@ class RpcServer:
         self.oCamera.Disconnect()
         return 0
 
-    def getArucoDetection(self):
-        logger.debug(f"Received getArucoDetection call")
-
-        if self.oCamera.bConnected:
-            ## Request image frame from camera
-            cvFrame = self.oCamera.getCvImageFrame()
-
-            ## Find markers + get annotated image
-            cvImg = self.oPoseEstimator.DetectMarkers(cvFrame)
-
-            ## Encode image as base64 string
-            _, buff = cv2.imencode('.jpg', cvImg)
-
-            enc_data = base64.b64encode(buff)
-            return enc_data
-        else:
-            cvFrame = cv2.imread("no-camera.jpg")
-            _, buff = cv2.imencode('.jpg', cvFrame)
-
-            enc_data = base64.b64encode(buff)
-            return enc_data
 
 
