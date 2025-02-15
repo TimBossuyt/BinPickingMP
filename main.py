@@ -3,6 +3,8 @@ import logging.config
 import datetime
 from xmlrpc_server import RpcServer
 
+
+
 ########## Logging setup ##########
 ## Generate ISO 8601 timestamped filename
 log_filename = datetime.datetime.now().strftime("log_%Y-%m-%dT%H-%M-%S.log")
@@ -18,6 +20,7 @@ logger = logging.getLogger("Main")
 ########## Camera setup ##########
 oCamera = Camera(5)
 ###################################
+
 
 ########## XML-RPC setup ##########
 oServer = RpcServer(
