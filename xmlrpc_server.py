@@ -90,7 +90,7 @@ class RpcServer:
         try:
             ## Shutdown camera thread / connection
             self.oCamera.Disconnect()
-            logger.debug("Camera disconnected succesfully")
+            logger.debug("Camera disconnected successfully")
 
             ## Stops .server_forever loop and finish all pending requests, does not close socket
             self.server.shutdown()
@@ -104,7 +104,7 @@ class RpcServer:
                 logger.debug("Waiting for server thread to finish")
                 self.thrServer.join()
 
-            logger.info("Server thread succesfully terminated")
+            logger.info("Server thread successfully terminated")
         except Exception as e:
             logger.error(f"An error occurred while stopping the server: {str(e)}")
 
@@ -132,7 +132,8 @@ class RpcServer:
 
 
     ################## ENDPOINTS ##################
-    def connect(self):
+    @staticmethod
+    def connect():
         """
         Sets up and tests the connection.
 
@@ -143,7 +144,8 @@ class RpcServer:
         logger.debug("Received connect call")
         return 0
 
-    def getConnectedDevices(self):
+    @staticmethod
+    def getConnectedDevices():
         """
         Fetches the list of currently connected devices.
 
@@ -185,8 +187,9 @@ class RpcServer:
                 cvFrame = self.oCamera.getCvVideoPreview()
 
                 if cvFrame is not None:
-                    _, buff = cv2.imencode('.jpg', cvFrame)
-                    enc_data = base64.b64encode(buff)
+                    _, encoded_img = cv2.imencode('.jpg', cvFrame)
+                    # noinspection PyTypeChecker
+                    enc_data = base64.b64encode(encoded_img)
                     return enc_data
                 else:
                     logger.warning("No frame available from connected camera")
@@ -194,9 +197,10 @@ class RpcServer:
             else:
                 logger.warning("Camera is not connected, returning no-camera.jpg")
                 cvFrame = cv2.imread("no-camera.jpg")
-                _, buff = cv2.imencode('.jpg', cvFrame)
+                _, encoded_img = cv2.imencode('.jpg', cvFrame)
 
-                enc_data = base64.b64encode(buff)
+                # noinspection PyTypeChecker
+                enc_data = base64.b64encode(encoded_img)
                 return enc_data
 
         except Exception as e:
@@ -220,6 +224,7 @@ class RpcServer:
                 cvFrame = self.oCamera.getCvImageFrame()
                 if cvFrame is not None:
                     _, buff = cv2.imencode('.jpg', cvFrame)
+                    # noinspection PyTypeChecker
                     enc_data = base64.b64encode(buff)
                     return enc_data
                 else:
@@ -228,6 +233,8 @@ class RpcServer:
                 logger.warning("Camera is not connected, returning no-camera.jpg")
                 cvFrame = cv2.imread("no-camera.jpg")
                 _, buff = cv2.imencode('.jpg', cvFrame)
+
+                # noinspection PyTypeChecker
                 enc_data = base64.b64encode(buff)
                 return enc_data
         except Exception as e:
@@ -275,6 +282,7 @@ class RpcServer:
         try:
             img = self.oCamera.imgCalibration
             _, buff = cv2.imencode('.jpg', img)
+            # noinspection PyTypeChecker
             enc_data = base64.b64encode(buff)
 
             return enc_data
@@ -302,7 +310,8 @@ class RpcServer:
             logger.error(f"Error while disconnecting camera: {str(e)}")
 
     ################## UTILS ##################
-    def __deserializeWorldPointsJson(self, dict_serialized):
+    @staticmethod
+    def __deserializeWorldPointsJson(dict_serialized):
         """
         :param dict_serialized: A JSON string representing a dictionary where keys are expected to be numeric (as strings) and values are associated data.
         :return: A dictionary with keys converted to integers and values preserved from the input JSON string.

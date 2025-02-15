@@ -380,9 +380,9 @@ class CameraCalibrator:
 
         ## Add each point with id from the world points dictionary
         # + find point with corresponding id in the camera points list and add it to the array
-        for (id, point) in self.dictWorldPoints.items():
+        for (_id, point) in self.dictWorldPoints.items():
             self.arrWorldPoints.append(point)
-            self.arrCamPoints.append(self.dictCameraPoints[id].tolist())
+            self.arrCamPoints.append(self.dictCameraPoints[_id].tolist())
 
         ## Reshape arrays to numpy format
         self.arrWorldPoints = np.array(self.arrWorldPoints, dtype=np.float32).reshape(-1, 3)
