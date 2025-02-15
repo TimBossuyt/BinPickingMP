@@ -34,62 +34,12 @@ def getConnectedDevices()-> list[str]:
 
 class Camera:
     """
-    Represents a Camera class for managing an OAK-D Camera device, configured using DepthAI SDK.
-    This includes camera connection and disconnection, data pipeline setup, calibration,
-    and retrieval of captured images and pointclouds.
+    Class representing a Camera and its associated functionalities.
 
-    Attributes:
-        oPipeline: DepthAI pipeline to configure and manage the camera processing flow.
-        iFPS: Integer FPS value for setting frame rates for the camera.
-        sMxId: String representing the unique identifier (MXID) of the connected camera.
-        bConnected: Boolean indicating whether the camera is successfully connected.
-        cvVideoPreview: Last cached video preview frame from the camera.
-        thrCameraConnect: Thread used to handle camera connection in a non-blocking manner.
-        evStop: Threading event to safely stop the connection thread.
-        request_queue: Queue for issuing requests to the camera processing thread.
-        response_queues: Dictionary mapping request types (e.g., CV_IMG_REQUEST, PCD_REQUEST)
-                         to their corresponding response queues.
-        oCalibrator: CameraCalibrator object initialized after calibration to handle intrinsic/extrinsic parameters.
-        bIsCalibrated: Boolean flag indicating whether the camera has been calibrated.
-        imgCalibration: Annotated calibration image showing detected board corners.
-        arrCameraMatrix: Intrinsic camera matrix obtained after connecting to device
-        arrCamToWorldMatrix: Transformation matrix mapping camera points to world points.
-
-    Methods:
-        __init__(iFPS):
-            Initializes the Camera object and its components, sets up threading and queues,
-            and configures the DepthAI pipeline.
-
-        getColoredPointCloud():
-            Requests and retrieves a pointcloud with associated RGB data from the camera.
-
-        getCvVideoPreview():
-            Retrieves the video preview frame from the camera.
-
-        getCvImageFrame():
-            Requests and retrieves a single captured image frame from the camera.
-
-        Disconnect():
-            Safely disconnects the camera by stopping its connection thread and resetting related states.
-
-        Connect(sMxId):
-            Establishes connection to the camera specified by its MXID in a separate thread.
-
-        __connect():
-            Handles the detailed connection process to the DepthAI camera device, initializes
-            queues for data exchange, retrieves calibration data, and processes requests for
-            images and pointclouds in a continuously running loop.
-
-        calibrateCamera(dictWorldPoints):
-            Runs camera calibration using provided world points. Generates the transformation
-            matrix and annotated image, and marks the camera as calibrated.
-
-        getCalibrationImageAnnot():
-            Returns the annotated calibration image with detected corners.
-
-        __configurePipeline():
-            Creates and configures the DepthAI pipeline, setting up color and mono cameras,
-            stereo depth calculations, synchronized pointcloud generation, and XLink data streams.
+    The `Camera` class provides methods to configure and operate a camera device,
+    retrieve video preview frames, capture still image frames, and generate colored point cloud data.
+    It uses threading for device connection and request processing, and maintains communication
+    queues for handling inter-thread interactions.
     """
     def __init__(self, iFPS: int) -> None:
         """
