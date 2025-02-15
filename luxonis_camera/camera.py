@@ -22,7 +22,68 @@ def getConnectedDevices():
     return arrDevices
 
 class Camera:
+    """
+    Represents a Camera class for managing an OAK-D Camera device, configured using DepthAI SDK.
+    This includes camera connection and disconnection, data pipeline setup, calibration,
+    and retrieval of captured images and pointclouds.
+
+    Attributes:
+        oPipeline: DepthAI pipeline to configure and manage the camera processing flow.
+        iFPS: Integer FPS value for setting frame rates for the camera.
+        sMxId: String representing the unique identifier (MXID) of the connected camera.
+        bConnected: Boolean indicating whether the camera is successfully connected.
+        cvVideoPreview: Last cached video preview frame from the camera.
+        thrCameraConnect: Thread used to handle camera connection in a non-blocking manner.
+        evStop: Threading event to safely stop the connection thread.
+        request_queue: Queue for issuing requests to the camera processing thread.
+        response_queues: Dictionary mapping request types (e.g., CV_IMG_REQUEST, PCD_REQUEST)
+                         to their corresponding response queues.
+        oCalibrator: CameraCalibrator object initialized after calibration to handle intrinsic/extrinsic parameters.
+        bIsCalibrated: Boolean flag indicating whether the camera has been calibrated.
+        imgCalibration: Annotated calibration image showing detected board corners.
+        arrCameraMatrix: Intrinsic camera matrix obtained after connecting to device
+        arrCamToWorldMatrix: Transformation matrix mapping camera points to world points.
+
+    Methods:
+        __init__(iFPS):
+            Initializes the Camera object and its components, sets up threading and queues,
+            and configures the DepthAI pipeline.
+
+        getColoredPointCloud():
+            Requests and retrieves a pointcloud with associated RGB data from the camera.
+
+        getCvVideoPreview():
+            Retrieves the video preview frame from the camera.
+
+        getCvImageFrame():
+            Requests and retrieves a single captured image frame from the camera.
+
+        Disconnect():
+            Safely disconnects the camera by stopping its connection thread and resetting related states.
+
+        Connect(sMxId):
+            Establishes connection to the camera specified by its MXID in a separate thread.
+
+        __connect():
+            Handles the detailed connection process to the DepthAI camera device, initializes
+            queues for data exchange, retrieves calibration data, and processes requests for
+            images and pointclouds in a continuously running loop.
+
+        calibrateCamera(dictWorldPoints):
+            Runs camera calibration using provided world points. Generates the transformation
+            matrix and annotated image, and marks the camera as calibrated.
+
+        getCalibrationImageAnnot():
+            Returns the annotated calibration image with detected corners.
+
+        __configurePipeline():
+            Creates and configures the DepthAI pipeline, setting up color and mono cameras,
+            stereo depth calculations, synchronized pointcloud generation, and XLink data streams.
+    """
     def __init__(self, iFPS):
+        """
+        :param iFPS: Input frames per second. Specifies the desired frame rate for the camera.
+        """
         self.oPipeline = dai.Pipeline()
         self.iFPS = iFPS
         self.sMxId = None
@@ -56,6 +117,13 @@ class Camera:
         self.arrCamToWorldMatrix = None
 
     def getColoredPointCloud(self):
+        """
+        Initiates a request to fetch a colored point cloud,
+        waits for the response, and constructs the point cloud using the obtained points and colors.
+
+        :return: A colored point cloud object.
+        :rtype: open3d.geometry.PointCloud
+        """
         ## Launch a request to the Run thread
         self.request_queue.put(PCD_REQUEST)
         logger.debug(f"Launched {PCD_REQUEST}")
@@ -72,9 +140,25 @@ class Camera:
         return oPointCloud
 
     def getCvVideoPreview(self):
+        """
+        Returns the video preview associated with the current instance.
+
+        :return: The video preview object.
+        :rtype: image in opencv format
+        """
         return self.cvVideoPreview
 
     def getCvImageFrame(self):
+        """
+        Launches a request to fetch the image frame and waits for the corresponding response.
+
+        This method interacts with a separate thread running requests by placing a specific request
+        in a request queue and retrieving the result from a corresponding
+        response queue dedicated for the request type.
+
+        :return: The image frame retrieved as a response.
+        """
+
         ## Launch a request to the Run thread
         self.request_queue.put(CV_IMG_REQUEST)
         logger.debug(f"Launched {CV_IMG_REQUEST}")
@@ -86,6 +170,15 @@ class Camera:
         return cvImg
 
     def Disconnect(self):
+        """
+        Disconnects the camera device and ensures the associated thread is properly terminated.
+
+        This method sets the stop event to signal the camera connection thread to terminate. If the thread is still alive,
+        it waits for the thread to finish execution and logs the waiting process. Once the thread has been successfully
+        terminated, the camera is marked as disconnected, and the stop event is cleared.
+
+        :return: None
+        """
         self.evStop.set()
         ## Wait for thread to finish if still alive
         if self.thrCameraConnect.is_alive():
@@ -99,7 +192,8 @@ class Camera:
 
     def Connect(self, sMxId):
         """
-        Runs the camera in a separate thread from the main thread
+        :param sMxId: Identifier for the device to be connected.
+        :return: None
         """
         self.sMxId = sMxId
 
@@ -111,6 +205,14 @@ class Camera:
         logger.debug("Started Connect thread")
 
     def __connect(self):
+        """
+        Tries to establish a connection with the camera device using its MXID,
+        configuring necessary parameters as well as creating queues to handle image and pointcloud data requests.
+        Reads camera calibration data and intrinsics for further processing,
+        then continuously processes image/video requests and pointcloud data until a stop event is triggered.
+
+        :return: Nothing
+        """
         device_info = dai.DeviceInfo(self.sMxId)  # MXID
         logger.info(f"Trying to connect to camera {self.sMxId}")
         with dai.Device(self.oPipeline, device_info, dai.UsbSpeed.SUPER) as device:
@@ -190,6 +292,19 @@ class Camera:
         logger.debug("Camera context manager ended")
 
     def calibrateCamera(self, dictWorldPoints):
+        """
+        Calibrates the camera using a set of known world points and an input image where a calibration object
+        (e.g., a checkerboard) is visible.
+
+        This function computes the camera-to-world transformation matrix and
+        updates the internal state of the object to reflect the completed calibration.
+
+        Additionally, an annotated image with detected board corners is saved.
+
+        :param dictWorldPoints: A dictionary containing the 3D world points of the calibration object. These points are typically pre-defined for accurate calibration.
+        :return: A 4x4 transformation matrix representing the camera-to-world calibration result (homogeneous transformation matrix).
+        """
+
         ## TODO: Add error handling
         ## Initialize calibrator object
         self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
@@ -214,9 +329,23 @@ class Camera:
         return trans_mat
 
     def getCalibrationImageAnnot(self):
+        """
+        Returns the calibration image annotation.
+
+        :return: The calibration image annotation.
+        :rtype: Object
+        """
+
         return self.imgCalibration
 
     def __configurePipeline(self):
+        """
+        Configures a DepthAI pipeline consisting of multiple cameras, processing nodes, and output streams.
+        The pipeline includes components for color image capture,
+        depth calculation, point cloud generation, synchronization, and output streaming.
+
+        :return: None
+        """
         ##### Cameras #####
         ## Color camera (middle) ##
         nodeCamColor = self.oPipeline.create(dai.node.ColorCamera)
