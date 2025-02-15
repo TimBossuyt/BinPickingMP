@@ -10,59 +10,22 @@ logger = logging.getLogger("RPC-server")
 
 class RpcServer:
     """
-    RpcServer is a class for managing an XML-RPC server that allows interaction with a Camera object.
-
-    It provides methods to control, retrieve data, and manage the state of the camera
-    through registered XML-RPC endpoints.
-
-    Attributes:
-        oCamera (Camera): Instance of the Camera object, used to perform camera-related operations.
-        host (str): Host address of the server. Defaults to "127.0.0.1".
-        port (int): Port number on which the server runs. Defaults to 8005.
-        thrServer (Thread): Thread responsible for running the server in the background.
-        server (SimpleXMLRPCServer): XML-RPC server instance used for serving requests.
+    Class to handle an XML-RPC server for managing camera operations, such as connecting to a camera,
+    fetching camera previews, executing calibration, and other camera-related functionalities.
+    The server runs on a specified host and port, and exposes multiple remote procedure call (RPC) endpoints.
 
     Methods:
-        Run:
-            Starts the XML-RPC server in a separate thread.
-
-        __run:
-            Internal method to run the XML-RPC server and serve requests indefinitely.
-
-        Stop:
-            Gracefully stops the XML-RPC server, shuts down connections, and ensures the thread terminates.
-
-        register_methods:
-            Registers the XML-RPC endpoint functions to the server.
-
-        connect:
-            Tests the connection setup for the server.
-
-        getConnectedDevices:
-            Retrieves the list of connected devices.
-
-        getCameraPreview:
-            Returns a base64-encoded JPEG image of the camera's video preview.
-            If the camera is not connected, it returns a default "no-camera" placeholder image.
-
-        getImageFrame:
-            Returns a base64-encoded JPEG image that represents the latest captured frame from the connected camera.
-            If the camera is not connected, it returns a default "no-camera" placeholder image.
-
-        connectCameraByMxId:
-            Connects to a camera given its MxId identifier.
-
-        runCalibration:
-            Runs the camera calibration using a JSON-serialized dictionary of world points.
-
-        getCalibrationImage:
-            Retrieves the base64-encoded JPEG calibration image produced during camera calibration.
-
-        disconnectCamera:
-            Disconnects the currently connected camera and stops its corresponding session.
-
-        __deserializeWorldPointsJson:
-            Internal utility to deserialize a JSON string of world points into a dictionary with integer keys.
+        - Run: Starts the XML-RPC server.
+        - __run: Internal method to initiate the server's loop.
+        - Stop: Stops the server and terminates associated threads.
+        - register_methods: Registers all the RPC methods for the server.
+        - connect: Establishes a connection and tests it.
+        - getConnectedDevices: Retrieves a list of connected devices.
+        - getCameraPreview: Fetches a preview frame from the connected camera or placeholder image.
+        - getImageFrame: Retrieves a single image frame or fallback image from a camera.
+        - connectCameraByMxId: Connects to a camera identified by a given MxId.
+        - runCalibration: Runs camera calibration using provided world points.
+        - getCalibrationImage: Retrieves the calibration image in Base64 format.
     """
     def __init__(self, oCamera: Camera, host="127.0.0.1", port=8005):
         """
@@ -184,7 +147,10 @@ class RpcServer:
         """
         Fetches the list of currently connected devices.
 
-        :return: A list of connected devices
+        This method logs the incoming request, attempts to retrieve the connected devices,
+        and logs the fetched devices. In case of any exceptions, it logs an error message.
+
+        :return: A list of connected devices. Returns None if an exception occurs during retrieval.
         """
 
         logger.debug("Received getConnectedDevices call")

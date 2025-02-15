@@ -135,20 +135,28 @@ class Camera:
         :return: A colored point cloud object.
         :rtype: open3d.geometry.PointCloud
         """
-        ## Launch a request to the Run thread
-        self.request_queue.put(PCD_REQUEST)
-        logger.debug(f"Launched {PCD_REQUEST}")
 
-        ## Wait for a response in the dedicated response queue
-        arrPoints, arrColors = self.response_queues[PCD_REQUEST].get()
-        logger.debug(f"Received response for {PCD_REQUEST}")
+        try:
+            ## Launch a request to the Run thread
+            self.request_queue.put(PCD_REQUEST)
+            logger.debug(f"Point cloud request sent to queue")
 
-        ## Create and return pointcloud once available
-        oPointCloud = o3d.geometry.PointCloud()
-        oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
-        oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
+            ## Wait for a response in the dedicated response queue
+            arrPoints, arrColors = self.response_queues[PCD_REQUEST].get(timeout=2)
+            logger.debug(f"Point cloud response received")
 
-        return oPointCloud
+            ## Create and return pointcloud once available
+            oPointCloud = o3d.geometry.PointCloud()
+            oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
+            oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
+
+            return oPointCloud
+
+        except queue.Empty:
+            logger.error("Timeout waiting for point cloud response")
+        except Exception as e:
+            logger.error(f"Error while getting colored point cloud: {e}")
+
 
     def getCvVideoPreview(self):
         """
@@ -173,16 +181,21 @@ class Camera:
         """
 
         ## TODO: Add correct type hinting
+        try:
+            ## Launch a request to the Run thread
+            self.request_queue.put(CV_IMG_REQUEST)
+            logger.debug("Image frame request sent to queue")
 
-        ## Launch a request to the Run thread
-        self.request_queue.put(CV_IMG_REQUEST)
-        logger.debug(f"Launched {CV_IMG_REQUEST}")
+            ## Wait for a response in the dedicated response queue
+            cvImg = self.response_queues[CV_IMG_REQUEST].get(timeout=2)
+            logger.debug("Image frame response received")
 
-        ## Wait for a response in the dedicated response queue
-        cvImg = self.response_queues[CV_IMG_REQUEST].get()
-        logger.debug(f"Received response for {CV_IMG_REQUEST}")
+            return cvImg
 
-        return cvImg
+        except queue.Empty:
+            logger.error("Timeout waiting for image frame response")
+        except Exception as e:
+            logger.error(f"Error while getting image frame: {e}")
 
     def Disconnect(self) -> None:
         """
@@ -194,16 +207,22 @@ class Camera:
 
         :return: None
         """
-        self.evStop.set()
-        ## Wait for thread to finish if still alive
-        if self.thrCameraConnect.is_alive():
-            logger.debug("Waiting for connection to be closed")
-            self.thrCameraConnect.join()
+        try:
+            self.evStop.set()
+            ## Wait for thread to finish if still alive
+            if self.thrCameraConnect.is_alive():
+                logger.info("Waiting for connection thread to finish")
+                self.thrCameraConnect.join()
 
-        logger.info("Camera disconnected")
-        self.bConnected = False
+            ## If thread has finished, flag not connected + reset stop event
+            self.bConnected = False
+            self.evStop.clear()
 
-        self.evStop.clear()
+            logger.info("Camera disconnected successfully")
+
+        except Exception as ex:
+            logger.error(f"Error disconnecting camera: {ex}")
+
 
     def Connect(self, sMxId) -> None:
         """
@@ -211,13 +230,17 @@ class Camera:
         :return: None
         """
         self.sMxId = sMxId
+        try:
+            logger.info(f"Connecting to camera with MxId: {sMxId}")
+            ## Re-initialize object to allow multiple restarts
+            self.thrCameraConnect = threading.Thread(target=self.__connect)
 
-        ## Re-initialize object to allow multiple restarts
-        self.thrCameraConnect = threading.Thread(target=self.__connect)
+            ## Start __connect in separate thread
+            self.thrCameraConnect.start()
+            logger.debug("Connect thread started")
 
-        ## Start __connect in separate thread
-        self.thrCameraConnect.start()
-        logger.debug("Started Connect thread")
+        except Exception as ex:
+            logger.error(f"Error connecting to camera: {ex}")
 
     def __connect(self) -> None:
         """
@@ -232,7 +255,7 @@ class Camera:
         try:
             logger.info(f"Trying to connect to camera {self.sMxId}")
             with dai.Device(self.oPipeline, device_info, dai.UsbSpeed.SUPER) as device:
-                logger.info("Camera connected")
+                logger.info("Successfully connected to camera")
 
                 self.bConnected = True
 
@@ -302,15 +325,15 @@ class Camera:
                             )
 
                     except queue.Empty:
-                        ## Skip if que is empty
+                        ## Skip if queue is empty
                         pass
 
             logger.debug("Camera context manager ended")
         except Exception as e:
-            logger.error(f"Failed to connect to the camera: {e}")
+            logger.error(f"Error while connecting to camera {self.sMxId}: {e}")
             self.bConnected = False
 
-    def calibrateCamera(self, dictWorldPoints: dict[int, list[float, float, float]]) -> np.ndarray:
+    def calibrateCamera(self, dictWorldPoints: dict[int, list[float, float, float]]) -> np.ndarray | None:
         """
         Calibrates the camera using a set of known world points and an input image where a calibration object
         (e.g., a checkerboard) is visible.
@@ -327,12 +350,20 @@ class Camera:
         ## TODO: Add error handling
         ## Initialize calibrator object
         self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
+        try:
+            ## Request an image where board is visible
+            image = self.getCvImageFrame()
+            if image is None:
+                logger.error("Received invalid image frame for calibration")
+                return
 
-        ## Request an image where board is visible
-        image = self.getCvImageFrame()
+            ## Find the transformation matrix from the calibrator object
+            trans_mat = self.oCalibrator.runCalibration(image, dictWorldPoints)
+        except Exception as e:
+            logger.error(f"Camera calibration failed: {e}")
+            return
 
-        ## Find the transformation matrix from the calibrator object
-        trans_mat = self.oCalibrator.runCalibration(image, dictWorldPoints)
+        ## <-- Assumes calibration was successful -->
 
         ## Save as attribute of the camera
         self.arrCamToWorldMatrix = trans_mat
@@ -341,9 +372,10 @@ class Camera:
         self.bIsCalibrated = True
 
         ## Save annotated image where corners are highlighted
+        logger.debug("Saving annotated calibration image.")
         self.imgCalibration = self.oCalibrator.showDetectedBoard()
 
-        logger.debug("Calibrating done")
+        logger.info("Calibrating successful")
 
         return np.asarray(trans_mat)
 
