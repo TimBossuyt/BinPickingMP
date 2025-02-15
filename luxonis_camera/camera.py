@@ -5,6 +5,7 @@ import threading
 import logging
 import queue
 from pathlib import Path
+import numpy as np
 
 from .calibrate import CameraCalibrator
 
@@ -14,12 +15,22 @@ logger = logging.getLogger("Camera")
 CV_IMG_REQUEST = "cv-img-request"
 PCD_REQUEST = "pcd-request"
 
-def getConnectedDevices():
-    arrDevices = []
-    for device in dai.Device.getAllAvailableDevices():
-          arrDevices.append(device.getMxId())
+def getConnectedDevices()-> list[str]:
+    """
+    Retrieves the list of MX IDs for all connected DepthAI devices.
 
-    return arrDevices
+    :return: List of strings representing the MX IDs of all connected DepthAI devices.
+    """
+
+    try:
+        arrDevices = []
+        for device in dai.Device.getAllAvailableDevices():
+              arrDevices.append(device.getMxId())
+
+        return arrDevices
+    except Exception as e:
+        logger.error(f"Error while getting connected devices: {e}")
+        return []
 
 class Camera:
     """
@@ -80,7 +91,7 @@ class Camera:
             Creates and configures the DepthAI pipeline, setting up color and mono cameras,
             stereo depth calculations, synchronized pointcloud generation, and XLink data streams.
     """
-    def __init__(self, iFPS):
+    def __init__(self, iFPS: int) -> None:
         """
         :param iFPS: Input frames per second. Specifies the desired frame rate for the camera.
         """
@@ -116,7 +127,7 @@ class Camera:
         self.arrCameraMatrix = None
         self.arrCamToWorldMatrix = None
 
-    def getColoredPointCloud(self):
+    def getColoredPointCloud(self) -> o3d.geometry.PointCloud:
         """
         Initiates a request to fetch a colored point cloud,
         waits for the response, and constructs the point cloud using the obtained points and colors.
@@ -146,6 +157,8 @@ class Camera:
         :return: The video preview object.
         :rtype: image in opencv format
         """
+
+        ## TODO: Add correct type hinting
         return self.cvVideoPreview
 
     def getCvImageFrame(self):
@@ -159,6 +172,8 @@ class Camera:
         :return: The image frame retrieved as a response.
         """
 
+        ## TODO: Add correct type hinting
+
         ## Launch a request to the Run thread
         self.request_queue.put(CV_IMG_REQUEST)
         logger.debug(f"Launched {CV_IMG_REQUEST}")
@@ -169,7 +184,7 @@ class Camera:
 
         return cvImg
 
-    def Disconnect(self):
+    def Disconnect(self) -> None:
         """
         Disconnects the camera device and ensures the associated thread is properly terminated.
 
@@ -190,7 +205,7 @@ class Camera:
 
         self.evStop.clear()
 
-    def Connect(self, sMxId):
+    def Connect(self, sMxId) -> None:
         """
         :param sMxId: Identifier for the device to be connected.
         :return: None
@@ -204,14 +219,14 @@ class Camera:
         self.thrCameraConnect.start()
         logger.debug("Started Connect thread")
 
-    def __connect(self):
+    def __connect(self) -> None:
         """
-        Tries to establish a connection with the camera device using its MXID,
-        configuring necessary parameters as well as creating queues to handle image and pointcloud data requests.
-        Reads camera calibration data and intrinsics for further processing,
-        then continuously processes image/video requests and pointcloud data until a stop event is triggered.
+        Attempts to establish a connection with a camera device using the specified device MXID and pipeline.
+        Upon successful connection, it initializes calibration data, intrinsics, calibrator, output queues, and
+        continuously processes requests in queues until stopped. Handles video previewing, image processing,
+        and point cloud generation requests.
 
-        :return: Nothing
+        :return: None
         """
         device_info = dai.DeviceInfo(self.sMxId)  # MXID
         try:
@@ -295,7 +310,7 @@ class Camera:
             logger.error(f"Failed to connect to the camera: {e}")
             self.bConnected = False
 
-    def calibrateCamera(self, dictWorldPoints):
+    def calibrateCamera(self, dictWorldPoints: dict[int, list[float, float, float]]) -> np.ndarray:
         """
         Calibrates the camera using a set of known world points and an input image where a calibration object
         (e.g., a checkerboard) is visible.
@@ -330,7 +345,7 @@ class Camera:
 
         logger.debug("Calibrating done")
 
-        return trans_mat
+        return np.asarray(trans_mat)
 
     def getCalibrationImageAnnot(self):
         """
@@ -342,7 +357,7 @@ class Camera:
 
         return self.imgCalibration
 
-    def __configurePipeline(self):
+    def __configurePipeline(self) -> None:
         """
         Configures a DepthAI pipeline consisting of multiple cameras, processing nodes, and output streams.
         The pipeline includes components for color image capture,
