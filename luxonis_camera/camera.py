@@ -214,82 +214,86 @@ class Camera:
         :return: Nothing
         """
         device_info = dai.DeviceInfo(self.sMxId)  # MXID
-        logger.info(f"Trying to connect to camera {self.sMxId}")
-        with dai.Device(self.oPipeline, device_info, dai.UsbSpeed.SUPER) as device:
-            logger.info("Camera connected")
+        try:
+            logger.info(f"Trying to connect to camera {self.sMxId}")
+            with dai.Device(self.oPipeline, device_info, dai.UsbSpeed.SUPER) as device:
+                logger.info("Camera connected")
 
-            self.bConnected = True
+                self.bConnected = True
 
-            ## Read and save calibration data
-            calibData = device.readCalibration()
-            calibData.eepromToJsonFile(Path("cam-calibration-data.json"))
+                ## Read and save calibration data
+                calibData = device.readCalibration()
+                calibData.eepromToJsonFile(Path("cam-calibration-data.json"))
 
-            ## Read camera intrinsics for selected resolution
-            intrinsics1080p = calibData.getCameraIntrinsics(
-                cameraId=dai.CameraBoardSocket.CAM_A,
-                resizeWidth=1920,
-                resizeHeight=1080,
-                keepAspectRatio=True
-            )
+                ## Read camera intrinsics for selected resolution
+                intrinsics1080p = calibData.getCameraIntrinsics(
+                    cameraId=dai.CameraBoardSocket.CAM_A,
+                    resizeWidth=1920,
+                    resizeHeight=1080,
+                    keepAspectRatio=True
+                )
 
-            self.arrCameraMatrix = intrinsics1080p
+                self.arrCameraMatrix = intrinsics1080p
 
-            ## Create calibration object
-            self.oCalibrator = CameraCalibrator(intrinsics1080p)
+                ## Create calibration object
+                self.oCalibrator = CameraCalibrator(intrinsics1080p)
 
-            ## Create queue objects
-            qOut = device.getOutputQueue(name="out", maxSize=5,
-                                         blocking=False)  # blocking False --> no pipeline freezing
+                ## Create queue objects
+                qOut = device.getOutputQueue(name="out", maxSize=5,
+                                             blocking=False)  # blocking False --> no pipeline freezing
 
-            qRgbPreview = device.getOutputQueue(name="rgb", maxSize=5,
-                                                blocking=False)
+                qRgbPreview = device.getOutputQueue(name="rgb", maxSize=5,
+                                                    blocking=False)
 
-            ## Empty output buffer
-            while not self.evStop.is_set():
-                inRgbPreview = qRgbPreview.get()
+                ## Empty output buffer
+                while not self.evStop.is_set():
+                    inRgbPreview = qRgbPreview.get()
 
-                ## Always read video preview (smaller format)
-                cvBGRFramePreview = inRgbPreview.getCvFrame()
-                self.cvVideoPreview = cvBGRFramePreview
+                    ## Always read video preview (smaller format)
+                    cvBGRFramePreview = inRgbPreview.getCvFrame()
+                    self.cvVideoPreview = cvBGRFramePreview
 
-                try:
-                    ## Get request (FIFO) if any
-                    sRequest = self.request_queue.get_nowait()
+                    try:
+                        ## Get request (FIFO) if any
+                        sRequest = self.request_queue.get_nowait()
 
-                    ## TODO: https://docs.luxonis.com/software/depthai/examples/latency_measurement/
+                        ## TODO: https://docs.luxonis.com/software/depthai/examples/latency_measurement/
 
-                    ## Check for correct request type
-                    if sRequest == CV_IMG_REQUEST:
-                        logger.debug("Image request received")
+                        ## Check for correct request type
+                        if sRequest == CV_IMG_REQUEST:
+                            logger.debug("Image request received")
 
-                        inMessageGroup = qOut.get()  # depthai.MessageGroup object
-                        inColor = inMessageGroup["color"]  # Get message object
-                        cvBGRFrame = inColor.getCvFrame()
+                            inMessageGroup = qOut.get()  # depthai.MessageGroup object
+                            inColor = inMessageGroup["color"]  # Get message object
+                            cvBGRFrame = inColor.getCvFrame()
 
-                        ## Put response into dedicated queue
-                        self.response_queues[CV_IMG_REQUEST].put(cvBGRFrame)
+                            ## Put response into dedicated queue
+                            self.response_queues[CV_IMG_REQUEST].put(cvBGRFrame)
 
-                    if sRequest == PCD_REQUEST:
-                        logger.debug("Pointcloud request received")
-                        inMessageGroup = qOut.get()  # depthai.MessageGroup object
+                        if sRequest == PCD_REQUEST:
+                            logger.debug("Pointcloud request received")
+                            inMessageGroup = qOut.get()  # depthai.MessageGroup object
 
-                        inColor = inMessageGroup["color"]  # Get message object
-                        inPointCloud = inMessageGroup["pcl"]  # Get message object
+                            inColor = inMessageGroup["color"]  # Get message object
+                            inPointCloud = inMessageGroup["pcl"]  # Get message object
 
-                        cvBGRFrame = inColor.getCvFrame()
-                        arrPoints = inPointCloud.getPoints()  # numpy.ndarray[numpy.float32]
-                        arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
+                            cvBGRFrame = inColor.getCvFrame()
+                            arrPoints = inPointCloud.getPoints()  # numpy.ndarray[numpy.float32]
+                            arrColors = cvBGRFrame.reshape(-1, 3) / 255.0
 
-                        ## Put response into dedicated queue (as tuple)
-                        self.response_queues[PCD_REQUEST].put(
-                            (arrPoints, arrColors)
-                        )
+                            ## Put response into dedicated queue (as tuple)
+                            self.response_queues[PCD_REQUEST].put(
+                                (arrPoints, arrColors)
+                            )
 
-                except queue.Empty:
-                    ## Skip if que is empty
-                    pass
+                    except queue.Empty:
+                        ## Skip if que is empty
+                        pass
 
-        logger.debug("Camera context manager ended")
+            logger.debug("Camera context manager ended")
+        except Exception as e:
+            logger.error(f"Failed to connect to the camera: {e}")
+            self.bConnected = False
 
     def calibrateCamera(self, dictWorldPoints):
         """
