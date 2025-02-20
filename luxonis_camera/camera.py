@@ -368,6 +368,8 @@ class Camera:
 
         ## Calculating nodes ##
         nodeDepth = self.oPipeline.create(dai.node.StereoDepth)
+        nodeDepth.setSubpixel(True)
+        nodeDepth.setLeftRightCheck(True)
         nodeDepth.setDefaultProfilePreset(
             dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset high accuracy (No median filter)
 

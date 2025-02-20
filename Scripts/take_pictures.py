@@ -7,8 +7,6 @@ from datetime import datetime
 import os
 import open3d as o3d
 
-
-
 oCamera = Camera(iFPS=5)
 sMxId = "1844301011B546F500"
 # print(getConnectedDevices())
@@ -49,7 +47,6 @@ def preview_loop(target_fps=5):
                 pcd = oCamera.getColoredPointCloud()
                 pointcloud_path = os.path.join("pointclouds", f"{timestamp}.ply")
                 o3d.io.write_point_cloud(pointcloud_path, pcd)
-
 
     finally:
         cv2.destroyAllWindows()

@@ -95,11 +95,11 @@ class ObjectSegmentation:
 
         ## Remove noise using morphological opening (= erode followed by dilute)
         kernel = np.ones((3, 3), np.uint8)
-        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_OPEN, kernel, iterations=2)
+        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_OPEN, kernel, iterations=3)
 
         ## Close holes in objects using morphological closing ( = dilute followed by erosion)
-        kernel = np.ones((7,7),np.uint8)
-        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_CLOSE, kernel, iterations=3)
+        kernel = np.ones((5, 5),np.uint8)
+        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_CLOSE, kernel, iterations=2)
 
         ## Save masked image after removing noise + closing holes
         self.img_cleaned = img_masked
