@@ -6,7 +6,12 @@ import logging
 logger = logging.getLogger("Segmentation")
 
 class ObjectSegmentation:
-    def __init__(self, x_min, y_min, x_max, y_max):
+    """
+    ObjectSegmentation is a class for performing image segmentation using the Watershed algorithm.
+    The class allows segmentation within a predefined region of interest (ROI)
+    and includes methods for thresholding, morphological operations, and visualization of the segmentation process.
+    """
+    def __init__(self, x_min: int, y_min:int, x_max:int, y_max:int):
         logger.debug("Initializing ObjectSegmentation object with ROI: "
                      "x_min=%d, y_min=%d, x_max=%d, y_max=%d", x_min, y_min, x_max, y_max)
 
@@ -30,47 +35,53 @@ class ObjectSegmentation:
         self.watershed_img = None
 
 
-    def getSegmentatedImage(self, cvImg):
-        ## Returns array (1080, 1920) with integer values indicating segmented object
-        ## TODO: Figure out what to do with segmentated background
+    def getSegmentatedImage(self, cvImg: np.ndarray) -> np.ndarray:
+        """
+        :param cvImg: Input image in the form of a numpy ndarray.
+        :return: A segmented image as a numpy ndarray with shape (1080, 1920), where each integer value indicates a segmented object.
+        """
 
-        logger.info("Starting segmentation process")
         logger.debug(f"Input image shape: {cvImg.shape}")
         self.__watershed(cvImg)
 
         logger.info("Watershed segmentation completed successfully")
         return self.watershed_img
 
-    def __watershed(self, img):
-        logger.info("Performing Watershed algorithm")
+    def __watershed(self, image: np.ndarray) -> None:
+        """
+        :param image: The input image as a NumPy ndarray, in BGR color space.
+        :return: None
+        """
+
         ## Set img attribute
-        self.cvImage = img
+        self.cvImage = image
 
         ## 1. Convert to gray colour scale
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         ## 2. Distinguish foreground (255) from background (0) using Otsu's method
-        logger.debug("Applying Otsu's thresholding")
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         logger.debug(f"Thresholding completed; threshold shape: {thresh.shape}")
 
         ## 3. Define everything outside ROI as background
-        logger.debug("Applying ROI to thresholded image")
         thresh = self.__applyROI(thresh)
 
         ## 4. Threshold image processing
-        logger.info("Processing masked image for noise removal and hole closing")
         self.__processMaskedImage(thresh)
 
         ## 5. Create labeling markers
-        logger.info("Creating markers for Watershed algorithm")
         self.__createMarkers()
 
         self.watershed_img = cv2.watershed(self.cvImage, self.markers)
 
 
-    def __applyROI(self, img_thresh):
+    def __applyROI(self, img_thresh: np.ndarray) -> np.ndarray:
+        """
+        :param img_thresh: Input thresholded image as a NumPy array.
+        :return: ROI-applied thresholded image as a NumPy array.
+        """
+
         thresh_masked = np.zeros_like(img_thresh)
 
         thresh_masked[self.y_min:self.y_max, self.x_min:self.x_max] = img_thresh[self.y_min:self.y_max, self.x_min:self.x_max]
@@ -78,6 +89,17 @@ class ObjectSegmentation:
         return thresh_masked
 
     def __createMarkers(self):
+        """
+        Creates and initializes the markers for the Watershed algorithm.
+
+        This method utilizes the connected components of the foreground object (`sure_fg`)
+        to generate markers required for the Watershed segmentation. It increments all
+        marker values by 1 to ensure the background, previously marked as 0, is not
+        treated as unknown. Regions marked as `unknown` are set to 0 in the markers.
+
+        :return: None. Modifies the instance attribute `self.markers`.
+        """
+
         _, self.markers = cv2.connectedComponents(self.sure_fg)
         ## Don't mark background (0 -> 1) as unknown (0)
         self.markers = self.markers + 1
@@ -90,7 +112,17 @@ class ObjectSegmentation:
         logger.debug(f"Markers shape: {self.markers.shape}")
 
 
-    def __processMaskedImage(self, img_masked):
+    def __processMaskedImage(self, img_masked: np.ndarray) -> None:
+        """
+        Processes a masked image to clean noise, close holes, and define regions for further analysis
+        such as sure background, sure foreground, and unknown regions.
+
+        Involves morphological operations and distance transformation.
+
+        :param img_masked: Input masked image as a numpy ndarray to be processed.
+        :return: None
+        """
+
         # TODO: Remove hardcoded kernels
 
         ## Remove noise using morphological opening (= erode followed by dilute)
@@ -118,6 +150,14 @@ class ObjectSegmentation:
         self.unknown = cv2.subtract(self.sure_bg, self.sure_fg)
 
     def debugVisuals(self):
+        """
+        Displays a series of visualizations in a 2x3 grid format showing different stages or aspects of image processing.
+        The stages include segmented image, cleaned image, sure background, sure foreground, unknown region,
+        and distance transform. Each image is shown in grayscale, with titles corresponding to the stage it represents.
+
+        :return: None
+        """
+
         fig, axes = plt.subplots(2, 3, figsize=(8, 6))
         images = [self.watershed_img, self.img_cleaned, self.sure_bg, self.sure_fg, self.unknown, self.dist_transform]
         titles = ["Segmentated Image", "Cleaned Image", "Sure Background", "Sure Foreground", "Unknown Region",

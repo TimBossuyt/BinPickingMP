@@ -10,14 +10,28 @@ from segmentation import ObjectSegmentation
 from utils import visualizeDensities, display_point_clouds
 ## ------------------------------------
 
+class SceneParameters:
+    def __init__(self):
+        ## Define all the default values
+        pass
+
+    def loadSettingsJson(self, sFileName):
+        pass
+
+    def parseJson(self):
+        pass
+
+
 class Scene:
     """
     Manages scene pointcloud for pose estimation
     """
 
-    def __init__(self, pcd, iWidthImage, iHeightImage, iVoxelSize, iOutlierNeighbours, iStd):
+    def __init__(self, raw_pcd: o3d.geometry.PointCloud, iWidthImage: int, iHeightImage: int,
+                 iVoxelSize: int, iOutlierNeighbours: int, iStd: float):
+
         ## Save settings
-        self.pcdRaw = pcd
+        self.pcdRaw = raw_pcd
         self.iVoxelSize = iVoxelSize
         self.iOutlierNeighbours = iOutlierNeighbours
         self.iStd = iStd
@@ -44,7 +58,7 @@ class Scene:
         self.dictProcessedPcds = self.__processObjects()
 
 
-    def displayObjectPoints(self):
+    def displayObjectPoints(self) -> None:
         geometries = []
         ## 3D Plot of each object with different colors
         for _id, pointcloud in self.dictProcessedPcds.items():
@@ -60,7 +74,7 @@ class Scene:
 
         o3d.visualization.draw_geometries(geometries)
 
-    def __createObjectsDict(self):
+    def __createObjectsDict(self) -> dict[int, np.ndarray]:
         dictObjects = {}
 
         ## apply mask for each detected object to the dictionary with the XYZ points as an array to corresponding key
@@ -72,7 +86,7 @@ class Scene:
 
         return dictObjects
 
-    def __processObjects(self):
+    def __processObjects(self) -> dict[int, o3d.geometry.PointCloud]:
         pcds = {}
 
         for _id, points in self.dictObjects.items():
@@ -80,7 +94,7 @@ class Scene:
 
         return pcds
 
-    def __processPoints(self, points):
+    def __processPoints(self, points: np.ndarray) -> o3d.geometry.PointCloud:
         ## Returns processed pointcloud with normals
 
         ## 1. Create pointcloud from points
@@ -108,8 +122,9 @@ class Scene:
         return pcd_reconstructed
 
     @staticmethod
-    def __surfaceReconstruction(pointcloud, iRawNormalRadius, iPoissonDepth,
-                                iDensityThreshold, iTaubinInter, iPoints, bVisualize):
+    def __surfaceReconstruction(pointcloud: o3d.geometry.PointCloud, iRawNormalRadius: int, iPoissonDepth: int,
+                                iDensityThreshold: float, iTaubinInter: int,
+                                iPoints: int, bVisualize: bool) -> o3d.geometry.PointCloud:
 
         ## 1. First normal estimation
         # Orient normals to camera (upwards)
@@ -159,7 +174,7 @@ class Scene:
 if __name__ == "__main__":
     pcd = o3d.io.read_point_cloud(Path("2025-02-20_19-46-58.ply"))
 
-    oScene = Scene(pcd=pcd,
+    oScene = Scene(raw_pcd=pcd,
                    iWidthImage=1920,
                    iHeightImage=1080,
                    iVoxelSize=5,

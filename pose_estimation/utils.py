@@ -2,17 +2,12 @@ import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
 
-def filter_points_by_x_range(pcd, x_min, x_max):
+def filter_points_by_x_range(pcd: o3d.geometry.PointCloud, x_min: int, x_max:int) -> o3d.geometry.PointCloud:
     """
-    Removes points from the input point cloud where x values are in the range [x_min, x_max].
-
-    Parameters:
-        pcd (open3d.geometry.PointCloud): The input point cloud.
-        x_min (float): The minimum x value of the range.
-        x_max (float): The maximum x value of the range.
-
-    Returns:
-        open3d.geometry.PointCloud: The filtered point cloud.
+    :param pcd: Input point cloud containing 3D points
+    :param x_min: Minimum x-coordinate value to filter the points
+    :param x_max: Maximum x-coordinate value to filter the points
+    :return: A new point cloud containing only the points within the specified x-coordinate range
     """
 
     # Get the numpy array of points
@@ -38,16 +33,12 @@ def filter_points_by_x_range(pcd, x_min, x_max):
 
     return filtered_pcd
 
-def visualizeDensities(arrDensities, msh):
+def visualizeDensities(arrDensities: np.ndarray, msh: o3d.geometry.Vertex):
     """
-    Visualizes the vertex densities on a mesh using a color map.
-
-    Parameters:
-    - arrDensities: Array of densities for each vertex.
-    - msh: Open3D TriangleMesh object.
-
-    Returns:
-    None
+    :param arrDensities: An array containing the density values associated with the vertices of a mesh.
+                        The values are used to map corresponding vertex colors using a colormap.
+    :param msh: The input mesh object from Open3D containing vertices, triangles, and triangle normals.
+    :return: None. Displays a visualization of the mesh with vertex colors mapped based on the provided density values.
     """
     densities = arrDensities
     density_colors = plt.get_cmap('plasma')(
@@ -61,17 +52,17 @@ def visualizeDensities(arrDensities, msh):
     display_point_clouds([density_mesh], "Density mesh visualization", False)
 
 
-def display_point_clouds(arrPointClouds, sWindowTitle, bShowNormals=False, bShowOrigin=False, iOriginSize=0):
+def display_point_clouds(arrPointClouds: [o3d.geometry.PointCloud], sWindowTitle: str,
+                         bShowNormals:bool=False, bShowOrigin:bool=False, iOriginSize:int=0):
     """
-    Displays a list of Open3D point clouds in a single visualization window.
+    :param arrPointClouds: List of open3d.geometry.PointCloud objects to be displayed.
+    :param sWindowTitle: Title of the visualization window.
+    :param bShowNormals: Boolean indicating whether to display normals for the point clouds.
+    :param bShowOrigin: Boolean indicating whether to display the coordinate origin in the visualization.
+    :param iOriginSize: Size of the coordinate origin if displayed.
+    :return: None
+    """
 
-    Parameters:
-    - point_clouds: List of Open3D point cloud objects to display.
-    - window_title: Title of the visualization window.
-    - show_normals: Boolean flag to indicate whether to display normals.
-    - show_origin: Boolean flag to indicate whether to display the origin.
-    - iOriginSize: Size of the origin coordinate axes (if show_origin is True).
-    """
     # Check if the list is not empty
     if not arrPointClouds:
         print("Error: The list of point clouds is empty.")
