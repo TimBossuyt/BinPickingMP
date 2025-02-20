@@ -10,22 +10,14 @@ logger = logging.getLogger("RPC-server")
 
 class RpcServer:
     """
-    Class to handle an XML-RPC server for managing camera operations, such as connecting to a camera,
-    fetching camera previews, executing calibration, and other camera-related functionalities.
+    Class to handle an XML-RPC server for managing camera operations + pose-estimation
+
     The server runs on a specified host and port, and exposes multiple remote procedure call (RPC) endpoints.
 
     Methods:
         - Run: Starts the XML-RPC server.
-        - __run: Internal method to initiate the server's loop.
         - Stop: Stops the server and terminates associated threads.
         - register_methods: Registers all the RPC methods for the server.
-        - connect: Establishes a connection and tests it.
-        - getConnectedDevices: Retrieves a list of connected devices.
-        - getCameraPreview: Fetches a preview frame from the connected camera or placeholder image.
-        - getImageFrame: Retrieves a single image frame or fallback image from a camera.
-        - connectCameraByMxId: Connects to a camera identified by a given MxId.
-        - runCalibration: Runs camera calibration using provided world points.
-        - getCalibrationImage: Retrieves the calibration image in Base64 format.
     """
     def __init__(self, oCamera: Camera, host="127.0.0.1", port=8005):
         """
