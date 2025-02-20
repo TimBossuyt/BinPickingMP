@@ -117,6 +117,18 @@ class ObjectSegmentation:
         self.sure_fg = np.uint8(self.sure_fg)
         self.unknown = cv2.subtract(self.sure_bg, self.sure_fg)
 
+    def debugVisuals(self):
+        fig, axes = plt.subplots(2, 3, figsize=(8, 6))
+        images = [self.watershed_img, self.img_cleaned, self.sure_bg, self.sure_fg, self.unknown, self.dist_transform]
+        titles = ["Segmentated Image", "Cleaned Image", "Sure Background", "Sure Foreground", "Unknown Region",
+                  "Distance Transform"]
+        for ax, image, title in zip(axes.flat, images, titles):
+            ax.imshow(image, cmap='gray')
+            ax.set_title(title)
+            ax.axis('off')
+        plt.tight_layout()
+        plt.show()
+
 
 
 if __name__ == '__main__':
@@ -127,17 +139,5 @@ if __name__ == '__main__':
     segm_image = oSegmentation.getSegmentatedImage(img)
 
     ## Debugging visuals
-    fig, axes = plt.subplots(2, 3, figsize=(8, 6))
-    images = [segm_image, oSegmentation.img_cleaned, oSegmentation.sure_bg, oSegmentation.sure_fg,
-              oSegmentation.unknown, oSegmentation.dist_transform]
-    titles = ["Segmentated Image", "Cleaned image", "Sure Background", "Sure Foreground", "Unknown Region",
-              "Distance Transform"]
-
-    for ax, image, title in zip(axes.flat, images, titles):
-        ax.imshow(image, cmap='gray')
-        ax.set_title(title)
-        ax.axis('off')
-
-    plt.tight_layout()
-    plt.show()
+    oSegmentation.debugVisuals()
 

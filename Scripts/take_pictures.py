@@ -5,6 +5,7 @@ import time
 import imutils
 from datetime import datetime
 import os
+import open3d as o3d
 
 
 
@@ -44,6 +45,11 @@ def preview_loop(target_fps=5):
                 filename = f"images/{timestamp}.jpg"
                 cv2.imwrite(filename, frame)
                 print(f"Image saved: {filename}")
+
+                pcd = oCamera.getColoredPointCloud()
+                pointcloud_path = os.path.join("pointclouds", f"{timestamp}.ply")
+                o3d.io.write_point_cloud(pointcloud_path, pcd)
+
 
     finally:
         cv2.destroyAllWindows()
