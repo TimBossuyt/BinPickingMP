@@ -24,7 +24,29 @@ class SceneParameters:
 
 class Scene:
     """
-    Manages scene pointcloud for pose estimation
+    A class for handling 3D point cloud data, performing object segmentation, processing detected objects, and reconstructing surfaces.
+
+    Attributes:
+    raw_pcd (o3d.geometry.PointCloud): The raw point cloud containing 3D coordinates and color information.
+    iWidthImage (int): The width of the corresponding 2D image.
+    iHeightImage (int): The height of the corresponding 2D image.
+    iVoxelSize (int): The voxel size used for downsampling the point cloud.
+    iOutlierNeighbours (int): Number of neighbors to consider when removing statistical outliers.
+    iStd (float): The standard deviation threshold for statistical outlier removal.
+    arrColours (np.ndarray): The color information in BGR format, reshaped to match the dimensions of the 2D image.
+    oMasks (ObjectMasks): Object mask segmentation object.
+    dictMasks (dict): A dictionary containing masks for each segmented object.
+    arrPoints (np.ndarray): 3D camera coordinates of the points in the cloud.
+    dictObjects (dict): A dictionary mapping object IDs to their corresponding 3D points.
+    dictProcessedPcds (dict): A dictionary containing processed point clouds for each detected object.
+
+    Methods:
+    __init__: Initializes the scene object from a raw point cloud and performs preprocessing including object segmentation.
+    displayObjectPoints: Visualizes 3D point clouds for each segmented object with different colors in a 3D space.
+    __createObjectsDict: Creates a dictionary mapping object IDs to corresponding 3D points based on segmentation masks.
+    __processObjects: Processes each object's 3D points to produce downsampled and reconstructed point clouds.
+    __processPoints: Processes a set of 3D points to create a downsampled point cloud, remove outliers, and perform surface reconstruction.
+    __surfaceReconstruction: Performs surface reconstruction using Poisson reconstruction, density filtering, and Taubin smoothing.
     """
 
     def __init__(self, raw_pcd: o3d.geometry.PointCloud, iWidthImage: int, iHeightImage: int,
@@ -59,6 +81,12 @@ class Scene:
 
 
     def displayObjectPoints(self) -> None:
+        """
+        Generates a 3D visualization of processed point clouds where each object is displayed with a unique color.
+        Adds a coordinate frame as the origin to the visualization.
+
+        :return: None
+        """
         geometries = []
         ## 3D Plot of each object with different colors
         for _id, pointcloud in self.dictProcessedPcds.items():
@@ -75,6 +103,15 @@ class Scene:
         o3d.visualization.draw_geometries(geometries)
 
     def __createObjectsDict(self) -> dict[int, np.ndarray]:
+        """
+        Creates a dictionary of objects where each key corresponds to an object's ID and the value
+        is a numpy array of XYZ coordinates associated with that object.
+
+        For each detected object ID, applies a mask to extract the corresponding XYZ points.
+        Points with a z-coordinate value of 0 (invalid points) are removed.
+
+        :return: Dictionary where the keys are object IDs (integers) and the values are numpy arrays of XYZ points.
+        """
         dictObjects = {}
 
         ## apply mask for each detected object to the dictionary with the XYZ points as an array to corresponding key
@@ -87,6 +124,11 @@ class Scene:
         return dictObjects
 
     def __processObjects(self) -> dict[int, o3d.geometry.PointCloud]:
+        """
+        Processes objects by converting their points into PointCloud objects and mapping them to their respective IDs.
+
+        :return: A dictionary mapping object IDs (int) to their corresponding PointCloud objects (o3d.geometry.PointCloud)
+        """
         pcds = {}
 
         for _id, points in self.dictObjects.items():
@@ -95,7 +137,15 @@ class Scene:
         return pcds
 
     def __processPoints(self, points: np.ndarray) -> o3d.geometry.PointCloud:
-        ## Returns processed pointcloud with normals
+        """
+        Processes a given point cloud by performing a series of operations including down-sampling,
+        outlier removal, and surface reconstruction.
+
+        :param points: Input point cloud data as a numpy array.
+        :type points: np.ndarray
+        :return: Processed point cloud with computed normals.
+        :rtype: o3d.geometry.PointCloud
+        """
 
         ## 1. Create pointcloud from points
         pcd_raw = o3d.geometry.PointCloud()
@@ -125,6 +175,16 @@ class Scene:
     def __surfaceReconstruction(pointcloud: o3d.geometry.PointCloud, iRawNormalRadius: int, iPoissonDepth: int,
                                 iDensityThreshold: float, iTaubinInter: int,
                                 iPoints: int, bVisualize: bool) -> o3d.geometry.PointCloud:
+        """
+        :param pointcloud: Input point cloud for surface reconstruction.
+        :param iRawNormalRadius: Radius used for initial normal estimation.
+        :param iPoissonDepth: Depth parameter for the Poisson surface reconstruction algorithm.
+        :param iDensityThreshold: Threshold for removing vertices based on density during reconstruction.
+        :param iTaubinInter: Number of iterations for Taubin smoothing filter.
+        :param iPoints: Number of points to sample after reconstruction.
+        :param bVisualize: Flag to visualize intermediate steps during reconstruction.
+        :return: Reconstructed point cloud after surface reconstruction and smoothing.
+        """
 
         ## 1. First normal estimation
         # Orient normals to camera (upwards)
@@ -167,7 +227,6 @@ class Scene:
         pointcloud_reconstructed.estimate_normals(oNormalSearchParam)
 
         return pointcloud_reconstructed
-
 
 
 
