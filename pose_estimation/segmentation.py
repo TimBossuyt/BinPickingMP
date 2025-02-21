@@ -6,7 +6,9 @@ from settings import SettingsManager
 
 logger = logging.getLogger("Segmentation")
 
+
 class ObjectSegmentation:
+
     """
     ObjectSegmentation is a class for performing image segmentation using the Watershed algorithm.
     The class allows segmentation within a predefined region of interest (ROI)
@@ -30,7 +32,7 @@ class ObjectSegmentation:
         ## Final watershed image
         self.watershed_img = None
 
-    def __loadSettings(self):
+    def __loadSettings(self) -> None:
         ## --------------- ROI ---------------
         self.x_min = self.oSm.get("ObjectSegmentation.ROI.xMin")
         self.y_min = self.oSm.get("ObjectSegmentation.ROI.yMin")
@@ -39,7 +41,6 @@ class ObjectSegmentation:
 
         ## ---------------- Morphological Operations ------------
         kernel = self.oSm.get("ObjectSegmentation.MorphologicalProcessing.OpeningKernel")
-        print(kernel)
         self.OpeningKernelSize = (kernel[0], kernel[1])
         self.OpeningIterations = self.oSm.get("ObjectSegmentation.MorphologicalProcessing.OpeningIterations")
 
@@ -55,6 +56,8 @@ class ObjectSegmentation:
 
         ## ---------------- Sure Foreground ------------
         self.SureFgThreshold = self.oSm.get("ObjectSegmentation.SureForeground.Threshold")
+
+        logger.debug("Settings set correctly")
 
 
     def getSegmentatedImage(self, cvImg: np.ndarray) -> np.ndarray:
@@ -194,7 +197,7 @@ class ObjectSegmentation:
 
 
 if __name__ == '__main__':
-    img = cv2.imread("segmentation_example.jpg")
+    img = cv2.imread("test_input/segmentation_example.jpg")
     sm = SettingsManager("default_settings.json")
 
 

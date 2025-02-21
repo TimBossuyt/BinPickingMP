@@ -32,6 +32,11 @@
   },
 
   "Scene": {
+    "CameraResolution": {
+      "WidthImage": 1920,
+      "HeightImage": 1080
+    },
+
     "BasicProcessing": {
       "VoxelSize": 5,
       "OutlierNeighbours": 10,
@@ -44,7 +49,8 @@
       "PoissonDepth": 9,
       "DensityThreshold": 0.5,
       "TaubinIter": 100,
-      "NumberOfPoints": 700
+      "NumberOfPoints": 700,
+      "bVisualize": 1
     }
   },
 

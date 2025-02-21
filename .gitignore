@@ -179,3 +179,4 @@ cython_debug/
 #.idea/
 /Scripts/images/
 /Scripts/pointclouds/
+/pose_estimation/test_input/
