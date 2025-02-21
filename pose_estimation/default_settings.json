@@ -38,7 +38,7 @@
     },
 
     "BasicProcessing": {
-      "VoxelSize": 5,
+      "VoxelSize": 3,
       "OutlierNeighbours": 10,
       "Std": 1
     },
@@ -50,13 +50,29 @@
       "DensityThreshold": 0.5,
       "TaubinIter": 100,
       "NumberOfPoints": 700,
-      "bVisualize": 1
+      "bVisualize": 0
     }
   },
 
   "Model": {
     "NumberOfPoints": 1000,
     "NormalRadius": 7
+  },
+
+  "PoseEstimation": {
+    "General": {
+      "VoxelSize": 5
+    },
+
+    "FeatureParams": {
+      "FeatureFactor": 20,
+      "MaxNeighbours": 100
+    },
+
+    "Matching": {
+      "DistanceFactor": 2,
+      "IcpDistanceFactor": 2
+    }
   }
 
 }

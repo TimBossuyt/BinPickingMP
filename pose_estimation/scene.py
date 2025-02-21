@@ -71,7 +71,7 @@ class Scene:
         self.iPoints = self.oSm.get("Scene.SurfaceReconstruction.NumberOfPoints")
 
         value = self.oSm.get("Scene.SurfaceReconstruction.bVisualize")
-        self.bVisualize = (value == 1)
+        self.bVisualize = (value == 1) ## Sets true if 1 and false if 0
 
         logger.debug("Settings set correctly")
 
