@@ -2,6 +2,7 @@ from luxonis_camera import Camera
 import logging.config
 import datetime
 from xmlrpc_server import RpcServer
+from viz import PointCloudVisualizer
 
 
 
@@ -19,8 +20,7 @@ logger = logging.getLogger("Main")
 
 ########## Camera setup ##########
 oCamera = Camera(5)
-###################################
-
+##################################
 
 ########## XML-RPC setup ##########
 oServer = RpcServer(
@@ -30,8 +30,15 @@ oServer = RpcServer(
 )
 ###################################
 
+########## Visualizer setup ##########
+oVisualizer = PointCloudVisualizer(oServer)
+###################################
+
+
+
 def main():
     oServer.Run()
+    oVisualizer.Run()
 
     ## Press enter to exit the program
     input()

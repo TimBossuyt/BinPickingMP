@@ -63,7 +63,7 @@ class PoseEstimatorFPFH:
             max_correspondence_distance=self.iVoxelSize*self.icpDistanceFactor,
             init=oInitialMatch.transformation,
             estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=30)
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200)
         )
 
 

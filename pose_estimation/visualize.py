@@ -15,7 +15,7 @@ class TransformVisualizer:
         self.dictTransforms = transformations
 
     def displayFoundObjects(self):
-        pcds = [self.oScene.pcdRaw]
+        pcds = [self.oScene.pcdROI]
 
         for _id, transform in self.dictTransforms.items():
             pcdModel = self.oModel.pcdModel

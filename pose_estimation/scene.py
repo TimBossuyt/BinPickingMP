@@ -52,7 +52,16 @@ class Scene:
         ## Process the object point clouds
         self.dictProcessedPcds = self.__processObjects()
 
+        ## Save the ROI of the scene
+        self.pcdROI = self.__selectROI()
+
     def __loadSettings(self) -> None:
+        ## --------------- ROI Settings ---------------
+        self.x_min = self.oSm.get("ObjectSegmentation.ROI.xMin")
+        self.y_min = self.oSm.get("ObjectSegmentation.ROI.yMin")
+        self.x_max = self.oSm.get("ObjectSegmentation.ROI.xMax")
+        self.y_max = self.oSm.get("ObjectSegmentation.ROI.yMax")
+
         ## --------------- Resolution Settings ---------------
         self.iHeightImage = self.oSm.get("Scene.CameraResolution.HeightImage")
         self.iWidthImage = self.oSm.get("Scene.CameraResolution.WidthImage")
@@ -75,6 +84,26 @@ class Scene:
 
         logger.debug("Settings set correctly")
 
+
+    def __selectROI(self):
+        ## Create points and colours arrays with correct shapes
+        points = np.asarray(self.pcdRaw.points).reshape(self.iHeightImage, self.iWidthImage, 3)
+        colors = np.asarray(self.pcdRaw.colors).reshape(self.iHeightImage, self.iWidthImage, 3)
+
+        sub_points = points[self.y_min:self.y_max, self.x_min:self.x_max]
+        sub_colors = colors[self.y_min:self.y_max, self.x_min:self.x_max]
+
+        sub_pcd = o3d.geometry.PointCloud()
+        sub_pcd.points = o3d.utility.Vector3dVector(sub_points.reshape(-1, 3))
+        sub_pcd.colors = o3d.utility.Vector3dVector(sub_colors.reshape(-1, 3))
+
+        ## Downsample
+        sub_pcd_down = sub_pcd.voxel_down_sample(voxel_size=5)
+
+        ## Filter the outliers
+        pcd_roi, _ = sub_pcd_down.remove_statistical_outlier(50, 0.1)
+
+        return pcd_roi
 
     def displayObjectPoints(self) -> None:
         """
