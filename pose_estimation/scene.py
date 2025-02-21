@@ -166,6 +166,7 @@ class Scene:
             iDensityThreshold=0.5,
             iTaubinInter=100,
             iPoints = 700,
+            iProcessedNormalRadius=7,
             bVisualize=False
         )
 
@@ -174,7 +175,7 @@ class Scene:
     @staticmethod
     def __surfaceReconstruction(pointcloud: o3d.geometry.PointCloud, iRawNormalRadius: int, iPoissonDepth: int,
                                 iDensityThreshold: float, iTaubinInter: int,
-                                iPoints: int, bVisualize: bool) -> o3d.geometry.PointCloud:
+                                iPoints: int, iProcessedNormalRadius: int, bVisualize: bool) -> o3d.geometry.PointCloud:
         """
         :param pointcloud: Input point cloud for surface reconstruction.
         :param iRawNormalRadius: Radius used for initial normal estimation.
@@ -223,7 +224,7 @@ class Scene:
 
         pointcloud_reconstructed = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=iPoints)
 
-        oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=7)
+        oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=iProcessedNormalRadius)
         pointcloud_reconstructed.estimate_normals(oNormalSearchParam)
 
         return pointcloud_reconstructed

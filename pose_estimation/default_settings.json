@@ -1,0 +1,56 @@
+{
+  "ObjectSegmentation": {
+    "ROI" : {
+      "xMin": 500,
+      "yMin": 100,
+      "xMax": 1500,
+      "yMax": 800
+    },
+
+    "MorphologicalProcessing": {
+      "OpeningKernel": [3, 3],
+      "OpeningIterations": 3,
+      "ClosingKernel": [5, 5],
+      "ClosingIterations": 2
+    },
+
+    "SureBackground": {
+      "Iterations": 3
+    },
+
+    "DistanceTransform": {
+      "MaskSize": 5
+    },
+
+    "SureForeground": {
+      "Threshold": 0.5
+    }
+  },
+
+  "ObjectMasks": {
+
+  },
+
+  "Scene": {
+    "BasicProcessing": {
+      "VoxelSize": 5,
+      "OutlierNeighbours": 10,
+      "Std": 1
+    },
+
+    "SurfaceReconstruction": {
+      "RawNormalRadius": 7,
+      "ProcessedNormalRadius": 7,
+      "PoissonDepth": 9,
+      "DensityThreshold": 0.5,
+      "TaubinIter": 100,
+      "NumberOfPoints": 700
+    }
+  },
+
+  "Model": {
+    "NumberOfPoints": 1000,
+    "NormalRadius": 7
+  }
+
+}
