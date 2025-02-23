@@ -1,11 +1,11 @@
-from model import Model
-from scene import Scene
-from settings import SettingsManager
-from utils import display_point_clouds
-from pose_estimator import PoseEstimatorFPFH
 import open3d as o3d
 from pathlib import Path
 
+from .model import Model
+from .scene import Scene
+from .settings import SettingsManager
+from .utils import display_point_clouds
+from .pose_estimator import PoseEstimatorFPFH
 
 class TransformVisualizer:
     def __init__(self, model: Model, scene: Scene, transformations: dict):

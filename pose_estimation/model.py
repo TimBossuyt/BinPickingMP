@@ -1,7 +1,7 @@
 import open3d as o3d
-from utils import filter_points_by_x_range
 
-from settings import SettingsManager
+from .utils import filter_points_by_x_range
+from .settings import SettingsManager
 
 class Model:
     """

@@ -1,12 +1,9 @@
-from Tools.scripts.dutree import display
-
-from scene import Scene
-from model import Model
-from settings import SettingsManager
+from .scene import Scene
+from .model import Model
+from .settings import SettingsManager
 import open3d as o3d
 import numpy as np
 from pathlib import Path
-from utils import display_point_clouds
 
 
 class PoseEstimatorFPFH:

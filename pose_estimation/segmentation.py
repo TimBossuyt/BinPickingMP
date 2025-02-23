@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 import logging
-from settings import SettingsManager
+from .settings import SettingsManager
 
 logger = logging.getLogger("Segmentation")
 

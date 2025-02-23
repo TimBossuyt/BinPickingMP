@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from segmentation import ObjectSegmentation
+from .segmentation import ObjectSegmentation
 import cv2
 import logging
 

@@ -6,10 +6,10 @@ import random
 import logging
 
 ## ---------- Custom imports ----------
-from object_masks import ObjectMasks
-from segmentation import ObjectSegmentation
-from settings import SettingsManager
-from utils import visualizeDensities, display_point_clouds
+from .object_masks import ObjectMasks
+from .segmentation import ObjectSegmentation
+from .settings import SettingsManager
+from .utils import visualizeDensities, display_point_clouds
 ## ------------------------------------
 
 

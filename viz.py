@@ -6,15 +6,40 @@ import time
 
 logger = logging.getLogger("Pointcloud Visualizer")
 
+#### !!!!! CODE DOES NOT WORK, VISUALIZER CANNOT WORK IN A SEPARATE THREAD
+
 
 class PointCloudVisualizer:
     def __init__(self, oServer: RpcServer):
         self.oServer = oServer
         self.vis = o3d.visualization.Visualizer()
 
+        self.thread = threading.Thread(target=self.__runVisualizer)
+        self.evStop = threading.Event()
+
     def Run(self):
-        thread = threading.Thread(target=self.__runVisualizer, daemon=True)
-        thread.start()
+
+        self.thread.start()
+        logger.info("Started the pointcloud visualization window")
+
+    def Stop(self):
+        logger.info("Closing pointcloud visualization window")
+        try:
+            self.evStop.set()
+
+            ## Wait for thread to finish
+            if self.thread.is_alive():
+                self.thread.join()
+
+            ## Destroy the window
+            self.vis.destroy_window()
+
+            self.evStop.clear()
+
+            logger.info("Pointcloud visualization window closed")
+
+        except Exception as e:
+            logger.error(f"Error closing visualization window: {e}")
 
     def __runVisualizer(self):
         ## Create visualization window
@@ -28,10 +53,11 @@ class PointCloudVisualizer:
         origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100)
         self.vis.add_geometry(origin)
 
-        while True:
+        while not self.evStop.is_set():
             self.vis.poll_events()
             self.vis.update_renderer()
 
-
             time.sleep(0.05)
+
+
 
