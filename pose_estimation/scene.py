@@ -3,75 +3,48 @@ import open3d as o3d
 from pathlib import Path
 import numpy as np
 import random
+import logging
 
 ## ---------- Custom imports ----------
-from object_masks import ObjectMasks
-from segmentation import ObjectSegmentation
-from utils import visualizeDensities, display_point_clouds
+from .object_masks import ObjectMasks
+from .segmentation import ObjectSegmentation
+from .settings import SettingsManager
+from .utils import visualizeDensities, display_point_clouds
 ## ------------------------------------
 
-class SceneParameters:
-    def __init__(self):
-        ## Define all the default values
-        pass
 
-    def loadSettingsJson(self, sFileName):
-        pass
-
-    def parseJson(self):
-        pass
-
+logger = logging.getLogger("Scene")
 
 class Scene:
     """
-    A class for handling 3D point cloud data, performing object segmentation, processing detected objects, and reconstructing surfaces.
-
-    Attributes:
-    raw_pcd (o3d.geometry.PointCloud): The raw point cloud containing 3D coordinates and color information.
-    iWidthImage (int): The width of the corresponding 2D image.
-    iHeightImage (int): The height of the corresponding 2D image.
-    iVoxelSize (int): The voxel size used for downsampling the point cloud.
-    iOutlierNeighbours (int): Number of neighbors to consider when removing statistical outliers.
-    iStd (float): The standard deviation threshold for statistical outlier removal.
-    arrColours (np.ndarray): The color information in BGR format, reshaped to match the dimensions of the 2D image.
-    oMasks (ObjectMasks): Object mask segmentation object.
-    dictMasks (dict): A dictionary containing masks for each segmented object.
-    arrPoints (np.ndarray): 3D camera coordinates of the points in the cloud.
-    dictObjects (dict): A dictionary mapping object IDs to their corresponding 3D points.
-    dictProcessedPcds (dict): A dictionary containing processed point clouds for each detected object.
-
-    Methods:
-    __init__: Initializes the scene object from a raw point cloud and performs preprocessing including object segmentation.
-    displayObjectPoints: Visualizes 3D point clouds for each segmented object with different colors in a 3D space.
-    __createObjectsDict: Creates a dictionary mapping object IDs to corresponding 3D points based on segmentation masks.
-    __processObjects: Processes each object's 3D points to produce downsampled and reconstructed point clouds.
-    __processPoints: Processes a set of 3D points to create a downsampled point cloud, remove outliers, and perform surface reconstruction.
-    __surfaceReconstruction: Performs surface reconstruction using Poisson reconstruction, density filtering, and Taubin smoothing.
+    A class for handling 3D point cloud data, performing object segmentation, processing detected objects,
+    and reconstructing surfaces.
     """
 
-    def __init__(self, raw_pcd: o3d.geometry.PointCloud, iWidthImage: int, iHeightImage: int,
-                 iVoxelSize: int, iOutlierNeighbours: int, iStd: float):
+    def __init__(self, raw_pcd: o3d.geometry.PointCloud, settingsmanager: SettingsManager):
+        ## Set and load the settings manager
+        self.oSm = settingsmanager
+        self.__loadSettings()
 
-        ## Save settings
+        ## Load pointcloud
         self.pcdRaw = raw_pcd
-        self.iVoxelSize = iVoxelSize
-        self.iOutlierNeighbours = iOutlierNeighbours
-        self.iStd = iStd
 
         ## Create image (BGR) from pointcloud data
-        self.arrColours = np.asarray(self.pcdRaw.colors).reshape(iHeightImage, iWidthImage, 3) * 255
+        self.arrColours = np.asarray(self.pcdRaw.colors).reshape(self.iHeightImage, self.iWidthImage, 3) * 255
         self.arrColours = np.uint8(self.arrColours)
 
         ## Initialize the object segmentation object
-        oSegmentation = ObjectSegmentation(500, 100, 1500, 800)
+        oSegmentation = ObjectSegmentation(
+            oSettingsManager=self.oSm
+        )
+
         self.oMasks = ObjectMasks(self.arrColours, oSegmentation)
 
-        ## Save the masks for each object
+        ## Save the masks for each objetc
         self.dictMasks = self.oMasks.getMasks()
 
         ## 3D Points (camera coordinates)
-        self.arrPoints = np.asarray(self.pcdRaw.points).reshape(iHeightImage, iWidthImage, 3)
-        # print(self.arrPoints.shape)
+        self.arrPoints = np.asarray(self.pcdRaw.points).reshape(self.iHeightImage, self.iWidthImage, 3)
 
         ## Create a dictionary with points of each object
         self.dictObjects = self.__createObjectsDict()
@@ -79,6 +52,58 @@ class Scene:
         ## Process the object point clouds
         self.dictProcessedPcds = self.__processObjects()
 
+        ## Save the ROI of the scene
+        self.pcdROI = self.__selectROI()
+
+    def __loadSettings(self) -> None:
+        ## --------------- ROI Settings ---------------
+        self.x_min = self.oSm.get("ObjectSegmentation.ROI.xMin")
+        self.y_min = self.oSm.get("ObjectSegmentation.ROI.yMin")
+        self.x_max = self.oSm.get("ObjectSegmentation.ROI.xMax")
+        self.y_max = self.oSm.get("ObjectSegmentation.ROI.yMax")
+
+        ## --------------- Resolution Settings ---------------
+        self.iHeightImage = self.oSm.get("Scene.CameraResolution.HeightImage")
+        self.iWidthImage = self.oSm.get("Scene.CameraResolution.WidthImage")
+
+        ## --------------- Basic Processing ---------------
+        self.iVoxelSize = self.oSm.get("Scene.BasicProcessing.VoxelSize")
+        self.iOutlierNeighbours = self.oSm.get("Scene.BasicProcessing.OutlierNeighbours")
+        self.iStd = self.oSm.get("Scene.BasicProcessing.Std")
+
+        ## --------------- Surface Reconstruction ---------------
+        self.iRawNormalRadius = self.oSm.get("Scene.SurfaceReconstruction.RawNormalRadius")
+        self.iProcessedNormalRadius = self.oSm.get("Scene.SurfaceReconstruction.ProcessedNormalRadius")
+        self.iPoissonDepth = self.oSm.get("Scene.SurfaceReconstruction.PoissonDepth")
+        self.iDensityThreshold = self.oSm.get("Scene.SurfaceReconstruction.DensityThreshold")
+        self.iTaubinIter = self.oSm.get("Scene.SurfaceReconstruction.TaubinIter")
+        self.iPoints = self.oSm.get("Scene.SurfaceReconstruction.NumberOfPoints")
+
+        value = self.oSm.get("Scene.SurfaceReconstruction.bVisualize")
+        self.bVisualize = (value == 1) ## Sets true if 1 and false if 0
+
+        logger.debug("Settings set correctly")
+
+
+    def __selectROI(self):
+        ## Create points and colours arrays with correct shapes
+        points = np.asarray(self.pcdRaw.points).reshape(self.iHeightImage, self.iWidthImage, 3)
+        colors = np.asarray(self.pcdRaw.colors).reshape(self.iHeightImage, self.iWidthImage, 3)
+
+        sub_points = points[self.y_min:self.y_max, self.x_min:self.x_max]
+        sub_colors = colors[self.y_min:self.y_max, self.x_min:self.x_max]
+
+        sub_pcd = o3d.geometry.PointCloud()
+        sub_pcd.points = o3d.utility.Vector3dVector(sub_points.reshape(-1, 3))
+        sub_pcd.colors = o3d.utility.Vector3dVector(sub_colors.reshape(-1, 3))
+
+        ## Downsample
+        sub_pcd_down = sub_pcd.voxel_down_sample(voxel_size=5)
+
+        ## Filter the outliers
+        pcd_roi, _ = sub_pcd_down.remove_statistical_outlier(50, 0.1)
+
+        return pcd_roi
 
     def displayObjectPoints(self) -> None:
         """
@@ -161,41 +186,22 @@ class Scene:
         # TODO: Remove hardcoded parameters
         pcd_reconstructed = self.__surfaceReconstruction(
             pointcloud=pcd_down,
-            iRawNormalRadius = 7,
-            iPoissonDepth=9,
-            iDensityThreshold=0.5,
-            iTaubinInter=100,
-            iPoints = 700,
-            bVisualize=False
         )
 
         return pcd_reconstructed
 
-    @staticmethod
-    def __surfaceReconstruction(pointcloud: o3d.geometry.PointCloud, iRawNormalRadius: int, iPoissonDepth: int,
-                                iDensityThreshold: float, iTaubinInter: int,
-                                iPoints: int, bVisualize: bool) -> o3d.geometry.PointCloud:
-        """
-        :param pointcloud: Input point cloud for surface reconstruction.
-        :param iRawNormalRadius: Radius used for initial normal estimation.
-        :param iPoissonDepth: Depth parameter for the Poisson surface reconstruction algorithm.
-        :param iDensityThreshold: Threshold for removing vertices based on density during reconstruction.
-        :param iTaubinInter: Number of iterations for Taubin smoothing filter.
-        :param iPoints: Number of points to sample after reconstruction.
-        :param bVisualize: Flag to visualize intermediate steps during reconstruction.
-        :return: Reconstructed point cloud after surface reconstruction and smoothing.
-        """
 
+    def __surfaceReconstruction(self, pointcloud: o3d.geometry.PointCloud) -> o3d.geometry.PointCloud:
         ## 1. First normal estimation
         # Orient normals to camera (upwards)
         pointcloud.estimate_normals()
         pointcloud.orient_normals_to_align_with_direction([0, 0, -1])
 
         # Recalculate normals with search parameters
-        oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=iRawNormalRadius)
+        oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=self.iRawNormalRadius)
         pointcloud.estimate_normals(oNormalSearchParam)
 
-        if bVisualize:
+        if self.bVisualize:
             display_point_clouds(arrPointClouds=[pointcloud],
                                  sWindowTitle="Estimated normals before reconstruction",
                                  bShowOrigin=True,
@@ -205,25 +211,25 @@ class Scene:
         ## 2. Perform poisson surface reconstruction
         mshSurfRec, arrDensities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
             pcd=pointcloud,
-            depth=iPoissonDepth
+            depth=self.iPoissonDepth
         )
 
         arrDensities = np.asarray(arrDensities)
 
-        if bVisualize:
+        if self.bVisualize:
             visualizeDensities(arrDensities, mshSurfRec)
 
         ## 3. Remove points with the lowest density
-        arrVerticesToRemove = arrDensities < np.quantile(arrDensities, iDensityThreshold)
+        arrVerticesToRemove = arrDensities < np.quantile(arrDensities, self.iDensityThreshold)
         mshSurfRec.remove_vertices_by_mask(arrVerticesToRemove)
 
         ## 4. Smoothing with taubin filter
-        mshSurfRecSmooth = mshSurfRec.filter_smooth_taubin(number_of_iterations=iTaubinInter)
+        mshSurfRecSmooth = mshSurfRec.filter_smooth_taubin(number_of_iterations=self.iTaubinIter)
         mshSurfRecSmooth.compute_vertex_normals()
 
-        pointcloud_reconstructed = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=iPoints)
+        pointcloud_reconstructed = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=self.iPoints)
 
-        oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=7)
+        oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=self.iProcessedNormalRadius)
         pointcloud_reconstructed.estimate_normals(oNormalSearchParam)
 
         return pointcloud_reconstructed
@@ -231,14 +237,12 @@ class Scene:
 
 
 if __name__ == "__main__":
-    pcd = o3d.io.read_point_cloud(Path("2025-02-20_19-46-58.ply"))
+    pcd = o3d.io.read_point_cloud(Path("test_input/2025-02-20_19-46-58.ply"))
+
+    sm = SettingsManager("test_input/default_settings.json")
 
     oScene = Scene(raw_pcd=pcd,
-                   iWidthImage=1920,
-                   iHeightImage=1080,
-                   iVoxelSize=5,
-                   iOutlierNeighbours=5,
-                   iStd=1)
+                   settingsmanager=sm)
 
     oScene.oMasks.debugSegmentation()
 

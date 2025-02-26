@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from segmentation import ObjectSegmentation
+from .segmentation import ObjectSegmentation
 import cv2
 import logging
 
@@ -146,7 +146,7 @@ class ObjectMasks:
 
 
 if __name__ == "__main__":
-    img = cv2.imread("segmentation_example.jpg")
+    img = cv2.imread("test_input/segmentation_example.jpg")
 
     oSegmentation = ObjectSegmentation(500, 100, 1500, 800)
     oMasks = ObjectMasks(img, oSegmentation)

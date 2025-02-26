@@ -2,26 +2,24 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 import logging
+from .settings import SettingsManager
 
 logger = logging.getLogger("Segmentation")
 
+
 class ObjectSegmentation:
+
     """
     ObjectSegmentation is a class for performing image segmentation using the Watershed algorithm.
     The class allows segmentation within a predefined region of interest (ROI)
     and includes methods for thresholding, morphological operations, and visualization of the segmentation process.
     """
-    def __init__(self, x_min: int, y_min:int, x_max:int, y_max:int):
-        logger.debug("Initializing ObjectSegmentation object with ROI: "
-                     "x_min=%d, y_min=%d, x_max=%d, y_max=%d", x_min, y_min, x_max, y_max)
+
+    def __init__(self, oSettingsManager: SettingsManager):
+        self.oSm = oSettingsManager
+        self.__loadSettings()
 
         self.cvImage = None
-
-        ## Define ROI parameters
-        self.x_min = x_min
-        self.y_min = y_min
-        self.x_max = x_max
-        self.y_max = y_max
 
         ## Thresholding init
         self.sure_fg = None
@@ -33,6 +31,33 @@ class ObjectSegmentation:
 
         ## Final watershed image
         self.watershed_img = None
+
+    def __loadSettings(self) -> None:
+        ## --------------- ROI ---------------
+        self.x_min = self.oSm.get("ObjectSegmentation.ROI.xMin")
+        self.y_min = self.oSm.get("ObjectSegmentation.ROI.yMin")
+        self.x_max = self.oSm.get("ObjectSegmentation.ROI.xMax")
+        self.y_max = self.oSm.get("ObjectSegmentation.ROI.yMax")
+
+        ## ---------------- Morphological Operations ------------
+        kernel = self.oSm.get("ObjectSegmentation.MorphologicalProcessing.OpeningKernel")
+        self.OpeningKernelSize = (kernel[0], kernel[1])
+        self.OpeningIterations = self.oSm.get("ObjectSegmentation.MorphologicalProcessing.OpeningIterations")
+
+        kernel = self.oSm.get("ObjectSegmentation.MorphologicalProcessing.ClosingKernel")
+        self.ClosingKernelSize = (kernel[0], kernel[1])
+        self.ClosingIterations = self.oSm.get("ObjectSegmentation.MorphologicalProcessing.ClosingIterations")
+
+        ## ---------------- Sure Background ------------
+        self.sureBgIterations = self.oSm.get("ObjectSegmentation.SureBackground.Iterations")
+
+        ## ---------------- Distance transform ------------
+        self.DistTransformMask = self.oSm.get("ObjectSegmentation.DistanceTransform.MaskSize")
+
+        ## ---------------- Sure Foreground ------------
+        self.SureFgThreshold = self.oSm.get("ObjectSegmentation.SureForeground.Threshold")
+
+        logger.debug("Settings set correctly")
 
 
     def getSegmentatedImage(self, cvImg: np.ndarray) -> np.ndarray:
@@ -82,6 +107,7 @@ class ObjectSegmentation:
         :return: ROI-applied thresholded image as a NumPy array.
         """
 
+        ## Define everything outside of ROI as background
         thresh_masked = np.zeros_like(img_thresh)
 
         thresh_masked[self.y_min:self.y_max, self.x_min:self.x_max] = img_thresh[self.y_min:self.y_max, self.x_min:self.x_max]
@@ -126,12 +152,12 @@ class ObjectSegmentation:
         # TODO: Remove hardcoded kernels
 
         ## Remove noise using morphological opening (= erode followed by dilute)
-        kernel = np.ones((3, 3), np.uint8)
-        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_OPEN, kernel, iterations=3)
+        kernel = np.ones(self.OpeningKernelSize, np.uint8)
+        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_OPEN, kernel, iterations=self.OpeningIterations)
 
         ## Close holes in objects using morphological closing ( = dilute followed by erosion)
-        kernel = np.ones((5, 5),np.uint8)
-        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_CLOSE, kernel, iterations=2)
+        kernel = np.ones(self.ClosingKernelSize,np.uint8)
+        img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_CLOSE, kernel, iterations=self.ClosingIterations)
 
         ## Save masked image after removing noise + closing holes
         self.img_cleaned = img_masked
@@ -139,11 +165,11 @@ class ObjectSegmentation:
         logger.debug("Masked image cleaned and saved")
 
         ## Define sure background
-        self.sure_bg = cv2.dilate(img_masked, kernel, iterations=3)
+        self.sure_bg = cv2.dilate(img_masked, kernel, iterations=self.sureBgIterations)
 
         ## Define sure foreground based on distance transform (euclidian distance to nearest black pixel)
-        self.dist_transform = cv2.distanceTransform(img_masked, cv2.DIST_L2, 5)
-        _, self.sure_fg = cv2.threshold(self.dist_transform, 0.5*self.dist_transform.max(), 255, 0)
+        self.dist_transform = cv2.distanceTransform(img_masked, cv2.DIST_L2, self.DistTransformMask)
+        _, self.sure_fg = cv2.threshold(self.dist_transform, self.SureFgThreshold*self.dist_transform.max(), 255, 0)
 
         ## Figure out the unknown region (sure background - sure foreground)
         self.sure_fg = np.uint8(self.sure_fg)
@@ -170,11 +196,12 @@ class ObjectSegmentation:
         plt.show()
 
 
-
 if __name__ == '__main__':
-    img = cv2.imread("segmentation_example.jpg")
+    img = cv2.imread("test_input/2025-02-20_19-46-58.jpg")
+    sm = SettingsManager("default_settings.json")
 
-    oSegmentation = ObjectSegmentation(500, 100, 1500, 800)
+
+    oSegmentation = ObjectSegmentation(sm)
 
     segm_image = oSegmentation.getSegmentatedImage(img)
 

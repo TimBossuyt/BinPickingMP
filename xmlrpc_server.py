@@ -5,6 +5,8 @@ import logging
 import cv2
 import threading
 import json
+from pose_estimation import Model, Scene, PoseEstimatorFPFH, SettingsManager
+
 
 logger = logging.getLogger("RPC-server")
 
@@ -19,7 +21,7 @@ class RpcServer:
         - Stop: Stops the server and terminates associated threads.
         - register_methods: Registers all the RPC methods for the server.
     """
-    def __init__(self, oCamera: Camera, host="127.0.0.1", port=8005):
+    def __init__(self, oCamera: Camera, sPoseSettingsPath: str, host="127.0.0.1", port=8005):
         """
         :param oCamera: Instance of the Camera class used to control camera operations.
         :type oCamera: Camera
@@ -40,7 +42,30 @@ class RpcServer:
         self.server = SimpleXMLRPCServer((self.host, self.port), logRequests=False)
         self.register_methods()
 
+        ## Set up the pose estimation stuff
+        self.__initializePoseEstimation(sPoseSettingsPath)
+
     ################## CONFIGURATION ##################
+    def __initializePoseEstimation(self, sPath: str):
+        ## Load the settings
+        self.SettingsManager = SettingsManager(sPath)
+
+        ## Load model (TODO: Remove hardcoding)
+        self.oModel = Model(
+            sModelPath="./Input/T-stuk-filled.stl",
+            settingsManager=self.SettingsManager,
+            picking_pose=None # TODO: Define picking pose
+        )
+
+        ## Create the pose estimator object
+        self.oPoseEstimator = PoseEstimatorFPFH(
+            settingsManager=self.SettingsManager,
+            model=self.oModel,
+        )
+
+        self.oScene = None
+
+
     def Run(self):
         """
         Starts the XML-RPC server at the specified host and port.
