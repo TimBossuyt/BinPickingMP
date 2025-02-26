@@ -36,7 +36,7 @@ class BoardDetector:
     Attributes:
         oArucoDict: The predefined ArUco dictionary used for marker detection.
         oChArUcoBoard: The ChArUcoBoard object representing the board to be detected.
-        oDetector: The detector object initialized with the ChArUco board for performing board detection.
+        oDetector: The detector object initialized witth the ChArUco board for performing board detection.
 
     Methods:
         __init__(iSquareLength, iMarkerLength, size):
@@ -73,7 +73,7 @@ class BoardDetector:
         """
         :param image: The input image in which the board is to be detected.
         :return: A tuple containing detected charuco corners and their corresponding ids.
-                    Returns (None, None) if no board is detected.
+                    Returns (None, None) if no tboard is detected.
         """
 
         ## Find corners and corresponding ids from the board

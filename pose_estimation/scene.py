@@ -40,7 +40,7 @@ class Scene:
 
         self.oMasks = ObjectMasks(self.arrColours, oSegmentation)
 
-        ## Save the masks for each object
+        ## Save the masks for each objetc
         self.dictMasks = self.oMasks.getMasks()
 
         ## 3D Points (camera coordinates)

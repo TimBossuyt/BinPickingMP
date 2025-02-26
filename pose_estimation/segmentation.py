@@ -197,7 +197,7 @@ class ObjectSegmentation:
 
 
 if __name__ == '__main__':
-    img = cv2.imread("test_input/segmentation_example.jpg")
+    img = cv2.imread("test_input/2025-02-20_19-46-58.jpg")
     sm = SettingsManager("default_settings.json")
 
 
