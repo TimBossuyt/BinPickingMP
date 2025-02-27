@@ -2,7 +2,8 @@ from luxonis_camera import Camera
 import logging.config
 import datetime
 from xmlrpc_server import RpcServer
-from viz import PointCloudVisualizer
+import open3d as o3d
+import time
 
 
 
@@ -22,6 +23,11 @@ logger = logging.getLogger("Main")
 oCamera = Camera(5)
 ##################################
 
+########## Visualizer setup ##########
+vis = o3d.visualization.VisualizerWithKeyCallback()
+origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100)
+###################################
+
 ########## XML-RPC setup ##########
 oServer = RpcServer(
     oCamera = oCamera,
@@ -31,22 +37,25 @@ oServer = RpcServer(
 )
 ###################################
 
-########## Visualizer setup ##########
-oVisualizer = PointCloudVisualizer(oServer)
-###################################
-
-
-
 def main():
     oServer.Run()
-    oVisualizer.Run()
 
-    ## Press enter to exit the program
-    input()
+    ## Visualizer
+    vis.create_window(
+        window_name="Pose Estimation",
+        width=1024,
+        height=768
+    )
+    vis.add_geometry(origin)
+
+    vis.run()
+
+    vis.destroy_window()
+
     logger.debug("Main thread exit command")
 
     logger.debug("Trying to stop server thread")
-    oVisualizer.Stop()
+    # oVisualizer.Stop()
     oServer.Stop()
 
     logger.info("Everything finished nicely")
