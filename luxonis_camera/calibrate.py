@@ -204,8 +204,7 @@ class CameraCalibrator:
         ## 1. Detect board and save corners/ids
         self.arrChArUcoCorners, self.arrChArUcoIds = self.oBoardDetector.detectBoard(image)
         if self.arrChArUcoCorners is None or self.arrChArUcoIds is None:
-            logger.warning("No board was found")
-            return None
+            raise Exception("No board was found")
 
         ## 2. Estimate the board pose w.r.t. camera
         # Calculates transformation needed to go from board coordinates to camera coordinates

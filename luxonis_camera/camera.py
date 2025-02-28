@@ -309,9 +309,10 @@ class Camera:
 
             ## Find the transformation matrix from the calibrator object
             trans_mat = self.oCalibrator.runCalibration(image, dictWorldPoints)
+
         except Exception as e:
             logger.error(f"Camera calibration failed: {e}")
-            return
+            raise Exception("Calibration failed")
 
         ## <-- Assumes calibration was successful -->
 
@@ -368,10 +369,10 @@ class Camera:
 
         ## Calculating nodes ##
         nodeDepth = self.oPipeline.create(dai.node.StereoDepth)
+        nodeDepth.setDefaultProfilePreset(
+            dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset robotics
         nodeDepth.setSubpixel(True)
         nodeDepth.setLeftRightCheck(True)
-        nodeDepth.setDefaultProfilePreset(
-            dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset high accuracy (No median filter)
 
         # Link stereo mono cameras to get depth map
         nodeCamLeft.out.link(nodeDepth.left)

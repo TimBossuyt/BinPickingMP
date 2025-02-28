@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import random
 import logging
+import time
 
 ## ---------- Custom imports ----------
 from .object_masks import ObjectMasks
@@ -38,7 +39,13 @@ class Scene:
             oSettingsManager=self.oSm
         )
 
+
+        logger.info("Trying to find the object masks")
+        tStart = time.time()
         self.oMasks = ObjectMasks(self.arrColours, oSegmentation)
+        tEnd = time.time()
+
+        logger.info(f"2D segmentation took {(tEnd - tStart)*1000:.2f} ms")
 
         ## Save the masks for each objetc
         self.dictMasks = self.oMasks.getMasks()
@@ -124,6 +131,7 @@ class Scene:
         ## Add origin to visualization
         origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=[0, 0, 0])
         geometries.append(origin)
+        geometries.append(self.pcdROI)
 
         o3d.visualization.draw_geometries(geometries)
 
@@ -140,9 +148,15 @@ class Scene:
         dictObjects = {}
 
         ## apply mask for each detected object to the dictionary with the XYZ points as an array to corresponding key
+
+        # logger.debug("Applying mask for each found object")
+
         for _id, mask in self.dictMasks.items():
             _id = int(_id)
             dictObjects[_id] = self.arrPoints[mask==1]
+
+            # logger.debug(f"Object with id {_id} has shape of {dictObjects[_id].shape}")
+
             ## Remove all points with z = 0
             dictObjects[_id] = dictObjects[_id][dictObjects[_id][:,2]!=0]
 
@@ -156,8 +170,17 @@ class Scene:
         """
         pcds = {}
 
+        tStartAll = time.time()
+
         for _id, points in self.dictObjects.items():
+            tStart = time.time()
             pcds[_id] = self.__processPoints(points)
+            tEnd = time.time()
+            logger.debug(f"Processing objects {_id} took {(tEnd - tStart) * 1000:.2f} ms")
+
+        tEndAll = time.time()
+
+        logger.info(f"Processing all objects took {(tEndAll - tStartAll)*1000:.2f} ms")
 
         return pcds
 
@@ -172,6 +195,8 @@ class Scene:
         :rtype: o3d.geometry.PointCloud
         """
 
+        # logger.debug("Starting pointcloud processing")
+
         ## 1. Create pointcloud from points
         pcd_raw = o3d.geometry.PointCloud()
         pcd_raw.points = o3d.utility.Vector3dVector(points)
@@ -183,6 +208,7 @@ class Scene:
             std_ratio=self.iStd)
 
         ## 3. Perform surface reconstruction
+        # logger.debug("Performing surface reconstruction")
         # TODO: Remove hardcoded parameters
         pcd_reconstructed = self.__surfaceReconstruction(
             pointcloud=pcd_down,
@@ -194,6 +220,7 @@ class Scene:
     def __surfaceReconstruction(self, pointcloud: o3d.geometry.PointCloud) -> o3d.geometry.PointCloud:
         ## 1. First normal estimation
         # Orient normals to camera (upwards)
+        # logger.debug("Initial pointcloud normal estimation")
         pointcloud.estimate_normals()
         pointcloud.orient_normals_to_align_with_direction([0, 0, -1])
 

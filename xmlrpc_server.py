@@ -1,11 +1,14 @@
 import base64
 from xmlrpc.server import SimpleXMLRPCServer
+
 from luxonis_camera import getConnectedDevices, Camera
 import logging
 import cv2
 import threading
 import json
-from pose_estimation import Model, Scene, PoseEstimatorFPFH, SettingsManager
+import time
+import numpy as np
+from pose_estimation import Model, Scene, PoseEstimatorFPFH, SettingsManager, TransformVisualizer
 
 
 logger = logging.getLogger("RPC-server")
@@ -33,7 +36,6 @@ class RpcServer:
 
         self.oCamera = oCamera
 
-
         self.host = host
         self.port = port
 
@@ -45,6 +47,11 @@ class RpcServer:
         ## Set up the pose estimation stuff
         self.__initializePoseEstimation(sPoseSettingsPath)
 
+        self.oScene = None
+
+        self.dictDetectionResults = {}
+        self.imgRender = None
+
     ################## CONFIGURATION ##################
     def __initializePoseEstimation(self, sPath: str):
         ## Load the settings
@@ -54,7 +61,7 @@ class RpcServer:
         self.oModel = Model(
             sModelPath="./Input/T-stuk-filled.stl",
             settingsManager=self.SettingsManager,
-            picking_pose=None # TODO: Define picking pose
+            picking_pose=(20, 0, 0, 1, 0, 0) # TODO: Define picking pose
         )
 
         ## Create the pose estimator object
@@ -63,7 +70,6 @@ class RpcServer:
             model=self.oModel,
         )
 
-        self.oScene = None
 
 
     def Run(self):
@@ -146,6 +152,9 @@ class RpcServer:
         self.server.register_function(self.getImageFrame)
         self.server.register_function(self.runCalibration)
         self.server.register_function(self.getCalibrationImage)
+        self.server.register_function(self.detectObjects)
+        self.server.register_function(self.imgSelectedObject)
+        self.server.register_function(self.imgRender)
 
 
     ################## ENDPOINTS ##################
@@ -180,7 +189,6 @@ class RpcServer:
             return devices
         except Exception as e:
             logger.error(f"Error while fetching connecting devices: {str(e)}")
-
 
     def getCameraPreview(self):
         """
@@ -223,7 +231,6 @@ class RpcServer:
         except Exception as e:
             logger.error(f"Error while fetching camera preview: {str(e)}")
 
-
     def getImageFrame(self):
         """
         Fetches an image frame from the connected camera or a fallback image
@@ -257,7 +264,6 @@ class RpcServer:
         except Exception as e:
             logger.error(f"Error while fetching camera frame: {str(e)}")
 
-
     def connectCameraByMxId(self, sMxId):
         """
         :param sMxId: The identifier for the camera to connect to.
@@ -289,6 +295,7 @@ class RpcServer:
             return 0
         except Exception as e:
             logger.error(f"Error during camera calibration: {str(e)}")
+            return 1
 
     def getCalibrationImage(self):
         """
@@ -305,7 +312,6 @@ class RpcServer:
             return enc_data
         except Exception as e:
             logger.error(f"Error while retrieving calibration image: {str(e)}")
-
 
     def disconnectCamera(self):
         """
@@ -325,6 +331,85 @@ class RpcServer:
             return 0
         except Exception as e:
             logger.error(f"Error while disconnecting camera: {str(e)}")
+            return 1
+
+    def detectObjects(self):
+        logger.info("Received detect objects request")
+        tStart = time.time()
+
+        ## 1. Get pointcloud scene from camera
+        pcdScene = self.oCamera.getColoredPointCloud()
+        # o3d.visualization.draw_geometries([pcdScene])
+
+        ## 2. Create scene object
+        self.oScene = Scene(
+            raw_pcd=pcdScene,
+            settingsmanager=self.SettingsManager
+        )
+
+        ## Debug visualize:
+        # self.oScene.oMasks.debugSegmentation()
+
+        # self.oScene.displayObjectPoints()
+
+        # o3d.visualization.draw_geometries([self.oScene.pcdROI])
+
+        ## 3. Find the array of transformations
+        dictTransformResults = self.oPoseEstimator.findObjectTransforms(self.oScene)
+
+        self.dictDetectionResults = dictTransformResults
+
+        tEnd = time.time()
+        logger.info(f"Complete object detection took: {(tEnd - tStart)*1000:.2f} ms")
+
+        oTransformVisualizer = TransformVisualizer(self.oModel, self.oScene, dictTransformResults)
+        self.imgRender = oTransformVisualizer.renderFoundObjects()
+
+        ## Dump results to json string
+        # 1. Convert dict to serializable data types (e.g. no ndarray)
+        dictSerializeProof = {}
+
+        for key, values in dictTransformResults.items():
+            transform = values[0].tolist()
+            fitness = float(values[1])
+            inlier_rmse = float(values[2])
+
+            dictSerializeProof[key] = (transform, fitness, inlier_rmse)
+
+        # 2. Dump as JSON string
+        dict_serialized = json.dumps(dictSerializeProof)
+
+        return dict_serialized
+
+    def imgSelectedObject(self, iId: int):
+        ## 1. Get mask for selected object
+        mask = self.oScene.dictMasks[iId]
+
+        ## 2. Get image
+        img = self.oScene.arrColours.copy()
+
+        ## Define overlay
+        blue_overlay = np.array([255, 0, 0], dtype=np.uint8)
+
+        overlay = img.copy()
+        overlay[mask == 1] = (1 - 0.5) * img[mask == 1] + 0.5 * blue_overlay
+        overlay = overlay.astype(np.uint8)
+
+        _, buff = cv2.imencode('.jpg', overlay)
+        # noinspection PyTypeChecker
+        enc_data = base64.b64encode(buff)
+
+        return enc_data
+
+    def imgRender(self):
+        if self.imgRender is not None:
+            _, buff = cv2.imencode('.jpg', self.imgRender)
+            # noinspection PyTypeChecker
+            enc_data = base64.b64encode(buff)
+
+            return enc_data
+
+
 
     ################## UTILS ##################
     @staticmethod

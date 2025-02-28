@@ -1,10 +1,17 @@
 import numpy as np
 import cv2
+import matplotlib
 from matplotlib import pyplot as plt
 import logging
 from .settings import SettingsManager
 
 logger = logging.getLogger("Segmentation")
+
+
+## Disable debug logging messages for matplotlib
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+# Set non-GUI backend to avoid the warning
+matplotlib.use("Agg")
 
 
 class ObjectSegmentation:
@@ -80,6 +87,8 @@ class ObjectSegmentation:
 
         ## Set img attribute
         self.cvImage = image
+
+        cv2.imwrite("segm_image.jpg", self.cvImage)
 
         ## 1. Convert to gray colour scale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -193,7 +202,10 @@ class ObjectSegmentation:
             ax.set_title(title)
             ax.axis('off')
         plt.tight_layout()
-        plt.show()
+
+        logger.info("Saving segmentation debug visuals")
+        plt.savefig("debug_segmentation_visuals.png")
+        plt.close(fig)
 
 
 if __name__ == '__main__':

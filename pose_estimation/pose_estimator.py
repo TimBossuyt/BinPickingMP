@@ -4,7 +4,10 @@ from .settings import SettingsManager
 import open3d as o3d
 import numpy as np
 from pathlib import Path
+import time
+import logging
 
+logger = logging.getLogger("Pose Estimator")
 
 class PoseEstimatorFPFH:
     def __init__(self, settingsManager: SettingsManager , model: Model):
@@ -18,15 +21,25 @@ class PoseEstimatorFPFH:
         self.__calculateModelFeatures()
 
 
-    def findObjectTransforms(self, scene: Scene) -> dict:
+    def findObjectTransforms(self, scene: Scene) -> dict[int, tuple[np.ndarray, float, float]]:
         results = {}
 
+        tStartTotal = time.time()
+
         for _id, pcdObject in scene.dictProcessedPcds.items():
+            tStartObject = time.time()
             results[_id] = self.__calculateTransform(pcdObject)
+            tEndObject = time.time()
+
+            logger.debug(f"Finding object {_id} took {(tEndObject-tStartObject)*1000:.2f} ms")
+
+        tEndTotal = time.time()
+
+        logger.info(f"Finding object transformations took {(tEndTotal-tStartTotal)*1000:.2f} ms")
 
         return results
 
-    def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud) -> np.ndarray:
+    def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud) -> (np.ndarray, float, float):
         ## 1. Voxel down object pointcloud to same density as object model
         pcdObjectDown = pcdObject.voxel_down_sample(voxel_size=self.iVoxelSize)
 
@@ -45,12 +58,12 @@ class PoseEstimatorFPFH:
             mutual_filter=False,
             max_correspondence_distance=self.distanceFactor*self.iVoxelSize,
             estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-            ransac_n=3,
+            ransac_n=5, ## TODO: Adjust ransac_n
             checkers=[
                 o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
                     self.distanceFactor*self.iVoxelSize),
             ],
-            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999)
+            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(1000000, 0.999)
         )
 
         ## 4. Perform ICP for finer results
@@ -60,22 +73,12 @@ class PoseEstimatorFPFH:
             max_correspondence_distance=self.iVoxelSize*self.icpDistanceFactor,
             init=oInitialMatch.transformation,
             estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200)
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=500)
         )
 
 
-        # # Visualize (DEBUGGING ONLY)
-        # pcdModelTransformed = self.pcdModelDown.transform(np.asarray(oIcpResult.transformation))
-        #
-        # display_point_clouds(
-        #     [
-        #         pcdObjectDown,
-        #         pcdModelTransformed,
-        #     ],
-        #     "Object and model after ICP",
-        #     False, True, 100)
 
-        return np.asarray(oIcpResult.transformation)
+        return np.asarray(oIcpResult.transformation), oIcpResult.fitness, oIcpResult.inlier_rmse
 
     def __loadSettings(self):
         ## General
