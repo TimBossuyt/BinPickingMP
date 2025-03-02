@@ -52,6 +52,9 @@ class RpcServer:
         self.dictDetectionResults = {}
         self.imgRender = None
 
+        ## Load last calibration settings
+        self.oCamera.arrCamToWorldMatrix = np.load("camera_calibration_matrix.npy")
+
     ################## CONFIGURATION ##################
     def __initializePoseEstimation(self, sPath: str):
         ## Load the settings
@@ -289,7 +292,10 @@ class RpcServer:
             dictWorldPoints = self.__deserializeWorldPointsJson(sWorldPointsJson)
             logger.debug(f"World points for calibration: {dictWorldPoints}")
 
-            self.oCamera.calibrateCamera(dictWorldPoints)
+            arrTransMat = self.oCamera.calibrateCamera(dictWorldPoints)
+
+
+            np.save("camera_calibration_matrix.npy", arrTransMat)
             logger.info("Camera calibration completed successfully")
 
             return 0
@@ -362,7 +368,9 @@ class RpcServer:
         tEnd = time.time()
         logger.info(f"Complete object detection took: {(tEnd - tStart)*1000:.2f} ms")
 
-        oTransformVisualizer = TransformVisualizer(self.oModel, self.oScene, dictTransformResults)
+        oTransformVisualizer = TransformVisualizer(self.oModel, self.oScene, dictTransformResults,
+                                                   self.oCamera.arrCamToWorldMatrix)
+        oTransformVisualizer.displayFoundObjects()
         self.imgRender = oTransformVisualizer.renderFoundObjects()
 
         ## Dump results to json string

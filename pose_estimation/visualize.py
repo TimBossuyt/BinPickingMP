@@ -3,6 +3,7 @@ from pathlib import Path
 import cv2
 import logging
 import numpy as np
+import copy
 
 from .model import Model
 from .scene import Scene
@@ -45,9 +46,11 @@ def create_arrow(origin, normal):
 
 
 class TransformVisualizer:
-    def __init__(self, model: Model, scene: Scene, dictResults: dict):
+    def __init__(self, model: Model, scene: Scene, dictResults: dict, camera_world_tf: np.ndarray):
         self.oModel = model
         self.oScene = scene
+
+        self.arrCamWorld = camera_world_tf
 
         self.dictResults = dictResults
 
@@ -113,9 +116,11 @@ class TransformVisualizer:
         cv2.imwrite("render.png", image_np)
         return image_np
 
-
     def displayFoundObjects(self):
-        geometries = [self.oScene.pcdROI]
+        pcdROI = copy.deepcopy(self.oScene.pcdROI)
+        pcdROI.transform(self.arrCamWorld)
+
+        geometries = [pcdROI]
 
         for _id, result in self.dictResults.items():
             pcdModel = self.oModel.pcdModel
@@ -144,7 +149,6 @@ class TransformVisualizer:
             ## Transform the arrow and add to geometries
             mshArrow.transform(transform)
             geometries.append(mshArrow)
-
 
         display_point_clouds(geometries, "Found objects", False, True, 100)
 
