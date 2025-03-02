@@ -8,7 +8,7 @@ class Model:
     Manages CAD-model for pose estimation
     """
 
-    def __init__(self, sModelPath, settingsManager: SettingsManager, picking_pose):
+    def __init__(self, sModelPath, settingsManager: SettingsManager, picking_pose: tuple[float, float, float, float, float, float]):
         self.oSm = settingsManager
         self.__loadSettings()
 
@@ -23,6 +23,12 @@ class Model:
 
         ## Picking pose = (x, y, z, NX, NY, NZ)
         self.picking_pose = picking_pose
+
+    def getPickPosition(self):
+        return self.picking_pose[0], self.picking_pose[1], self.picking_pose[2]
+
+    def getPickNormal(self):
+        return self.picking_pose[3], self.picking_pose[4], self.picking_pose[5]
 
     def __loadSettings(self):
         self.iNormalRadius = self.oSm.get("Model.NormalRadius")

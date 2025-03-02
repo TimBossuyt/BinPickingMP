@@ -2,9 +2,8 @@ from luxonis_camera import Camera
 import logging.config
 import datetime
 from xmlrpc_server import RpcServer
-from viz import PointCloudVisualizer
-
-
+import open3d as o3d
+import time
 
 ########## Logging setup ##########
 ## Generate ISO 8601 timestamped filename
@@ -31,22 +30,14 @@ oServer = RpcServer(
 )
 ###################################
 
-########## Visualizer setup ##########
-oVisualizer = PointCloudVisualizer(oServer)
-###################################
-
-
-
 def main():
     oServer.Run()
-    oVisualizer.Run()
 
-    ## Press enter to exit the program
+    ## Press enter to exit main thread
     input()
     logger.debug("Main thread exit command")
 
     logger.debug("Trying to stop server thread")
-    oVisualizer.Stop()
     oServer.Stop()
 
     logger.info("Everything finished nicely")

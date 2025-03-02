@@ -204,13 +204,17 @@ class CameraCalibrator:
         ## 1. Detect board and save corners/ids
         self.arrChArUcoCorners, self.arrChArUcoIds = self.oBoardDetector.detectBoard(image)
         if self.arrChArUcoCorners is None or self.arrChArUcoIds is None:
-            logger.warning("No board was found")
-            return None
+            raise Exception("No board was found")
 
         ## 2. Estimate the board pose w.r.t. camera
         # Calculates transformation needed to go from board coordinates to camera coordinates
         logger.debug("Estimating board pose")
         self.__estimateBoardPose()
+
+        # cv2.drawFrameAxes(self.calibrationImage, self.arrCameraMatrix, self.arrDistortionCoeffs, self.rvec_bc, self.tvec_bc, length=50)
+        # cv2.imshow("Pose Estimation", self.calibrationImage)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         ## 3. Create corner points dictionary in camera coordinates
         self.__calculateCameraDict()
@@ -307,6 +311,9 @@ class CameraCalibrator:
         :return: The 4x4 transformation matrix representing the transformation from camera to world coordinates.
         """
 
+        # print(self.arrCamPoints)
+        # print(self.arrWorldPoints)
+
         _, out, inliers = cv2.estimateAffine3D(self.arrCamPoints, self.arrWorldPoints, True)
 
         trans_mat = np.vstack((out, [0, 0, 0, 1]))
@@ -363,7 +370,8 @@ class CameraCalibrator:
 
         # Same point in camera coordinates
         # = negative z-offset from origin in board coordinates transformed to camera coordinates
-        point = [37.5, 37.5, -50]
+        # point = [225, 0, -50]
+        point = [225, 37.5, -50]
         point_camera = self.__convertBoardToCamera(point)
         self.dictCameraPoints[100] = point_camera
 
