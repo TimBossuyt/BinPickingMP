@@ -25,7 +25,6 @@ def drawDetectedCorners(image, charuco_corners, charuco_ids):
 
     return img_result
 
-
 def annotate_image(image, arrCamPoints, arrWorldPoints):
     """
     Annotates an image with 2D camera points and their corresponding 3D world coordinates.
@@ -66,7 +65,7 @@ class BoardDetector:
     Attributes:
         oArucoDict: The predefined ArUco dictionary used for marker detection.
         oChArUcoBoard: The ChArUcoBoard object representing the board to be detected.
-        oDetector: The detector object initialized witth the ChArUco board for performing board detection.
+        oDetector: The detector object initialized with the ChArUco board for performing board detection.
 
     Methods:
         __init__(iSquareLength, iMarkerLength, size):
@@ -139,8 +138,9 @@ class CameraCalibrator:
             size=(7, 5),
         )
 
-        ## Checks if the calibration has completed
-        self.bCalibrated = False
+        self.rvec_wc = None
+        self.tvec_wc = None
+
 
         ## Image with board used for calibration
         self.calibrationImage = None
@@ -172,7 +172,7 @@ class CameraCalibrator:
         ## 1. Detect board and save corners/ids
         self.arrChArUcoCorners, self.arrChArUcoIds = self.oBoardDetector.detectBoard(image)
         if self.arrChArUcoCorners is None or self.arrChArUcoIds is None:
-            raise Exception("No board was found")
+            raise Exception("Board was not found")
 
 
 
@@ -184,6 +184,8 @@ class CameraCalibrator:
         for i, charuco_id in enumerate(self.arrChArUcoIds.flatten()):
             board_point = self.arrChArUcoCorners[i].flatten()
             self.dictCameraPoints[charuco_id] = np.asarray(board_point)
+
+        print(self.dictCameraPoints)
 
         self.annotate_and_display()
 
@@ -205,8 +207,11 @@ class CameraCalibrator:
                     imagePoints=np.asarray(self.arrCamPoints),
                     cameraMatrix=self.arrCameraMatrix,
                     distCoeffs=self.arrDistortionCoeffs,
-                    flags=cv2.SOLVEPNP_IPPE
+                    flags=cv2.SOLVEPNP_ITERATIVE
         )
+
+        self.rvec_wc = rvec
+        self.tvec_wc = tvec
 
         ## Draw origin
         img_axis = cv2.drawFrameAxes(image, self.arrCameraMatrix, (0, 0, 0, 0, 0), rvec, tvec, 100)
@@ -221,8 +226,6 @@ class CameraCalibrator:
         T_w2c[:3, 3] = tvec.flatten()
 
         # print(T_w2c)
-
-        self.bCalibrated = True
 
         ## 5. Calculate inverse
         T_c2w = np.linalg.inv(T_w2c)
