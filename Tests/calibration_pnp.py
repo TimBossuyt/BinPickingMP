@@ -108,7 +108,7 @@ points = np.asarray(pcd.points)
 
 ## Left handed luxonis --> right handed opencv (see opencv pinhole camera model)
 points[:, 1] = -points[:, 1]
-points[:, 2] = points[:, 2] - 60
+# points[:, 2] = points[:, 2] - 60
 
 
 # Update the point cloud with the flipped coordinates

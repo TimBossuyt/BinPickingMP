@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import logging
 import open3d as o3d
+from PIL.ImageOps import scale
 
 logger = logging.getLogger("Calibration")
 
@@ -162,9 +163,9 @@ class CameraCalibrator:
         self.arrWorldPoints = []
         self.arrCamPoints = []
 
-    def runCalibration(self, image: np.ndarray, pcd: o3d.geometry.PointCloud, dictWorldPoints: dict, ):
+    def runCalibration(self, image: np.ndarray, pointcloud: o3d.geometry.PointCloud, dictWorldPoints: dict, ):
         """
-        :param pcd:
+        :param pointcloud:
         :param image: Input image used for calibration.
         :param dictWorldPoints: A dictionary containing world points mapped to their identifiers.
         :return: Transformation matrix representing the camera-to-world transformation.
@@ -173,14 +174,12 @@ class CameraCalibrator:
         ## Save as attributes
         self.calibrationImage = image
         self.dictWorldPoints = dictWorldPoints
-        self.pcd = pcd
+        self.pcd = pointcloud
 
         ## 1. Detect board and save corners/ids
         self.arrChArUcoCorners, self.arrChArUcoIds = self.oBoardDetector.detectBoard(image)
         if self.arrChArUcoCorners is None or self.arrChArUcoIds is None:
             raise Exception("Board was not found")
-
-
 
         # print(self.arrChArUcoCorners)
         # print(self.arrChArUcoIds)
@@ -222,6 +221,8 @@ class CameraCalibrator:
 
             point_3d = np.mean(point_window.reshape(-1, 3), axis=0)
             self.dictCamera3DPoints[id] = point_3d
+
+        print(self.dictCamera3DPoints)
 
         ## 4. Add the depth information
         # Detect extra - aruco code
@@ -270,10 +271,12 @@ class CameraCalibrator:
             dst=np.asarray(self.arrWorldPoints),
             force_rotation=True
         )
+        print(scale)
+
 
         trans_mat = np.vstack((trans_mat, np.array([0, 0, 0, 1])))
 
-        return trans_mat
+        return trans_mat, scale
 
         # # Returns transformation from world --> camera
         # _, rvec, tvec = cv2.solvePnP(
