@@ -26,6 +26,36 @@ def drawDetectedCorners(image, charuco_corners, charuco_ids):
     return img_result
 
 
+def annotate_image(image, arrCamPoints, arrWorldPoints):
+    """
+    Annotates an image with 2D camera points and their corresponding 3D world coordinates.
+
+    :param image: The input image to be annotated.
+    :param arrCamPoints: A numpy array of shape (N,2) containing 2D camera coordinates (u, v).
+    :param arrWorldPoints: A numpy array of shape (N,3) containing corresponding 3D world coordinates (x, y, z).
+    """
+    annotated_image = image.copy()
+    text_offset = 20  # Offset for text placement to prevent overlap
+
+    for i, (cam_point, world_point) in enumerate(zip(arrCamPoints, arrWorldPoints)):
+        x2d, y2d = int(cam_point[0]), int(cam_point[1])
+        x3d, y3d, z3d = world_point
+
+        # Draw circle on 2D camera coordinates
+        cv2.circle(annotated_image, (x2d, y2d), radius=6, color=(0, 255, 0), thickness=-1)
+
+        # Adjust text placement to reduce overlap
+        text_y_offset = y2d - 10 - (i % 3) * text_offset
+
+        # Display 3D coordinates above the point in white for better visibility
+        text = f"({x3d:.1f}, {y3d:.1f}, {z3d:.1f})"
+        cv2.putText(annotated_image, text, (x2d - 50, text_y_offset),
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6,
+                    color=(0, 255, 255), thickness=2, lineType=cv2.LINE_AA)
+
+    return annotated_image
+
+
 class BoardDetector:
     """
     BoardDetector is a class designed to detect a ChArUco board in a given image using the OpenCV ArUco module.
@@ -87,58 +117,6 @@ class BoardDetector:
 
 
 class CameraCalibrator:
-    """
-    CameraCalibrator class is designed for performing camera calibration using a planar ChArUco board as the target.
-
-    The class estimates the transformation matrices between various coordinate systems
-    such as camera, board, and world coordinates.
-
-    Attributes:
-        arrCameraMatrix: 2D NumPy array storing the intrinsic camera matrix for the camera.
-        arrDistortionCoeffs: NumPy array storing the camera's distortion coefficients. Defaults to [0, 0, 0, 0, 0].
-        oBoardDetector: Instance of `BoardDetector`, responsible for detecting the ChArUco board in input images.
-        bCalibrated: Boolean flag indicating whether the calibration process has been completed.
-        rvec_bc: NumPy array representing the rotation vector for the transformation from board to camera coordinates.
-        tvec_bc: NumPy array representing the translation vector for the transformation from board to camera coordinates.
-        calibrationImage: Image used for performing the calibration.
-        arrChArUcoCorners: Detected corners of the ChArUco board, in image pixel coordinates.
-        arrChArUcoIds: Detected marker IDs corresponding to ChArUco corners.
-        arrBoardCornerPoints: NumPy array of detected corner points in the board's local 3D coordinate system.
-        arrImgCornerPoints: NumPy array of detected corner points in the image's 2D pixel coordinate system.
-        dictWorldPoints: Dictionary mapping point IDs to their 3D coordinates in the world coordinate system.
-        dictCameraPoints: Dictionary mapping point IDs to their 3D coordinates in the camera coordinate system.
-        arrWorldPoints: List of 3D points used for finding the world-to-camera transformation.
-        arrCamPoints: List of corresponding 3D camera points for finding the world-to-camera transformation.
-
-    Methods:
-        runCalibration(image, dictWorldPoints):
-            Perform the entire calibration procedure using an input image and a dictionary of world points.
-
-        showDetectedBoard():
-            Generate an annotated image showing ChArUco corners and their IDs if calibration succeeded.
-
-        saveCornerCameraCoordinates():
-            Save 3D coordinates of detected camera points to a text file. (Debugging purposes)
-
-        __estimateBoardPose():
-            Estimate the pose of the board in relation to the camera by calculating the rotation and translation vectors.
-
-        calibrateCameraWorldTransformation():
-            Compute the transformation matrix needed to convert coordinates from the camera reference frame to the world reference frame.
-
-        __calculateCameraDict():
-            Store detected corner points in the camera coordinate system as a dictionary.
-
-        __convertBoardToCamera(board_point):
-            Transform a 3D point from the board coordinate system to the camera coordinate system.
-
-        __includeDepthInfo():
-            Add depth information manually to generate a more robust transformation.
-
-        __createCorrespondingPointsArray():
-            Create matched arrays of points in the world and camera coordinate systems to estimate the transformation matrix.
-    """
-
     def __init__(self, arrCameraMatrix, arrDistortionCoeffs=None):
         """
         :param arrCameraMatrix: A numpy array representing the intrinsic camera matrix,
@@ -164,10 +142,6 @@ class CameraCalibrator:
         ## Checks if the calibration has completed
         self.bCalibrated = False
 
-        ## rvec and tvec save the transformation to go from board space to camera space
-        self.rvec_bc = None
-        self.tvec_bc = None
-
         ## Image with board used for calibration
         self.calibrationImage = None
 
@@ -175,15 +149,9 @@ class CameraCalibrator:
         self.arrChArUcoCorners = None
         self.arrChArUcoIds = None
 
-        ## Detected corners in Board coordinates (3D [mm])
-        self.arrBoardCornerPoints = None #3D
-
-        ## Detected corners in image coordinates (2D [pixels])
-        self.arrImgCornerPoints = None #2D
-
         ## Dictionary of point coordinates with corresponding id as key
-        self.dictWorldPoints = {} # In world coordinates
-        self.dictCameraPoints = {} # In camera coordinates
+        self.dictWorldPoints = {} # In world coordinates [3D] = (x, y, z)
+        self.dictCameraPoints = {} # In camera coordinates [2D] = (u, v)
 
         ## Array of points in each coordinate space to estimate transformation
         # Point in one array should correspond to the point with the same index in the other array
@@ -206,33 +174,83 @@ class CameraCalibrator:
         if self.arrChArUcoCorners is None or self.arrChArUcoIds is None:
             raise Exception("No board was found")
 
-        ## 2. Estimate the board pose w.r.t. camera
-        # Calculates transformation needed to go from board coordinates to camera coordinates
-        logger.debug("Estimating board pose")
-        self.__estimateBoardPose()
 
-        # cv2.drawFrameAxes(self.calibrationImage, self.arrCameraMatrix, self.arrDistortionCoeffs, self.rvec_bc, self.tvec_bc, length=50)
-        # cv2.imshow("Pose Estimation", self.calibrationImage)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
 
-        ## 3. Create corner points dictionary in camera coordinates
-        self.__calculateCameraDict()
+        # print(self.arrChArUcoCorners)
+        # print(self.arrChArUcoIds)
 
-        ## 4. Add depth information to the dictionaries
-        self.__includeDepthInfo()
+        ## 2. Save detected corners as dictionary
+        self.dictCameraPoints = {}
+        for i, charuco_id in enumerate(self.arrChArUcoIds.flatten()):
+            board_point = self.arrChArUcoCorners[i].flatten()
+            self.dictCameraPoints[charuco_id] = np.asarray(board_point)
 
-        ## 5. Create list of corresponding points
+        self.annotate_and_display()
+
+        ## 3. Create corresponding points array
         self.__createCorrespondingPointsArray()
+        # print(self.arrCamPoints)
+        # print(self.arrWorldPoints)
 
-        ## 6. Calibrate camera-to-world transformation
-        logger.debug("Calculating camera-world transformation")
-        trans_mat = self.calibrateCameraWorldTransformation()
-        logger.info("Found camera-world transformation")
+        img_annot = annotate_image(self.calibrationImage, self.arrCamPoints, self.arrWorldPoints)
+        cv2.imshow("t", img_annot)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
+        ## 4. Calculate the extrinsics by solving 3D points to projection points
+        # Returns transformation from world --> camera
+        _, rvec, tvec = cv2.solvePnP(
+                    objectPoints=np.asarray(self.arrWorldPoints),
+                    imagePoints=np.asarray(self.arrCamPoints),
+                    cameraMatrix=self.arrCameraMatrix,
+                    distCoeffs=self.arrDistortionCoeffs,
+                    flags=cv2.SOLVEPNP_IPPE
+        )
+
+        ## Draw origin
+        img_axis = cv2.drawFrameAxes(image, self.arrCameraMatrix, (0, 0, 0, 0, 0), rvec, tvec, 100)
+        cv2.imshow("Annotated Image", img_axis)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        R, _ = cv2.Rodrigues(rvec)
+
+        T_w2c = np.eye(4)
+        T_w2c[:3, :3] = R
+        T_w2c[:3, 3] = tvec.flatten()
+
+        # print(T_w2c)
 
         self.bCalibrated = True
 
-        return trans_mat
+        ## 5. Calculate inverse
+        T_c2w = np.linalg.inv(T_w2c)
+
+        return T_c2w
+
+
+    def annotate_and_display(self):
+        # Make a copy of the image to avoid modifying the original
+        annotated_image = self.calibrationImage.copy()
+
+        # Iterate over detected points and draw them
+        for charuco_id, (x, y) in self.dictCameraPoints.items():
+            # Convert coordinates to integers
+            x, y = int(x), int(y)
+
+            # Draw a small circle at each detected corner
+            cv2.circle(annotated_image, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
+
+            # Put the ID near the point
+            cv2.putText(annotated_image, str(charuco_id), (x + 10, y - 10),
+                        fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5,
+                        color=(255, 0, 0), thickness=2)
+
+        # Display the annotated image
+        cv2.imshow("Annotated Image", annotated_image)
+        cv2.waitKey(0)  # Wait until a key is pressed
+        cv2.destroyAllWindows()
 
     def showDetectedBoard(self):
         """
@@ -251,129 +269,6 @@ class CameraCalibrator:
             logger.warning("First run calibration")
             return None
 
-    def saveCornerCameraCoordinates(self):
-        """
-        Saves the camera coordinates of ChArUco markers to a text file if calibration has been completed.
-
-        The coordinates for each ChArUco marker are written to a file named "charuco_camera_coordinates.txt".
-        Each line in the file contains the ChArUco ID and its corresponding camera coordinates.
-
-        :raises Warning: If calibration has not been performed prior to calling this method.
-        """
-
-        if self.bCalibrated:
-            output_file = "charuco_camera_coordinates.txt"
-            with open(output_file, "w") as f:
-                for charuco_id, coord in self.dictCameraPoints.items():
-                    coord_str = " ".join(map(str, coord))  # Convert coordinates to a space-separated string
-                    f.write(f"ChArUco ID {charuco_id}: Camera Coordinates {coord_str}\n")
-
-            logger.info(f"ChArUco camera coordinates saved to {output_file}")
-        else:
-            logger.warning("First run calibration")
-
-    def __estimateBoardPose(self):
-        """
-        Estimates the board pose by computing the transformation from the board's coordinate space
-        to the camera's coordinate space.
-
-        :return: A tuple containing the rotation vector (rvec) and translation vector (tvec)
-                    representing the pose of the board in the camera coordinate system.
-        """
-
-        ## Get points in charuco space (3D) and in image space (pixels)
-        self.arrBoardCornerPoints, self.arrImgCornerPoints = self.oBoardDetector.oChArUcoBoard.matchImagePoints(
-            detectedCorners=self.arrChArUcoCorners,
-            detectedIds=self.arrChArUcoIds,
-        )
-
-        ## Find the transformation that maps points in charuco space to camera space
-        _, rvec, tvec = cv2.solvePnP(
-            objectPoints=self.arrBoardCornerPoints,
-            imagePoints=self.arrImgCornerPoints,
-            cameraMatrix=self.arrCameraMatrix,
-            distCoeffs=self.arrDistortionCoeffs,
-        )
-
-        self.rvec_bc = rvec
-        self.tvec_bc = tvec
-
-        return rvec, tvec
-
-    def calibrateCameraWorldTransformation(self):
-        """
-        Calibrates the camera world transformation by estimating the affine 3D transformation matrix.
-
-        This method computes the transformation matrix that converts camera coordinates to world coordinates using
-        corresponding points in both spaces. It utilizes OpenCV's estimateAffine3D function to perform the computation.
-        Inliers are also computed but not returned.
-
-        :return: The 4x4 transformation matrix representing the transformation from camera to world coordinates.
-        """
-
-        # print(self.arrCamPoints)
-        # print(self.arrWorldPoints)
-
-        _, out, inliers = cv2.estimateAffine3D(self.arrCamPoints, self.arrWorldPoints, True)
-
-        trans_mat = np.vstack((out, [0, 0, 0, 1]))
-        logger.debug(f"Calculated trans_mat: {trans_mat}")
-
-        return trans_mat
-
-    def __calculateCameraDict(self):
-        """
-        Calculates a dictionary mapping ChArUco marker IDs to their corresponding 3D points in camera coordinates.
-
-        The method iterates over the detected ChArUco IDs and computes their respective 3D points in
-        camera coordinates by converting the 3D board points using the `__convertBoardToCamera` method.
-
-        The computed points are then stored in the `self.dictCameraPoints` attribute.
-
-        :return: None
-        """
-        charuco_3D_camera = {}
-        for i, charuco_id in enumerate(self.arrChArUcoIds.flatten()):
-            board_point = self.arrBoardCornerPoints[charuco_id].flatten()
-            camera_point = self.__convertBoardToCamera(board_point)
-
-            charuco_3D_camera[charuco_id] = camera_point
-
-        ## Save
-        self.dictCameraPoints = charuco_3D_camera
-
-    def __convertBoardToCamera(self, board_point):
-        """
-        :param board_point: A 3D point in the board's coordinate system, represented as a list, tuple, or numpy array.
-        :return: A 3D point converted to the camera's coordinate system, represented as a numpy array.
-        """
-        R, _ = cv2.Rodrigues(self.rvec_bc)
-        camera_point = R@np.array(board_point) + self.tvec_bc.flatten()
-
-        return camera_point
-
-    def __includeDepthInfo(self):
-        """
-        Updates the world and camera points dictionaries with included depth information.
-
-        Add a fixed point along the z-axis with a 50 unit offset from the surface
-        into the `dictWorldPoints` dictionary. Converts the same point, represented
-        in board coordinates, to camera coordinates and updates the `dictCameraPoints`
-        dictionary with the transformed value.
-
-        :return: None
-        """
-
-        # TODO: Automate the included depth information + remove hardcoding
-        # Point along z-axis with offset 50 from surface
-        self.dictWorldPoints[100] = [0, 0, 50]
-
-        # Same point in camera coordinates
-        # = negative z-offset from origin in board coordinates transformed to camera coordinates
-        # point = [225, 0, -50]
-        point = [225, 37.5, -50]
-        point_camera = self.__convertBoardToCamera(point)
-        self.dictCameraPoints[100] = point_camera
 
     def __createCorrespondingPointsArray(self):
         """
@@ -394,6 +289,6 @@ class CameraCalibrator:
 
         ## Reshape arrays to numpy format
         self.arrWorldPoints = np.array(self.arrWorldPoints, dtype=np.float32).reshape(-1, 3)
-        self.arrCamPoints = np.array(self.arrCamPoints, dtype=np.float32).reshape(-1, 3)
+        self.arrCamPoints = np.array(self.arrCamPoints, dtype=np.float32).reshape(-1, 2)
 
 

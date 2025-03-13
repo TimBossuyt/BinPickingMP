@@ -221,6 +221,8 @@ class Camera:
                     keepAspectRatio=True
                 )
 
+                print(intrinsics1080p)
+
                 self.arrCameraMatrix = intrinsics1080p
 
                 ## Create calibration object
@@ -370,7 +372,7 @@ class Camera:
         ## Calculating nodes ##
         nodeDepth = self.oPipeline.create(dai.node.StereoDepth)
         nodeDepth.setDefaultProfilePreset(
-            dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset robotics
+            dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset
         nodeDepth.setSubpixel(True)
         nodeDepth.setLeftRightCheck(True)
 
