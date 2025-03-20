@@ -1,29 +1,29 @@
 {
   "ObjectSegmentation": {
     "ROI" : {
-      "xMin": 700,
-      "yMin": 200,
-      "xMax": 1500,
-      "yMax": 900
+      "xMin": 1060,
+      "yMin": 60,
+      "xMax": 1860,
+      "yMax": 930
     },
 
     "MorphologicalProcessing": {
       "OpeningKernel": [3, 3],
       "OpeningIterations": 3,
-      "ClosingKernel": [5, 5],
-      "ClosingIterations": 4
+      "ClosingKernel": [3, 3],
+      "ClosingIterations": 3
     },
 
     "SureBackground": {
-      "Iterations": 3
+      "Iterations": 2
     },
 
     "DistanceTransform": {
-      "MaskSize": 5
+      "MaskSize": 3
     },
 
     "SureForeground": {
-      "Threshold": 0.5
+      "Threshold": 0.3
     }
   },
 
@@ -61,12 +61,12 @@
 
   "PoseEstimation": {
     "General": {
-      "VoxelSize": 5
+      "VoxelSize": 7
     },
 
     "FeatureParams": {
-      "FeatureFactor": 10,
-      "MaxNeighbours": 100
+      "FeatureFactor": 13,
+      "MaxNeighbours": 200
     },
 
     "Matching": {
@@ -74,5 +74,4 @@
       "IcpDistanceFactor": 2
     }
   }
-
 }

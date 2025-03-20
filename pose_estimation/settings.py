@@ -8,6 +8,10 @@ class SettingsManager:
         self.sPath = sConfigFile
         self.settings = self.__loadSettings()
 
+    def reload_settings(self):
+        logger.info("Reloading settings")
+        self.__loadSettings()
+
     def __loadSettings(self) -> dict:
         try:
             with open(self.sPath, 'r') as f:

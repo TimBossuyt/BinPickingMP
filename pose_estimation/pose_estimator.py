@@ -98,6 +98,9 @@ class PoseEstimatorFPFH:
         self.distanceFactor = self.oSm.get("PoseEstimation.Matching.DistanceFactor")
         self.icpDistanceFactor = self.oSm.get("PoseEstimation.Matching.IcpDistanceFactor")
 
+    def reload_settings(self):
+        self.__loadSettings()
+        logger.info("Reloaded settings")
 
     def __calculateModelFeatures(self):
         ## Voxel down (make sure scene model points are same density
@@ -108,6 +111,8 @@ class PoseEstimatorFPFH:
             input=self.pcdModelDown,
             search_param=self.oFeatureParams
         )
+
+
 
 if __name__ == "__main__":
     ## Load settings

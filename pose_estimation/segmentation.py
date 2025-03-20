@@ -93,21 +93,38 @@ class ObjectSegmentation:
         ## 1. Convert to gray colour scale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        ## 2. Distinguish foreground (255) from background (0) using Otsu's method
-        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        cv2.imshow("Gray image", gray)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
-        logger.debug(f"Thresholding completed; threshold shape: {thresh.shape}")
+        roi = gray[self.y_min:self.y_max, self.x_min:self.x_max]
+
+        ## 2. Distinguish foreground (255) from background (0) using Otsu's method
+        _, roi_thresh = cv2.threshold(roi, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        logger.debug(f"Thresholding completed; threshold shape: {roi_thresh.shape}")
 
         ## 3. Define everything outside ROI as background
-        thresh = self.__applyROI(thresh)
+        mask = np.zeros_like(gray)
+        mask[self.y_min:self.y_max, self.x_min:self.x_max] = roi_thresh
+
+        cv2.imshow("Mask", mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        # thresh = self.__applyROI(thresh)
 
         ## 4. Threshold image processing
-        self.__processMaskedImage(thresh)
+        self.__processMaskedImage(mask)
 
         ## 5. Create labeling markers
+
         self.__createMarkers()
 
         self.watershed_img = cv2.watershed(self.cvImage, self.markers)
+
+        # cv2.imshow("Watershed result", self.watershed_img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
 
     def __applyROI(self, img_thresh: np.ndarray) -> np.ndarray:
@@ -167,6 +184,20 @@ class ObjectSegmentation:
         ## Close holes in objects using morphological closing ( = dilute followed by erosion)
         kernel = np.ones(self.ClosingKernelSize,np.uint8)
         img_masked = cv2.morphologyEx(img_masked, cv2.MORPH_CLOSE, kernel, iterations=self.ClosingIterations)
+
+        # Find connected components
+        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(img_masked, connectivity=8)
+
+        # Filter out small components
+        min_area = 10000  # Change based on expected object size
+        for i in range(1, num_labels):  # Ignore background (label 0)
+            print(stats[i, cv2.CC_STAT_AREA])
+            if stats[i, cv2.CC_STAT_AREA] < min_area:
+                img_masked[labels == i] = 0
+
+        cv2.imshow("Mask - cleaned", img_masked)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         ## Save masked image after removing noise + closing holes
         self.img_cleaned = img_masked

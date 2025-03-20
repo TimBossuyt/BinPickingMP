@@ -156,6 +156,7 @@ class RpcServer:
         self.server.register_function(self.imgSelectedObject)
         self.server.register_function(self.imgRender)
         self.server.register_function(self.loadLastCalibration)
+        self.server.register_function(self.reloadSettings)
 
 
     ################## ENDPOINTS ##################
@@ -420,6 +421,17 @@ class RpcServer:
 
             return enc_data
 
+
+    def reloadSettings(self):
+        logger.info("Received request to reload the settings")
+        self.SettingsManager.reload_settings()
+        ## Reload pose estimator settings
+        self.oPoseEstimator.oSm = self.SettingsManager
+        self.oPoseEstimator.reload_settings()
+
+        logger.info("Successfully reloaded the settings")
+
+        return 0
 
 
     ################## UTILS ##################
