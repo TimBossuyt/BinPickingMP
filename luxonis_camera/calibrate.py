@@ -3,7 +3,6 @@ import numpy as np
 import cv2
 import logging
 import open3d as o3d
-from PIL.ImageOps import scale
 
 logger = logging.getLogger("Calibration")
 
@@ -146,6 +145,8 @@ class CameraCalibrator:
 
         self.pcd = None
 
+        self.bCalibrated = False
+
         ## Image with board used for calibration
         self.calibrationImage = None
 
@@ -171,6 +172,8 @@ class CameraCalibrator:
         :return: Transformation matrix representing the camera-to-world transformation.
         """
 
+        logger.info("Starting calibration procedure")
+
         ## Save as attributes
         self.calibrationImage = image
         self.dictWorldPoints = dictWorldPoints
@@ -180,6 +183,8 @@ class CameraCalibrator:
         self.arrChArUcoCorners, self.arrChArUcoIds = self.oBoardDetector.detectBoard(image)
         if self.arrChArUcoCorners is None or self.arrChArUcoIds is None:
             raise Exception("Board was not found")
+
+        logger.info("Board detected")
 
         # print(self.arrChArUcoCorners)
         # print(self.arrChArUcoIds)
@@ -192,9 +197,10 @@ class CameraCalibrator:
 
         # print(self.dictCameraPoints)
 
-        self.annotate_and_display()
+        # self.annotate_and_display()
 
         ## 3. Get corners in camera coordinates (3D)
+        logger.info("Getting 3D points from pointcloud corners")
         self.dictCamera3DPoints = {}
 
         kernel_size = 6
@@ -222,9 +228,10 @@ class CameraCalibrator:
             point_3d = np.mean(point_window.reshape(-1, 3), axis=0)
             self.dictCamera3DPoints[id] = point_3d
 
-        print(self.dictCamera3DPoints)
+        # print(self.dictCamera3DPoints)
 
         ## 4. Add the depth information
+        logger.info("Incorporate depth info")
         # Detect extra - aruco code
         oDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         detector = cv2.aruco.ArucoDetector(oDict, cv2.aruco.DetectorParameters())
@@ -237,9 +244,9 @@ class CameraCalibrator:
         img_aruco = copy.deepcopy(image)
         img_aruco = cv2.circle(img_aruco, (int(depth_point[0]), int(depth_point[1])),5, color=(0, 255, 0), thickness=-1)
 
-        cv2.imshow('Aruco for depth', img_aruco)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('Aruco for depth', img_aruco)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         ## Get 3D Depth point
         u, v = int(depth_point[0]), int(depth_point[1])
@@ -266,48 +273,20 @@ class CameraCalibrator:
 
         # ## 4. Calculate the extrinsics by solving 3D points to projection points
         # Returns transformation from camera --> world
+        logger.info("Trying to calculate the transformation")
         trans_mat, scale = cv2.estimateAffine3D(
             src=np.asarray(self.arrCamPoints),
             dst=np.asarray(self.arrWorldPoints),
             force_rotation=True
         )
-        print(scale)
 
-
+        # trans_mat = scale*trans_mat
+        logger.info("Transformation found")
         trans_mat = np.vstack((trans_mat, np.array([0, 0, 0, 1])))
 
-        return trans_mat, scale
+        self.bCalibrated = True
 
-        # # Returns transformation from world --> camera
-        # _, rvec, tvec = cv2.solvePnP(
-        #             objectPoints=np.asarray(self.arrWorldPoints),
-        #             imagePoints=np.asarray(self.arrCamPoints),
-        #             cameraMatrix=self.arrCameraMatrix,
-        #             distCoeffs=self.arrDistortionCoeffs,
-        #             flags=cv2.SOLVEPNP_ITERATIVE
-        # )
-        #
-        # self.rvec_wc = rvec
-        # self.tvec_wc = tvec
-        #
-        # ## Draw origin
-        # img_axis = cv2.drawFrameAxes(image, self.arrCameraMatrix, (0, 0, 0, 0, 0), rvec, tvec, 100)
-        # cv2.imshow("Annotated Image", img_axis)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-        #
-        # R, _ = cv2.Rodrigues(rvec)
-        #
-        # T_w2c = np.eye(4)
-        # T_w2c[:3, :3] = R
-        # T_w2c[:3, 3] = tvec.flatten()
-        #
-        # # print(T_w2c)
-        #
-        # ## 5. Calculate inverse
-        # T_c2w = np.linalg.inv(T_w2c)
-        #
-        # return T_c2w
+        return trans_mat, scale
 
 
     def annotate_and_display(self):

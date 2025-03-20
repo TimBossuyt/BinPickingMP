@@ -13,7 +13,6 @@ from .settings import SettingsManager
 from .utils import visualizeDensities, display_point_clouds
 ## ------------------------------------
 
-
 logger = logging.getLogger("Scene")
 
 class Scene:
@@ -108,7 +107,7 @@ class Scene:
         sub_pcd_down = sub_pcd.voxel_down_sample(voxel_size=5)
 
         ## Filter the outliers
-        pcd_roi, _ = sub_pcd_down.remove_statistical_outlier(50, 0.1)
+        pcd_roi, _ = sub_pcd_down.remove_statistical_outlier(10, 0.05)
 
         return pcd_roi
 
@@ -222,7 +221,7 @@ class Scene:
         # Orient normals to camera (upwards)
         # logger.debug("Initial pointcloud normal estimation")
         pointcloud.estimate_normals()
-        pointcloud.orient_normals_to_align_with_direction([0, 0, -1])
+        pointcloud.orient_normals_to_align_with_direction([0, 0, 1])
 
         # Recalculate normals with search parameters
         oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=self.iRawNormalRadius)

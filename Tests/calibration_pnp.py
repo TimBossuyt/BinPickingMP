@@ -152,6 +152,6 @@ for id, coords in oCalibrator.dictCameraImagePoints.items():
     print("Coordinates in camera space")
     print(point_3d)
     print("Coordinates in cobot space")
-    point_transformed = transform_points(point_3d.reshape(1, 3), trans_mat)
+    point_transformed = transform_points(point_3d.reshape(1, 3)*0.9191951789734782, trans_mat)
     print(point_transformed)
     print("==========================")

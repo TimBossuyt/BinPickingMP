@@ -51,6 +51,8 @@ points = np.asarray(pcd.points)
 
 oCalibrator = CameraCalibrator(arrIntrinsics)
 trans_mat, scale = oCalibrator.runCalibration(img, pcd, charuco_3D_world)
+np.save("transform_camera_world.npy", trans_mat)
+np.save("scale_camera_world.npy", scale)
 
 ## 2. Visualize
 pcd_transformed = copy.deepcopy(pcd)
