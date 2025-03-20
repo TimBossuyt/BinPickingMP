@@ -15,6 +15,31 @@ logger = logging.getLogger("Camera")
 CV_IMG_REQUEST = "cv-img-request"
 PCD_REQUEST = "pcd-request"
 
+def transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
+    """
+    Transforms a set of 3D points using a homogeneous transformation matrix.
+
+    :param points: (N, 3) NumPy array of 3D points.
+    :param transform: (4, 4) NumPy array representing the homogeneous transformation matrix.
+    :return: (N, 3) NumPy array of transformed 3D points.
+    """
+    if points.shape[1] != 3:
+        raise ValueError("Input points should have shape (N, 3)")
+    if transform.shape != (4, 4):
+        raise ValueError("Transformation matrix should have shape (4, 4)")
+
+    # Convert points to homogeneous coordinates (N, 4)
+    ones = np.ones((points.shape[0], 1))
+    homogeneous_points = np.hstack([points, ones])
+
+    # Apply transformation
+    transformed_homogeneous = (transform @ homogeneous_points.T).T
+
+    # Convert back to 3D coordinates
+    transformed_points = transformed_homogeneous[:, :3]
+
+    return transformed_points
+
 def getConnectedDevices()-> list[str]:
     """
     Retrieves the list of MX IDs for all connected DepthAI devices.
@@ -45,6 +70,8 @@ class Camera:
         """
         :param iFPS: Input frames per second. Specifies the desired frame rate for the camera.
         """
+        self.arrCamToWorldMatrix = None
+        self.CamToWorldScale = None
         self.oPipeline = dai.Pipeline()
         self.iFPS = iFPS
         self.sMxId = None
@@ -73,10 +100,6 @@ class Camera:
 
         self.imgCalibration = None
 
-        ## Camera parameters
-        self.arrCameraMatrix = None
-        self.arrCamToWorldMatrix = None
-
     def getColoredPointCloud(self) -> o3d.geometry.PointCloud:
         """
         Initiates a request to fetch a colored point cloud,
@@ -96,9 +119,19 @@ class Camera:
             logger.debug(f"Point cloud response received")
 
             ## Create and return pointcloud once available
+            ## Update if camera was calibrated
+            if self.bIsCalibrated:
+                arrPoints = np.asarray(arrPoints)
+                ## Flip to right handed
+                arrPoints[:, 1] = -arrPoints[:, 1]
+                arrPoints = transform_points(arrPoints * self.CamToWorldScale, self.arrCamToWorldMatrix)
+
             oPointCloud = o3d.geometry.PointCloud()
             oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
             oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
+
+            origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=(0, 0, 0))
+            o3d.visualization.draw_geometries([oPointCloud, origin], window_name="Point from camera object")
 
             return oPointCloud
 
@@ -221,6 +254,8 @@ class Camera:
                     keepAspectRatio=True
                 )
 
+                print(intrinsics1080p)
+
                 self.arrCameraMatrix = intrinsics1080p
 
                 ## Create calibration object
@@ -283,23 +318,18 @@ class Camera:
             logger.error(f"Error while connecting to camera {self.sMxId}: {e}")
             self.bConnected = False
 
+    def loadCalibration(self, twc: np.ndarray, scale_twc: float):
+        ## Set the attributes and flag as calibrated
+        self.arrCamToWorldMatrix = twc
+        self.CamToWorldScale = scale_twc
+
+        self.bIsCalibrated = True
+
     def calibrateCamera(self, dictWorldPoints: dict[int, list[float, float, float]]) -> np.ndarray | None:
-        """
-        Calibrates the camera using a set of known world points and an input image where a calibration object
-        (e.g., a checkerboard) is visible.
-
-        This function computes the camera-to-world transformation matrix and
-        updates the internal state of the object to reflect the completed calibration.
-
-        Additionally, an annotated image with detected board corners is saved.
-
-        :param dictWorldPoints: A dictionary containing the 3D world points of the calibration object. These points are typically pre-defined for accurate calibration.
-        :return: A 4x4 transformation matrix representing the camera-to-world calibration result (homogeneous transformation matrix).
-        """
-
         ## TODO: Add error handling
         ## Initialize calibrator object
         self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
+        self.bIsCalibrated = False ## Don't transform the pcd from camera before calibration
         try:
             ## Request an image where board is visible
             image = self.getCvImageFrame()
@@ -307,8 +337,19 @@ class Camera:
                 logger.error("Received invalid image frame for calibration")
                 return
 
+            ## Request pointcloud
+            pcd = self.getColoredPointCloud()
+
+            ## DEBUGGING ONLY
+            o3d.visualization.draw_geometries([pcd])
+
+
+            if pcd is None:
+                logger.error("Received invalid pointcloud")
+                return
+
             ## Find the transformation matrix from the calibrator object
-            trans_mat = self.oCalibrator.runCalibration(image, dictWorldPoints)
+            trans_mat, scale = self.oCalibrator.runCalibration(image, pcd, dictWorldPoints)
 
         except Exception as e:
             logger.error(f"Camera calibration failed: {e}")
@@ -318,6 +359,16 @@ class Camera:
 
         ## Save as attribute of the camera
         self.arrCamToWorldMatrix = trans_mat
+        self.CamToWorldScale = scale
+
+        ## Save as numpy files for re-use
+        try:
+            np.save("./CalibrationData/tcw.npy", trans_mat)
+            np.save("./CalibrationData/scale_tcw.npy", scale)
+        except Exception as e:
+            logger.error(e)
+            raise Exception("Failed to save camera calibration parameters")
+
 
         ## Flag calibration is done
         self.bIsCalibrated = True
@@ -327,8 +378,6 @@ class Camera:
         self.imgCalibration = self.oCalibrator.showDetectedBoard()
 
         logger.info("Calibrating successful")
-
-        return np.asarray(trans_mat)
 
     def getCalibrationImageAnnot(self):
         """
@@ -370,7 +419,7 @@ class Camera:
         ## Calculating nodes ##
         nodeDepth = self.oPipeline.create(dai.node.StereoDepth)
         nodeDepth.setDefaultProfilePreset(
-            dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset robotics
+            dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset
         nodeDepth.setSubpixel(True)
         nodeDepth.setLeftRightCheck(True)
 

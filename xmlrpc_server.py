@@ -52,9 +52,6 @@ class RpcServer:
         self.dictDetectionResults = {}
         self.imgRender = None
 
-        ## Load last calibration settings
-        self.oCamera.arrCamToWorldMatrix = np.load("camera_calibration_matrix.npy")
-
     ################## CONFIGURATION ##################
     def __initializePoseEstimation(self, sPath: str):
         ## Load the settings
@@ -158,6 +155,7 @@ class RpcServer:
         self.server.register_function(self.detectObjects)
         self.server.register_function(self.imgSelectedObject)
         self.server.register_function(self.imgRender)
+        self.server.register_function(self.loadLastCalibration)
 
 
     ################## ENDPOINTS ##################
@@ -280,22 +278,29 @@ class RpcServer:
         except Exception as e:
             logger.error(f"Error connecting to camera with MxId {sMxId}: {str(e)}")
 
+    def loadLastCalibration(self):
+        ## 1. Read numpy files in CalibrationData
+        twc = np.load("./CalibrationData/tcw.npy")
+        twc_scale = float(np.load("./CalibrationData/scale_tcw.npy"))
+
+        self.oCamera.loadCalibration(twc, twc_scale)
+
+        return 0
+
+
+
     def runCalibration(self, sWorldPointsJson):
         """
         :param sWorldPointsJson: A JSON string representing the world points used for camera calibration.
         :return: An integer indicating the status of the calibration process (default: 0).
         """
-
         logger.info("Received request to run camera calibration")
         try:
             ## Calibrate camera function expects dictionary --> json to dict
             dictWorldPoints = self.__deserializeWorldPointsJson(sWorldPointsJson)
             logger.debug(f"World points for calibration: {dictWorldPoints}")
 
-            arrTransMat = self.oCamera.calibrateCamera(dictWorldPoints)
-
-
-            np.save("camera_calibration_matrix.npy", arrTransMat)
+            self.oCamera.calibrateCamera(dictWorldPoints)
             logger.info("Camera calibration completed successfully")
 
             return 0
@@ -345,7 +350,6 @@ class RpcServer:
 
         ## 1. Get pointcloud scene from camera
         pcdScene = self.oCamera.getColoredPointCloud()
-        # o3d.visualization.draw_geometries([pcdScene])
 
         ## 2. Create scene object
         self.oScene = Scene(
@@ -364,13 +368,12 @@ class RpcServer:
         dictTransformResults = self.oPoseEstimator.findObjectTransforms(self.oScene)
 
         self.dictDetectionResults = dictTransformResults
-
         tEnd = time.time()
         logger.info(f"Complete object detection took: {(tEnd - tStart)*1000:.2f} ms")
 
-        oTransformVisualizer = TransformVisualizer(self.oModel, self.oScene, dictTransformResults,
-                                                   self.oCamera.arrCamToWorldMatrix)
+        oTransformVisualizer = TransformVisualizer(self.oModel, self.oScene, dictTransformResults)
         oTransformVisualizer.displayFoundObjects()
+
         self.imgRender = oTransformVisualizer.renderFoundObjects()
 
         ## Dump results to json string

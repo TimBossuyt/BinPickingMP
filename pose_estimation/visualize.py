@@ -46,12 +46,9 @@ def create_arrow(origin, normal):
 
 
 class TransformVisualizer:
-    def __init__(self, model: Model, scene: Scene, dictResults: dict, camera_world_tf: np.ndarray):
+    def __init__(self, model: Model, scene: Scene, dictResults: dict):
         self.oModel = model
         self.oScene = scene
-
-        self.arrCamWorld = camera_world_tf
-
         self.dictResults = dictResults
 
     def renderFoundObjects(self):
@@ -76,6 +73,8 @@ class TransformVisualizer:
 
             logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
 
+            print(transform)
+
             pcdObjectTransformed = pcdModelCopy.transform(transform)
             geometries.append(pcdObjectTransformed)
 
@@ -99,9 +98,9 @@ class TransformVisualizer:
         point_cloud_center = bbox.get_center()  # This is the center of your point cloud
         eye = point_cloud_center
 
-        center = point_cloud_center + np.array([0, 0, -1], dtype=np.float32)
+        center = point_cloud_center + np.array([0, 0, 1], dtype=np.float32)
 
-        up = np.array([0, 1, 0], dtype=np.float32)  # Up vector along +y-axis
+        up = np.array([1, 1, 0], dtype=np.float32)
 
         ctr = vis.get_view_control()
         # ctr.set_lookat(center)
@@ -118,7 +117,6 @@ class TransformVisualizer:
 
     def displayFoundObjects(self):
         pcdROI = copy.deepcopy(self.oScene.pcdROI)
-        pcdROI.transform(self.arrCamWorld)
 
         geometries = [pcdROI]
 
