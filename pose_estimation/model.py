@@ -1,7 +1,11 @@
 import open3d as o3d
+import logging
 
-from .utils import filter_points_by_x_range
+from .utils import filter_points_by_x_range, filter_points_by_z_range
 from .settings import SettingsManager
+
+logger = logging.getLogger("Model object")
+
 
 class Model:
     """
@@ -11,6 +15,9 @@ class Model:
     def __init__(self, sModelPath, settingsManager: SettingsManager, picking_pose: tuple[float, float, float, float, float, float]):
         self.oSm = settingsManager
         self.__loadSettings()
+
+        ## Scale debugging
+        self.bScaled = False
 
         ## Load model as mesh
         self.mshModel = o3d.io.read_triangle_mesh(sModelPath)
@@ -34,11 +41,25 @@ class Model:
         self.iNormalRadius = self.oSm.get("Model.NormalRadius")
         self.iPoints = self.oSm.get("Model.NumberOfPoints")
 
+    def reload_settings(self):
+        self.__loadSettings()
+
+        ## Recalculate model optimizer
+        logger.info("Recalculating model features")
+        self.__optimizeModel()
+
+        logger.info("Reloaded settings")
+
 
     def __optimizeModel(self):
         ## MODEL SPECIFIC!!!! TODO: Change model specific optimization
         # Only selects the upper half of the model (remove symmetry)
-        self.pcdModel = filter_points_by_x_range(self.pcdModel, 0, 300)
+        self.pcdModel = filter_points_by_x_range(self.pcdModel, 0, 500)
+        # self.pcdModel = filter_points_by_z_range(self.pcdModel, 0, 1000)
+
+        if not self.bScaled:
+            # self.pcdModel = self.pcdModel.scale(0.9, center=[0, 0, 0])
+            self.bScaled = True
 
         ## Re-estimate the surface normals
         oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=self.iNormalRadius)

@@ -117,7 +117,6 @@ class ObjectSegmentation:
         self.__processMaskedImage(mask)
 
         ## 5. Create labeling markers
-
         self.__createMarkers()
 
         self.watershed_img = cv2.watershed(self.cvImage, self.markers)

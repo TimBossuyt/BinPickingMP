@@ -349,6 +349,9 @@ class RpcServer:
         logger.info("Received detect objects request")
         tStart = time.time()
 
+        if not self.oCamera.bIsCalibrated:
+            raise Exception("First run calibration")
+
         ## 1. Get pointcloud scene from camera
         pcdScene = self.oCamera.getColoredPointCloud()
 
@@ -428,6 +431,14 @@ class RpcServer:
         ## Reload pose estimator settings
         self.oPoseEstimator.oSm = self.SettingsManager
         self.oPoseEstimator.reload_settings()
+
+        ## Reload scene settings
+        self.oScene.oSm = self.SettingsManager ## TODO: Necessary?
+        self.oScene.reload_settings()
+
+        ## Reload model settings
+        self.oModel.oSm = self.SettingsManager
+        self.oModel.reload_settings()
 
         logger.info("Successfully reloaded the settings")
 

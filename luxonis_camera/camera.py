@@ -130,8 +130,8 @@ class Camera:
             oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
             oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
 
-            origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=(0, 0, 0))
-            o3d.visualization.draw_geometries([oPointCloud, origin], window_name="Point from camera object")
+            # origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=(0, 0, 0))
+            # o3d.visualization.draw_geometries([oPointCloud, origin], window_name="Point from camera object")
 
             return oPointCloud
 
@@ -241,6 +241,8 @@ class Camera:
                 logger.info("Successfully connected to camera")
 
                 self.bConnected = True
+
+                device.setIrLaserDotProjectorIntensity(1)
 
                 ## Read and save calibration data
                 calibData = device.readCalibration()
@@ -422,6 +424,7 @@ class Camera:
             dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset
         nodeDepth.setSubpixel(True)
         nodeDepth.setLeftRightCheck(True)
+        nodeDepth.setSubpixelFractionalBits(4)
 
         # Link stereo mono cameras to get depth map
         nodeCamLeft.out.link(nodeDepth.left)

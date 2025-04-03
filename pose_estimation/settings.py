@@ -10,7 +10,7 @@ class SettingsManager:
 
     def reload_settings(self):
         logger.info("Reloading settings")
-        self.__loadSettings()
+        self.settings = self.__loadSettings()
 
     def __loadSettings(self) -> dict:
         try:
