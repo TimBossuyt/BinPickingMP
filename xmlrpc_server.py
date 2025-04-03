@@ -362,7 +362,7 @@ class RpcServer:
         )
 
         ## Debug visualize:
-        # self.oScene.oMasks.debugSegmentation()
+        # self.oScene.oMasks.debugSegmentation
 
         # self.oScene.displayObjectPoints()
 
