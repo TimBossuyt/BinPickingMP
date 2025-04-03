@@ -33,6 +33,37 @@ def filter_points_by_x_range(pcd: o3d.geometry.PointCloud, x_min: int, x_max:int
 
     return filtered_pcd
 
+def filter_points_by_z_range(pcd: o3d.geometry.PointCloud, z_min: int, z_max:int) -> o3d.geometry.PointCloud:
+    """
+    :param pcd: Input point cloud containing 3D points
+    :param z_min: Minimum x-coordinate value to filter the points
+    :param z_max: Maximum x-coordinate value to filter the points
+    :return: A new point cloud containing only the points within the specified x-coordinate range
+    """
+
+    # Get the numpy array of points
+    points = np.asarray(pcd.points)
+
+    # Apply the mask to get points inside the range [x_min, x_max]
+    mask = (points[:, 2] > z_min) & (points[:, 2] < z_max)
+    filtered_points = points[mask]
+
+    # Create a new point cloud with the filtered points
+    filtered_pcd = o3d.geometry.PointCloud()
+    filtered_pcd.points = o3d.utility.Vector3dVector(filtered_points)
+
+    # Copy colors if available
+    if pcd.has_colors():
+        colors = np.asarray(pcd.colors)
+        filtered_pcd.colors = o3d.utility.Vector3dVector(colors[mask])
+
+    # Copy normals if available
+    if pcd.has_normals():
+        normals = np.asarray(pcd.normals)
+        filtered_pcd.normals = o3d.utility.Vector3dVector(normals[mask])
+
+    return filtered_pcd
+
 def visualizeDensities(arrDensities: np.ndarray, msh: o3d.geometry.Vertex):
     """
     :param arrDensities: An array containing the density values associated with the vertices of a mesh.

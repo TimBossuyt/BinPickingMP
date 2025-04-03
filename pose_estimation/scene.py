@@ -38,7 +38,6 @@ class Scene:
             oSettingsManager=self.oSm
         )
 
-
         logger.info("Trying to find the object masks")
         tStart = time.time()
         self.oMasks = ObjectMasks(self.arrColours, oSegmentation)
@@ -46,7 +45,7 @@ class Scene:
 
         logger.info(f"2D segmentation took {(tEnd - tStart)*1000:.2f} ms")
 
-        ## Save the masks for each objetc
+        ## Save the masks for each object
         self.dictMasks = self.oMasks.getMasks()
 
         ## 3D Points (camera coordinates)
@@ -104,10 +103,10 @@ class Scene:
         sub_pcd.colors = o3d.utility.Vector3dVector(sub_colors.reshape(-1, 3))
 
         ## Downsample
-        sub_pcd_down = sub_pcd.voxel_down_sample(voxel_size=5)
+        sub_pcd_down = sub_pcd.voxel_down_sample(voxel_size=self.iVoxelSize)
 
         ## Filter the outliers
-        pcd_roi, _ = sub_pcd_down.remove_statistical_outlier(10, 0.05)
+        pcd_roi, _ = sub_pcd_down.remove_statistical_outlier(self.iOutlierNeighbours , self.iStd)
 
         return pcd_roi
 
@@ -249,16 +248,36 @@ class Scene:
         arrVerticesToRemove = arrDensities < np.quantile(arrDensities, self.iDensityThreshold)
         mshSurfRec.remove_vertices_by_mask(arrVerticesToRemove)
 
+        if self.bVisualize:
+            o3d.visualization.draw_geometries([mshSurfRec], window_name="Created mesh after "
+                                                                        "removing low density surfaces",
+                                              width=800, height=600)
+
         ## 4. Smoothing with taubin filter
         mshSurfRecSmooth = mshSurfRec.filter_smooth_taubin(number_of_iterations=self.iTaubinIter)
         mshSurfRecSmooth.compute_vertex_normals()
+
+        if self.bVisualize:
+            o3d.visualization.draw_geometries([mshSurfRecSmooth], window_name="Mesh after smoothing",
+                                              width=800, height=600)
 
         pointcloud_reconstructed = mshSurfRecSmooth.sample_points_poisson_disk(number_of_points=self.iPoints)
 
         oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=self.iProcessedNormalRadius)
         pointcloud_reconstructed.estimate_normals(oNormalSearchParam)
 
+        if self.bVisualize:
+            display_point_clouds(arrPointClouds=[pointcloud],
+                                 sWindowTitle="Final reconstructed pointcloud",
+                                 bShowOrigin=True,
+                                 iOriginSize=100
+                                 )
+
         return pointcloud_reconstructed
+
+    def reload_settings(self):
+        self.__loadSettings()
+        logger.info("Reloaded settings")
 
 
 

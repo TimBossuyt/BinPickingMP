@@ -156,6 +156,7 @@ class RpcServer:
         self.server.register_function(self.imgSelectedObject)
         self.server.register_function(self.imgRender)
         self.server.register_function(self.loadLastCalibration)
+        self.server.register_function(self.reloadSettings)
 
 
     ################## ENDPOINTS ##################
@@ -348,6 +349,9 @@ class RpcServer:
         logger.info("Received detect objects request")
         tStart = time.time()
 
+        if not self.oCamera.bIsCalibrated:
+            raise Exception("First run calibration")
+
         ## 1. Get pointcloud scene from camera
         pcdScene = self.oCamera.getColoredPointCloud()
 
@@ -358,7 +362,7 @@ class RpcServer:
         )
 
         ## Debug visualize:
-        # self.oScene.oMasks.debugSegmentation()
+        # self.oScene.oMasks.debugSegmentation
 
         # self.oScene.displayObjectPoints()
 
@@ -420,6 +424,25 @@ class RpcServer:
 
             return enc_data
 
+
+    def reloadSettings(self):
+        logger.info("Received request to reload the settings")
+        self.SettingsManager.reload_settings()
+        ## Reload pose estimator settings
+        self.oPoseEstimator.oSm = self.SettingsManager
+        self.oPoseEstimator.reload_settings()
+
+        ## Reload scene settings
+        self.oScene.oSm = self.SettingsManager ## TODO: Necessary?
+        self.oScene.reload_settings()
+
+        ## Reload model settings
+        self.oModel.oSm = self.SettingsManager
+        self.oModel.reload_settings()
+
+        logger.info("Successfully reloaded the settings")
+
+        return 0
 
 
     ################## UTILS ##################

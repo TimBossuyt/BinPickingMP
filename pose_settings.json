@@ -1,29 +1,29 @@
 {
   "ObjectSegmentation": {
     "ROI" : {
-      "xMin": 700,
+      "xMin": 1060,
       "yMin": 200,
-      "xMax": 1500,
-      "yMax": 900
+      "xMax": 1600,
+      "yMax": 930
     },
 
     "MorphologicalProcessing": {
       "OpeningKernel": [3, 3],
       "OpeningIterations": 3,
-      "ClosingKernel": [5, 5],
-      "ClosingIterations": 4
+      "ClosingKernel": [3, 3],
+      "ClosingIterations": 3
     },
 
     "SureBackground": {
-      "Iterations": 3
+      "Iterations": 2
     },
 
     "DistanceTransform": {
-      "MaskSize": 5
+      "MaskSize": 3
     },
 
     "SureForeground": {
-      "Threshold": 0.5
+      "Threshold": 0.3
     }
   },
 
@@ -38,15 +38,15 @@
     },
 
     "BasicProcessing": {
-      "VoxelSize": 3,
+      "VoxelSize": 2,
       "OutlierNeighbours": 10,
       "Std": 1
     },
 
     "SurfaceReconstruction": {
-      "RawNormalRadius": 7,
-      "ProcessedNormalRadius": 7,
-      "PoissonDepth": 9,
+      "RawNormalRadius": 20,
+      "ProcessedNormalRadius": 10,
+      "PoissonDepth": 6,
       "DensityThreshold": 0.5,
       "TaubinIter": 100,
       "NumberOfPoints": 700,
@@ -55,24 +55,30 @@
   },
 
   "Model": {
-    "NumberOfPoints": 1000,
-    "NormalRadius": 7
+    "NumberOfPoints": 4000,
+    "NormalRadius": 5
   },
 
   "PoseEstimation": {
     "General": {
-      "VoxelSize": 5
+      "VoxelSize": 2
     },
 
     "FeatureParams": {
-      "FeatureFactor": 10,
-      "MaxNeighbours": 100
+      "FeatureFactor": 20,
+      "MaxNeighbours": 200
     },
 
     "Matching": {
-      "DistanceFactor": 2,
-      "IcpDistanceFactor": 2
+      "MutualFilter": 0,
+      "RansacIterations": 3,
+      "DistanceFactor": 5,
+      "IcpDistanceFactor": 1,
+      "CheckerEdgeLengthThreshold": 0.5,
+      "NormalAngleThreshold": 0.7,
+      "MaxIcpIterations": 30,
+      "InitFitnessThresh": 0.5,
+      "TimeOut": 5000
     }
   }
-
 }

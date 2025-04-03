@@ -73,7 +73,7 @@ class TransformVisualizer:
 
             logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
 
-            print(transform)
+            # print(transform)
 
             pcdObjectTransformed = pcdModelCopy.transform(transform)
             geometries.append(pcdObjectTransformed)

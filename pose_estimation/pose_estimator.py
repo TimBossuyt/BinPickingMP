@@ -1,3 +1,6 @@
+from IPython.core.display_functions import display
+
+from pose_estimation.utils import display_point_clouds
 from .scene import Scene
 from .model import Model
 from .settings import SettingsManager
@@ -28,7 +31,7 @@ class PoseEstimatorFPFH:
 
         for _id, pcdObject in scene.dictProcessedPcds.items():
             tStartObject = time.time()
-            results[_id] = self.__calculateTransform(pcdObject)
+            results[_id] = self.__calculateTransform(pcdObject, self.MatchingTimeOut)
             tEndObject = time.time()
 
             logger.debug(f"Finding object {_id} took {(tEndObject-tStartObject)*1000:.2f} ms")
@@ -39,9 +42,15 @@ class PoseEstimatorFPFH:
 
         return results
 
-    def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud) -> (np.ndarray, float, float):
+    def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud, timeout: float) -> (np.ndarray, float, float):
+        ## REMOVE, DEBUGGING ONLY
+        self.__calculateModelFeatures()
+
         ## 1. Voxel down object pointcloud to same density as object model
         pcdObjectDown = pcdObject.voxel_down_sample(voxel_size=self.iVoxelSize)
+
+        # display_point_clouds([pcdObjectDown, self.pcdModelDown], "Model and object used for pose estimation",
+        #                      True, True, 100)
 
         ## 2. Calculate the FPFH features
         oObjectFPFH = o3d.pipelines.registration.compute_fpfh_feature(
@@ -49,22 +58,37 @@ class PoseEstimatorFPFH:
             search_param=self.oFeatureParams
         )
 
-        ## 3. Find initial transformation using RANSAC
-        oInitialMatch = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
-            source=self.pcdModelDown,
-            target=pcdObjectDown,
-            source_feature=self.oModelFPFH,
-            target_feature=oObjectFPFH,
-            mutual_filter=False,
-            max_correspondence_distance=self.distanceFactor*self.iVoxelSize,
-            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-            ransac_n=5, ## TODO: Adjust ransac_n
-            checkers=[
-                o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
-                    self.distanceFactor*self.iVoxelSize),
-            ],
-            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(1000000, 0.999)
-        )
+
+        # 3. Find initial transformation using RANSAC
+        oInitialMatch = None
+        fitness = -1
+        start_time = time.time()
+        while fitness < self.FitnessThreshold:
+            elapsed_time = (time.time() - start_time) * 1000
+            if elapsed_time > timeout:
+                print("RANSAC timeout reached, returning default transformation")
+                return np.eye(4), 0.0, 0.0  # Return identity matrix and zero fitness/RMSE
+
+
+            oInitialMatch = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+                source=self.pcdModelDown,
+                target=pcdObjectDown,
+                source_feature=self.oModelFPFH,
+                target_feature=oObjectFPFH,
+                mutual_filter= self.bMutualFilter,
+                max_correspondence_distance=self.distanceFactor*self.iVoxelSize,
+                estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+                ransac_n=self.iRansacIterations,
+                checkers=[
+                    # o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+                    #     self.distanceFactor*self.iVoxelSize),
+                    o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(self.CheckerLengthThreshold ),
+                    o3d.pipelines.registration.CorrespondenceCheckerBasedOnNormal(self.NormalAngleThresh)
+
+                ],
+                criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(10000, 0.999)
+            )
+            fitness = oInitialMatch.fitness
 
         ## 4. Perform ICP for finer results
         oIcpResult = o3d.pipelines.registration.registration_icp(
@@ -73,10 +97,8 @@ class PoseEstimatorFPFH:
             max_correspondence_distance=self.iVoxelSize*self.icpDistanceFactor,
             init=oInitialMatch.transformation,
             estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=500)
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=self.iMaxIcpIterations)
         )
-
-
 
         return np.asarray(oIcpResult.transformation), oIcpResult.fitness, oIcpResult.inlier_rmse
 
@@ -95,9 +117,22 @@ class PoseEstimatorFPFH:
         )
 
         ## Matching parameters
+        self.iRansacIterations = self.oSm.get("PoseEstimation.Matching.RansacIterations")
         self.distanceFactor = self.oSm.get("PoseEstimation.Matching.DistanceFactor")
         self.icpDistanceFactor = self.oSm.get("PoseEstimation.Matching.IcpDistanceFactor")
+        value = self.oSm.get("PoseEstimation.Matching.MutualFilter")
+        self.bMutualFilter = (value == 1)
 
+        self.CheckerLengthThreshold = self.oSm.get("PoseEstimation.Matching.CheckerEdgeLengthThreshold")
+        self.NormalAngleThresh = self.oSm.get("PoseEstimation.Matching.NormalAngleThreshold")
+
+        self.iMaxIcpIterations = self.oSm.get("PoseEstimation.Matching.MaxIcpIterations")
+        self.FitnessThreshold = self.oSm.get("PoseEstimation.Matching.InitFitnessThresh")
+        self.MatchingTimeOut = self.oSm.get("PoseEstimation.Matching.TimeOut")
+
+    def reload_settings(self):
+        self.__loadSettings()
+        logger.info("Reloaded settings")
 
     def __calculateModelFeatures(self):
         ## Voxel down (make sure scene model points are same density
@@ -108,6 +143,8 @@ class PoseEstimatorFPFH:
             input=self.pcdModelDown,
             search_param=self.oFeatureParams
         )
+
+
 
 if __name__ == "__main__":
     ## Load settings
