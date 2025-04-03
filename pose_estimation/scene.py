@@ -1,6 +1,8 @@
 import cv2
 import open3d as o3d
-from pathlib import Path
+import matplotlib.path as mplpath
+import matplotlib.pyplot as plt
+from scipy.spatial import ConvexHull
 import numpy as np
 import random
 import logging
@@ -33,39 +35,38 @@ class Scene:
         self.arrColours = np.asarray(self.pcdRaw.colors).reshape(self.iHeightImage, self.iWidthImage, 3) * 255
         self.arrColours = np.uint8(self.arrColours)
 
-        ## Initialize the object segmentation object
-        oSegmentation = ObjectSegmentation(
-            oSettingsManager=self.oSm
-        )
+        ## Save the ROI of the scene
+        self.pcdROI = self.__selectROI()
+        self.pcdViz = self.__cropViz()
 
-        logger.info("Trying to find the object masks")
+        logger.info("Trying to find the objects in pointcloud")
         tStart = time.time()
-        self.oMasks = ObjectMasks(self.arrColours, oSegmentation)
-        tEnd = time.time()
 
-        logger.info(f"2D segmentation took {(tEnd - tStart)*1000:.2f} ms")
-
-        ## Save the masks for each object
-        self.dictMasks = self.oMasks.getMasks()
-
-        ## 3D Points (camera coordinates)
-        self.arrPoints = np.asarray(self.pcdRaw.points).reshape(self.iHeightImage, self.iWidthImage, 3)
-
-        ## Create a dictionary with points of each object
+        ## Create a dictionary with points of each object (using clustering algorithm)
         self.dictObjects = self.__createObjectsDict()
+
+        tEnd = time.time()
+        logger.info(f"Clustering objects took {(tEnd - tStart)*1000:.2f} ms")
 
         ## Process the object point clouds
         self.dictProcessedPcds = self.__processObjects()
 
-        ## Save the ROI of the scene
-        self.pcdROI = self.__selectROI()
+
 
     def __loadSettings(self) -> None:
         ## --------------- ROI Settings ---------------
-        self.x_min = self.oSm.get("ObjectSegmentation.ROI.xMin")
-        self.y_min = self.oSm.get("ObjectSegmentation.ROI.yMin")
-        self.x_max = self.oSm.get("ObjectSegmentation.ROI.xMax")
-        self.y_max = self.oSm.get("ObjectSegmentation.ROI.yMax")
+        self.ptRoi1 = self.oSm.get("Scene.ROI.p1")
+        self.ptRoi2 = self.oSm.get("Scene.ROI.p2")
+        self.ptRoi3 = self.oSm.get("Scene.ROI.p3")
+        self.ptRoi4 = self.oSm.get("Scene.ROI.p4")
+
+        self.iBinPlaneDistance = self.oSm.get("Scene.ROI.BinPlaneDistance")
+
+        ## --------------- Clustering ---------------
+        self.clustEpsilon = self.oSm.get("Scene.Clustering.Epsilon")
+        self.clustMinPoints = self.oSm.get("Scene.Clustering.min_points")
+
+        self.minObjectSize = self.oSm.get("Scene.Clustering.MinObjectSize")
 
         ## --------------- Resolution Settings ---------------
         self.iHeightImage = self.oSm.get("Scene.CameraResolution.HeightImage")
@@ -91,24 +92,97 @@ class Scene:
 
 
     def __selectROI(self):
-        ## Create points and colours arrays with correct shapes
+        """
+        Returns ROI of pointcloud
+        :return:
+        """
+
+        ## Create quadrilateral Path (matplotlib)
+        quad_points = [self.ptRoi1, self.ptRoi2, self.ptRoi3, self.ptRoi4]
+        quad_path = mplpath.Path(quad_points)
+
         points = np.asarray(self.pcdRaw.points).reshape(self.iHeightImage, self.iWidthImage, 3)
-        colors = np.asarray(self.pcdRaw.colors).reshape(self.iHeightImage, self.iWidthImage, 3)
+        flat_points = points[:, :, :2].reshape(-1, 2)
 
-        sub_points = points[self.y_min:self.y_max, self.x_min:self.x_max]
-        sub_colors = colors[self.y_min:self.y_max, self.x_min:self.x_max]
+        mask_flat = quad_path.contains_points(flat_points)
+        mask_2d = mask_flat.reshape(points.shape[:2])
 
-        sub_pcd = o3d.geometry.PointCloud()
-        sub_pcd.points = o3d.utility.Vector3dVector(sub_points.reshape(-1, 3))
-        sub_pcd.colors = o3d.utility.Vector3dVector(sub_colors.reshape(-1, 3))
+        ## Only get points within x, y region
+        filtered_points = points[mask_2d == 1]
+        filtered_pcd = o3d.geometry.PointCloud()
+        filtered_pcd.points = o3d.utility.Vector3dVector(filtered_points)
 
-        ## Downsample
-        sub_pcd_down = sub_pcd.voxel_down_sample(voxel_size=self.iVoxelSize)
+        o3d.visualization.draw_geometries([filtered_pcd], window_name="Scene - ROI")
 
-        ## Filter the outliers
-        pcd_roi, _ = sub_pcd_down.remove_statistical_outlier(self.iOutlierNeighbours , self.iStd)
+        ## Remove bin plane
+        plane_model, inliers = filtered_pcd.segment_plane(
+            distance_threshold=self.iBinPlaneDistance,
+            ransac_n = 3,
+            num_iterations=1000,
+        )
+        ## Only select outliers (not plane) as part of ROI
+        filtered_pcd = filtered_pcd.select_by_index(inliers, invert=True)
+        # o3d.visualization.draw_geometries([filtered_pcd], window_name="Scene - ROI - Removed Plane")
 
-        return pcd_roi
+        return filtered_pcd
+
+    def __cropViz(self):
+        """
+        Returns pointcloud with only interesting points for visualization
+        :return:
+        """
+        quad_points = [self.ptRoi1, self.ptRoi2, self.ptRoi3, self.ptRoi4]
+
+        ## Add margin to the points
+        quad_points = [self.ptRoi1, self.ptRoi2, self.ptRoi3, self.ptRoi4]
+        quad_points = np.array(quad_points)
+
+        hull = ConvexHull(quad_points)
+        hull_points = quad_points[hull.vertices]
+
+        # Adding a margin of 20 to the convex hull
+        margin = 100
+        center = np.mean(hull_points, axis=0)  # Center of the hull
+
+        expanded_hull_points = []
+        for point in hull_points:
+            # Direction vector from center to the point
+            direction = point - center
+            # Normalize the direction and expand by margin
+            expanded_point = point + direction / np.linalg.norm(direction) * margin
+            expanded_hull_points.append(expanded_point)
+        expanded_hull_points = np.array(expanded_hull_points)
+        quad_path = mplpath.Path(expanded_hull_points)
+
+        points = np.asarray(self.pcdRaw.points).reshape(self.iHeightImage, self.iWidthImage, 3)
+        flat_points = points[:, :, :2].reshape(-1, 2)
+
+        mask_flat = quad_path.contains_points(flat_points)
+        mask_2d = mask_flat.reshape(points.shape[:2])
+
+        # Only get points within the x, y region and z coordinate between 0 and 200
+        z_mask = (points[:, :, 2] >= 0) & (points[:, :, 2] <= 200)  # Apply Z condition
+        combined_mask = mask_2d & z_mask  # Combine x, y mask with z condition
+
+        ## Only get points within x, y region
+        filtered_points = points[combined_mask == 1]
+        filtered_pcd = o3d.geometry.PointCloud()
+        filtered_pcd.points = o3d.utility.Vector3dVector(filtered_points)
+
+        ## Apply colours
+        colours = np.asarray(self.pcdRaw.colors).reshape(self.iHeightImage, self.iWidthImage, 3)
+        # print(colours.shape)
+
+        filtered_colours = colours[combined_mask == 1]
+        # print(filtered_colours.shape)
+        # filtered_colours = cv2.cvtColor(filtered_colours, cv2.COLOR_BGR2RGB) / 255
+        ## Swap BGR to RGB
+        filtered_colours = filtered_colours[..., ::-1]
+
+        filtered_pcd.colors = o3d.utility.Vector3dVector(filtered_colours)
+
+        # o3d.visualization.draw_geometries([filtered_pcd], window_name="Scene - Viz")
+        return filtered_pcd
 
     def displayObjectPoints(self) -> None:
         """
@@ -138,25 +212,39 @@ class Scene:
         Creates a dictionary of objects where each key corresponds to an object's ID and the value
         is a numpy array of XYZ coordinates associated with that object.
 
-        For each detected object ID, applies a mask to extract the corresponding XYZ points.
-        Points with a z-coordinate value of 0 (invalid points) are removed.
-
         :return: Dictionary where the keys are object IDs (integers) and the values are numpy arrays of XYZ points.
         """
         dictObjects = {}
 
-        ## apply mask for each detected object to the dictionary with the XYZ points as an array to corresponding key
+        labels = np.array(
+            self.pcdROI.cluster_dbscan(eps=self.clustEpsilon, min_points=self.clustMinPoints)
+        )
 
-        # logger.debug("Applying mask for each found object")
+        ## ----------- DEBUG - Visualization -----------
+        max_label = labels.max()
+        colors = plt.get_cmap("tab20")(labels / (max_label if max_label > 0 else 1))
+        colors[labels < 0] = 0
+        self.pcdROI.colors = o3d.utility.Vector3dVector(colors[:, :3])
 
-        for _id, mask in self.dictMasks.items():
-            _id = int(_id)
-            dictObjects[_id] = self.arrPoints[mask==1]
+        o3d.visualization.draw_geometries([self.pcdROI])
+        ## ---------------------------------------------
 
-            # logger.debug(f"Object with id {_id} has shape of {dictObjects[_id].shape}")
+        logger.info(f"Found {len(np.unique(labels))} different clusters")
 
-            ## Remove all points with z = 0
-            dictObjects[_id] = dictObjects[_id][dictObjects[_id][:,2]!=0]
+        ## Create dictionary of objects (clusters)
+        for label in np.unique(labels):
+            if label == -1:
+                continue  # Skip noise points
+
+            # Get indices of points that belong to this label (cluster)
+            cluster_points = np.array(self.pcdROI.points)[labels == label]
+
+            # Add the cluster points to the dictionary if cluster is large enough
+            logger.debug(f"Cluster {label} counts {len(cluster_points)} points")
+            # print(len(cluster_points))
+
+            if len(cluster_points) >= self.minObjectSize:
+                dictObjects[label] = cluster_points
 
         return dictObjects
 
@@ -278,17 +366,3 @@ class Scene:
     def reload_settings(self):
         self.__loadSettings()
         logger.info("Reloaded settings")
-
-
-
-if __name__ == "__main__":
-    pcd = o3d.io.read_point_cloud(Path("test_input/2025-02-20_19-46-58.ply"))
-
-    sm = SettingsManager("test_input/default_settings.json")
-
-    oScene = Scene(raw_pcd=pcd,
-                   settingsmanager=sm)
-
-    oScene.oMasks.debugSegmentation()
-
-    oScene.displayObjectPoints()

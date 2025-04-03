@@ -52,7 +52,7 @@ class TransformVisualizer:
         self.dictResults = dictResults
 
     def renderFoundObjects(self):
-        geometries = [self.oScene.pcdROI]
+        geometries = [self.oScene.pcdViz]
 
         for _id, result in self.dictResults.items():
             pcdModelCopy = o3d.geometry.PointCloud()
@@ -116,9 +116,11 @@ class TransformVisualizer:
         return image_np
 
     def displayFoundObjects(self):
-        pcdROI = copy.deepcopy(self.oScene.pcdROI)
+        pcdViz = copy.deepcopy(self.oScene.pcdViz)
 
-        geometries = [pcdROI]
+        geometries = [pcdViz]
+
+        # display_point_clouds(geometries, "Pointcloud - transformed", False, True, 100)
 
         for _id, result in self.dictResults.items():
             pcdModel = self.oModel.pcdModel
@@ -149,35 +151,4 @@ class TransformVisualizer:
             geometries.append(mshArrow)
 
         display_point_clouds(geometries, "Found objects", False, True, 100)
-
-
-if __name__ == "__main__":
-    ## Load settings
-    sm = SettingsManager("default_settings.json")
-
-    ## Load model
-    oModel = Model(
-        sModelPath="test_input/T-stuk-filled.stl",
-        settingsManager=sm,
-        picking_pose=None,
-    )
-
-    ## Load scene
-    pcd = o3d.io.read_point_cloud(Path("test_input/2025-02-20_19-46-58.ply"))
-
-    oScene = Scene(
-        raw_pcd=pcd,
-        settingsmanager=sm
-    )
-
-    ## Create pose estimator object
-    oPoseEstimator = PoseEstimatorFPFH(
-        settingsManager=sm,
-        model=oModel
-    )
-
-    transforms = oPoseEstimator.findObjectTransforms(oScene)
-
-    oTransformVisualizer = TransformVisualizer(oModel, oScene, transforms)
-    oTransformVisualizer.displayFoundObjects()
 

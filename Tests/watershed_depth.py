@@ -44,7 +44,7 @@ twc = np.load("../CalibrationData/tcw.npy")
 twc_scale = float(np.load("../CalibrationData/scale_tcw.npy"))
 
 arrPoints = np.asarray(pcd.points)
-## Flip to right handed
+## Flip to right-handed
 arrPoints[:, 1] = -arrPoints[:, 1]
 arrPoints = transform_points(arrPoints*twc_scale, twc)
 

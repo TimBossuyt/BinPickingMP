@@ -1,12 +1,5 @@
 {
   "ObjectSegmentation": {
-    "ROI" : {
-      "xMin": 1060,
-      "yMin": 200,
-      "xMax": 1600,
-      "yMax": 930
-    },
-
     "MorphologicalProcessing": {
       "OpeningKernel": [3, 3],
       "OpeningIterations": 3,
@@ -27,14 +20,24 @@
     }
   },
 
-  "ObjectMasks": {
-
-  },
-
   "Scene": {
     "CameraResolution": {
       "WidthImage": 1920,
       "HeightImage": 1080
+    },
+
+    "ROI" : {
+      "p1": [356.331, 434.791],
+      "p2": [192.801, 607.212],
+      "p3": [419.131, 826.673],
+      "p4": [592.422, 665.927],
+      "BinPlaneDistance": 10
+    },
+
+    "Clustering" : {
+      "Epsilon": 6,
+      "min_points": 300,
+      "MinObjectSize": 10000
     },
 
     "BasicProcessing": {
@@ -76,8 +79,8 @@
       "IcpDistanceFactor": 1,
       "CheckerEdgeLengthThreshold": 0.5,
       "NormalAngleThreshold": 0.7,
-      "MaxIcpIterations": 30,
-      "InitFitnessThresh": 0.5,
+      "MaxIcpIterations": 20,
+      "InitFitnessThresh": 0.6,
       "TimeOut": 5000
     }
   }

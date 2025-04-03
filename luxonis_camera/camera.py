@@ -242,7 +242,13 @@ class Camera:
 
                 self.bConnected = True
 
-                device.setIrLaserDotProjectorIntensity(1)
+                ret = device.setIrLaserDotProjectorIntensity(1)
+
+                if ret:
+                    logger.info("Successfully turned on dot projector")
+                else:
+                    logger.warning("Failed to enable laser dot projector")
+
 
                 ## Read and save calibration data
                 calibData = device.readCalibration()

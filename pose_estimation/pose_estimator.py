@@ -90,6 +90,11 @@ class PoseEstimatorFPFH:
             )
             fitness = oInitialMatch.fitness
 
+        if (self.iMaxIcpIterations == 0):
+            logger.debug("ICP Was disabled")
+            return np.asarray(oInitialMatch.transformation), oInitialMatch.fitness, oInitialMatch.inlier_rmse
+
+
         ## 4. Perform ICP for finer results
         oIcpResult = o3d.pipelines.registration.registration_icp(
             source=self.pcdModelDown,
