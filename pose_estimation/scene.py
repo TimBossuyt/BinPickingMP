@@ -171,10 +171,10 @@ class Scene:
 
         ## Apply colours
         colours = np.asarray(self.pcdRaw.colors).reshape(self.iHeightImage, self.iWidthImage, 3)
-        print(colours.shape)
+        # print(colours.shape)
 
         filtered_colours = colours[combined_mask == 1]
-        print(filtered_colours.shape)
+        # print(filtered_colours.shape)
         # filtered_colours = cv2.cvtColor(filtered_colours, cv2.COLOR_BGR2RGB) / 255
         ## Swap BGR to RGB
         filtered_colours = filtered_colours[..., ::-1]
@@ -241,7 +241,7 @@ class Scene:
 
             # Add the cluster points to the dictionary if cluster is large enough
             logger.debug(f"Cluster {label} counts {len(cluster_points)} points")
-            print(len(cluster_points))
+            # print(len(cluster_points))
 
             if len(cluster_points) >= self.minObjectSize:
                 dictObjects[label] = cluster_points
