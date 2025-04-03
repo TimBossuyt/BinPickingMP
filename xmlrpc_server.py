@@ -288,8 +288,6 @@ class RpcServer:
 
         return 0
 
-
-
     def runCalibration(self, sWorldPointsJson):
         """
         :param sWorldPointsJson: A JSON string representing the world points used for camera calibration.
@@ -389,7 +387,7 @@ class RpcServer:
             fitness = float(values[1])
             inlier_rmse = float(values[2])
 
-            dictSerializeProof[key] = (transform, fitness, inlier_rmse)
+            dictSerializeProof[int(key)] = (transform, fitness, inlier_rmse)
 
         # 2. Dump as JSON string
         dict_serialized = json.dumps(dictSerializeProof)
@@ -397,24 +395,24 @@ class RpcServer:
         return dict_serialized
 
     def imgSelectedObject(self, iId: int):
-        ## 1. Get mask for selected object
-        mask = self.oScene.dictMasks[iId]
+        # ## 1. Get mask for selected object
+        # mask = self.oScene.dictMasks[iId]
+        #
+        # ## 2. Get image
+        # img = self.oScene.arrColours.copy()
+        #
+        # ## Define overlay
+        # blue_overlay = np.array([255, 0, 0], dtype=np.uint8)
+        #
+        # overlay = img.copy()
+        # overlay[mask == 1] = (1 - 0.5) * img[mask == 1] + 0.5 * blue_overlay
+        # overlay = overlay.astype(np.uint8)
+        #
+        # _, buff = cv2.imencode('.jpg', overlay)
+        # # noinspection PyTypeChecker
+        # enc_data = base64.b64encode(buff)
 
-        ## 2. Get image
-        img = self.oScene.arrColours.copy()
-
-        ## Define overlay
-        blue_overlay = np.array([255, 0, 0], dtype=np.uint8)
-
-        overlay = img.copy()
-        overlay[mask == 1] = (1 - 0.5) * img[mask == 1] + 0.5 * blue_overlay
-        overlay = overlay.astype(np.uint8)
-
-        _, buff = cv2.imencode('.jpg', overlay)
-        # noinspection PyTypeChecker
-        enc_data = base64.b64encode(buff)
-
-        return enc_data
+        return None
 
     def imgRender(self):
         if self.imgRender is not None:
@@ -433,7 +431,7 @@ class RpcServer:
         self.oPoseEstimator.reload_settings()
 
         ## Reload scene settings
-        self.oScene.oSm = self.SettingsManager ## TODO: Necessary?
+        self.oScene.oSm = self.SettingsManager
         self.oScene.reload_settings()
 
         ## Reload model settings
