@@ -13,7 +13,7 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 # Set non-GUI backend to avoid the warning
 matplotlib.use("Agg")
 
-
+## !!!!!! Wordt tijdelijk niet gebruikt !!!!!!
 class ObjectSegmentation:
 
     """

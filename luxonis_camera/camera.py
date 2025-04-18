@@ -6,6 +6,7 @@ import logging
 import queue
 from pathlib import Path
 import numpy as np
+import json
 
 from .calibrate import CameraCalibrator
 
@@ -57,6 +58,7 @@ def getConnectedDevices()-> list[str]:
         logger.error(f"Error while getting connected devices: {e}")
         return []
 
+
 class Camera:
     """
     Class representing a Camera and its associated functionalities.
@@ -93,6 +95,10 @@ class Camera:
 
         ## Configure pipeline
         self.__configurePipeline()
+        ## Save pipeline as .json for debugging
+        with open("pipeline_debug.json", "w") as f:
+            json.dump(self.oPipeline.serializeToJson(), f, indent=4)
+
 
         self.oCalibrator = None
 
@@ -129,6 +135,7 @@ class Camera:
             oPointCloud = o3d.geometry.PointCloud()
             oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
             oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
+
 
             # origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=(0, 0, 0))
             # o3d.visualization.draw_geometries([oPointCloud, origin], window_name="Point from camera object")
@@ -238,7 +245,12 @@ class Camera:
         try:
             logger.info(f"Trying to connect to camera {self.sMxId}")
             with dai.Device(self.oPipeline, device_info, dai.UsbSpeed.SUPER) as device:
-                logger.info("Successfully connected to camera")
+                ## Print the device summary
+                logger.info("---------- Camera Summary ----------")
+                logger.info(f"MxId: {device.getDeviceInfo().getMxId()}")
+                logger.info(f"USB speed: {device.getUsbSpeed()}")
+                logger.info(f"Connected cameras: {device.getConnectedCameras()}")
+                logger.info("------------------------------------")
 
                 self.bConnected = True
 
@@ -262,7 +274,7 @@ class Camera:
                     keepAspectRatio=True
                 )
 
-                print(intrinsics1080p)
+                # print(intrinsics1080p)
 
                 self.arrCameraMatrix = intrinsics1080p
 
@@ -270,10 +282,10 @@ class Camera:
                 self.oCalibrator = CameraCalibrator(intrinsics1080p)
 
                 ## Create queue objects
-                qOut = device.getOutputQueue(name="out", maxSize=5,
+                qOut = device.getOutputQueue(name="out", maxSize=1,
                                              blocking=False)  # blocking False --> no pipeline freezing
 
-                qRgbPreview = device.getOutputQueue(name="rgb", maxSize=5,
+                qRgbPreview = device.getOutputQueue(name="rgb", maxSize=1,
                                                     blocking=False)
 
                 ## Empty output buffer
@@ -334,7 +346,6 @@ class Camera:
         self.bIsCalibrated = True
 
     def calibrateCamera(self, dictWorldPoints: dict[int, list[float, float, float]]) -> np.ndarray | None:
-        ## TODO: Add error handling
         ## Initialize calibrator object
         self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
         self.bIsCalibrated = False ## Don't transform the pcd from camera before calibration
@@ -405,7 +416,7 @@ class Camera:
 
         :return: None
         """
-        ##### Cameras #####
+        ########## CAMERAS ##########
         ## Color camera (middle) ##
         nodeCamColor = self.oPipeline.create(dai.node.ColorCamera)
         nodeCamColor.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
@@ -424,39 +435,54 @@ class Camera:
         nodeCamRight.setResolution(dai.MonoCameraProperties.SensorResolution.THE_800_P)
         nodeCamRight.setFps(self.iFPS)
 
-        ## Calculating nodes ##
+        ########## CALCULATING NODES ##########
+        ## Depth node ##
         nodeDepth = self.oPipeline.create(dai.node.StereoDepth)
-        nodeDepth.setDefaultProfilePreset(
-            dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset
+        # nodeDepth.setDefaultProfilePreset(
+        #     dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)  ## Preset
+        nodeDepth.setDepthAlign(dai.CameraBoardSocket.CAM_A)  ## To get depth map to the same scale as the color image
         nodeDepth.setSubpixel(True)
         nodeDepth.setLeftRightCheck(True)
-        nodeDepth.setSubpixelFractionalBits(4)
+        # nodeDepth.setExtendedDisparity(True)
+        nodeDepth.setSubpixelFractionalBits(5)
+        medianFilter = dai.MedianFilter.MEDIAN_OFF
+        nodeDepth.setMedianFilter(medianFilter)
+        nodeDepth.initialConfig.PostProcessing.TemporalFilter.enabled = True
 
-        # Link stereo mono cameras to get depth map
-        nodeCamLeft.out.link(nodeDepth.left)
-        nodeCamRight.out.link(nodeDepth.right)
 
-        ## Depth map + Camera intrinsics to pointcloud ##
+        ## Pointcloud from depth-map
         nodePointCloud = self.oPipeline.create(dai.node.PointCloud)
-        nodeDepth.depth.link(nodePointCloud.inputDepth)
-        nodeDepth.setDepthAlign(dai.CameraBoardSocket.CAM_A)  ## To get depth map to the same scale as the color image
 
-        ## Sync ##
+        ########## SYNCING ##########
         # synchronizes pointcloud frame with rgb image to match timestamps
         nodeSync = self.oPipeline.create(dai.node.Sync)
         nodeSync.setSyncThreshold(timedelta(milliseconds=50))
 
-        nodeCamColor.isp.link(nodeSync.inputs["color"])
-        nodePointCloud.outputPointCloud.link(nodeSync.inputs["pcl"])
-
+        ########## OUTPUTS ##########
         ## xOut node for PointCloud ##
         # send pointcloud data from OAK device to host
         nodeXOut = self.oPipeline.create(dai.node.XLinkOut)
-        nodeSync.out.link(nodeXOut.input)
         nodeXOut.setStreamName("out")
 
         ## xOut node for RGB Preview ##
         # send rgb preview data from OAK device to host
         nodeXOutRgbPreview = self.oPipeline.create(dai.node.XLinkOut)
-        nodeCamColor.preview.link(nodeXOutRgbPreview.input)
         nodeXOutRgbPreview.setStreamName("rgb")
+
+        ########## Linking ##########
+        ## Preview
+        nodeCamColor.preview.link(nodeXOutRgbPreview.input)
+
+        ## Sync message group output to host
+        nodeSync.out.link(nodeXOut.input)
+
+        ## Depth map to pointcloud
+        nodeDepth.depth.link(nodePointCloud.inputDepth)
+
+        ## RGB + Pointcloud syncing
+        nodeCamColor.isp.link(nodeSync.inputs["color"])
+        nodePointCloud.outputPointCloud.link(nodeSync.inputs["pcl"])
+
+        ## Mono-cameras to disparity depth calculation
+        nodeCamLeft.out.link(nodeDepth.left)
+        nodeCamRight.out.link(nodeDepth.right)

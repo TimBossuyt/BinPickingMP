@@ -355,7 +355,7 @@ class Scene:
         pointcloud_reconstructed.estimate_normals(oNormalSearchParam)
 
         if self.bVisualize:
-            display_point_clouds(arrPointClouds=[pointcloud],
+            display_point_clouds(arrPointClouds=[pointcloud_reconstructed],
                                  sWindowTitle="Final reconstructed pointcloud",
                                  bShowOrigin=True,
                                  iOriginSize=100

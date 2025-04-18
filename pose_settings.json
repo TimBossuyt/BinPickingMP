@@ -41,7 +41,7 @@
     },
 
     "BasicProcessing": {
-      "VoxelSize": 2,
+      "VoxelSize": 3,
       "OutlierNeighbours": 10,
       "Std": 1
     },
@@ -50,10 +50,10 @@
       "RawNormalRadius": 20,
       "ProcessedNormalRadius": 10,
       "PoissonDepth": 6,
-      "DensityThreshold": 0.5,
+      "DensityThreshold": 0.3,
       "TaubinIter": 100,
       "NumberOfPoints": 700,
-      "bVisualize": 0
+      "bVisualize": 1
     }
   },
 
@@ -74,12 +74,12 @@
 
     "Matching": {
       "MutualFilter": 0,
-      "RansacIterations": 3,
+      "RansacIterations": 4,
       "DistanceFactor": 5,
-      "IcpDistanceFactor": 1,
+      "IcpDistanceFactor": 3,
       "CheckerEdgeLengthThreshold": 0.5,
       "NormalAngleThreshold": 0.7,
-      "MaxIcpIterations": 20,
+      "MaxIcpIterations": 200,
       "InitFitnessThresh": 0.6,
       "TimeOut": 5000
     }

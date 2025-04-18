@@ -58,11 +58,14 @@ class PoseEstimatorFPFH:
             search_param=self.oFeatureParams
         )
 
+        display_point_clouds([pcdObjectDown, self.pcdModelDown], "Pointclouds src and dst", True, True, 100)
+
 
         # 3. Find initial transformation using RANSAC
         oInitialMatch = None
         fitness = -1
         start_time = time.time()
+
         while fitness < self.FitnessThreshold:
             elapsed_time = (time.time() - start_time) * 1000
             if elapsed_time > timeout:

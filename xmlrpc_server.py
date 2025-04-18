@@ -280,11 +280,15 @@ class RpcServer:
             logger.error(f"Error connecting to camera with MxId {sMxId}: {str(e)}")
 
     def loadLastCalibration(self):
+        logger.info("Received request to load last camera calibration")
+
         ## 1. Read numpy files in CalibrationData
         twc = np.load("./CalibrationData/tcw.npy")
         twc_scale = float(np.load("./CalibrationData/scale_tcw.npy"))
 
         self.oCamera.loadCalibration(twc, twc_scale)
+        logger.info("Succesfully loaded last calibration")
+
 
         return 0
 
