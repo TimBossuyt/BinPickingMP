@@ -16,12 +16,8 @@ class Model:
         self.oSm = settingsManager
         self.__loadSettings()
 
-        ## Scale debugging
-        self.bScaled = False
-
         ## Load model as mesh
         self.mshModel = o3d.io.read_triangle_mesh(sModelPath)
-
         ## Sampling mesh to create pointcloud
         self.pcdModel = self.mshModel.sample_points_poisson_disk(number_of_points=self.iPoints)
 
@@ -56,10 +52,6 @@ class Model:
         # Only selects the upper half of the model (remove symmetry)
         self.pcdModel = filter_points_by_x_range(self.pcdModel, 0, 500)
         # self.pcdModel = filter_points_by_z_range(self.pcdModel, 0, 1000)
-
-        if not self.bScaled:
-            # self.pcdModel = self.pcdModel.scale(0.9, center=[0, 0, 0])
-            self.bScaled = True
 
         ## Re-estimate the surface normals
         oNormalSearchParam = o3d.geometry.KDTreeSearchParamRadius(radius=self.iNormalRadius)

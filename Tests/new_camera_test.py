@@ -7,8 +7,8 @@ from luxonis_camera import CameraV2, getConnectedDevices
 log_filename = datetime.datetime.now().strftime("log_%Y-%m-%dT%H-%M-%S.log")
 
 ## Read config file
-logging.config.fileConfig("logging.conf",
-                          disable_existing_loggers=False ,
+logging.config.fileConfig("../logging.conf",
+                          disable_existing_loggers=False,
                           defaults={'filename':f"logs/{log_filename}"})
 
 logger = logging.getLogger("Main")

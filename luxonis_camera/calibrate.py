@@ -130,6 +130,7 @@ class CameraCalibrator:
         if arrDistortionCoeffs is None:
             arrDistortionCoeffs = [0, 0, 0, 0, 0]
         logger.debug("CameraCalibrator initializing")
+
         self.arrCameraMatrix = np.asarray(arrCameraMatrix)
         self.arrDistortionCoeffs = np.asarray(arrDistortionCoeffs)
 
@@ -140,11 +141,13 @@ class CameraCalibrator:
             size=(7, 5),
         )
 
+        ## Initialize World-Camera transformation vectors
         self.rvec_wc = None
         self.tvec_wc = None
 
         self.pcd = None
 
+        ## Calibrated flag
         self.bCalibrated = False
 
         ## Image with board used for calibration
@@ -195,8 +198,6 @@ class CameraCalibrator:
             board_point = self.arrChArUcoCorners[i].flatten()
             self.dictCameraImagePoints[charuco_id] = np.asarray(board_point)
 
-        # print(self.dictCameraPoints)
-
         # self.annotate_and_display()
 
         ## 3. Get corners in camera coordinates (3D)
@@ -209,6 +210,7 @@ class CameraCalibrator:
         ## Flip to right handed system (X-right, Y-Down, Z-in)
         points[:, 1] = -points[:, 1]
 
+        ## Reshape to organized pointcloud 3D-matrix
         pcd_points = points.reshape(1080, 1920, 3)
 
         for id, coords in self.dictCameraImagePoints.items():
@@ -228,8 +230,6 @@ class CameraCalibrator:
             point_3d = np.mean(point_window.reshape(-1, 3), axis=0)
             self.dictCamera3DPoints[id] = point_3d
 
-        # print(self.dictCamera3DPoints)
-
         ## 4. Add the depth information
         logger.info("Incorporate depth info")
         # Detect extra - aruco code
@@ -241,9 +241,8 @@ class CameraCalibrator:
         ## Depth point = top left corner of aruco
         depth_point = corners[0][0][0]
 
-        img_aruco = copy.deepcopy(image)
-        img_aruco = cv2.circle(img_aruco, (int(depth_point[0]), int(depth_point[1])),5, color=(0, 255, 0), thickness=-1)
-
+        # img_aruco = copy.deepcopy(image)
+        # img_aruco = cv2.circle(img_aruco, (int(depth_point[0]), int(depth_point[1])),5, color=(0, 255, 0), thickness=-1)
         # cv2.imshow('Aruco for depth', img_aruco)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
@@ -262,14 +261,13 @@ class CameraCalibrator:
         # print(point_window)
         point_3d = np.mean(point_window.reshape(-1, 3), axis=0)
 
+        ## Save depth point at index 100
         self.dictCamera3DPoints[100] = point_3d
 
         ## 3. Create corresponding points array
         self.__createCorrespondingPointsArray()
         # print(self.arrCamPoints)
         # print(self.arrWorldPoints)
-
-
 
         # ## 4. Calculate the extrinsics by solving 3D points to projection points
         # Returns transformation from camera --> world

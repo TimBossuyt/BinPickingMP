@@ -56,7 +56,7 @@ def getConnectedDevices()-> list[str]:
         return arrDevices
     except Exception as e:
         logger.error(f"Error while getting connected devices: {e}")
-        return []
+        raise e
 
 
 class Camera:
@@ -360,12 +360,10 @@ class Camera:
             pcd = self.getColoredPointCloud()
 
             ## DEBUGGING ONLY
-            o3d.visualization.draw_geometries([pcd])
-
+            o3d.visualization.draw_geometries([pcd], window_name="Pointcloud received during calibration")
 
             if pcd is None:
                 logger.error("Received invalid pointcloud")
-                return
 
             ## Find the transformation matrix from the calibrator object
             trans_mat, scale = self.oCalibrator.runCalibration(image, pcd, dictWorldPoints)
@@ -443,12 +441,15 @@ class Camera:
         nodeDepth.setDepthAlign(dai.CameraBoardSocket.CAM_A)  ## To get depth map to the same scale as the color image
         nodeDepth.setSubpixel(True)
         nodeDepth.setLeftRightCheck(True)
-        # nodeDepth.setExtendedDisparity(True)
+        nodeDepth.setExtendedDisparity(True)
         nodeDepth.setSubpixelFractionalBits(5)
+
+        # nodeDepth.initialConfig.setDisparityShift(40)
+
+        # nodeDepth.setPostProcessingHardwareResources(3, 3)
         medianFilter = dai.MedianFilter.MEDIAN_OFF
         nodeDepth.setMedianFilter(medianFilter)
         nodeDepth.initialConfig.PostProcessing.TemporalFilter.enabled = True
-
 
         ## Pointcloud from depth-map
         nodePointCloud = self.oPipeline.create(dai.node.PointCloud)

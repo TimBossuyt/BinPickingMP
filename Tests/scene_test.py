@@ -34,7 +34,7 @@ def transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
     return transformed_points
 
 
-sPath = "../pose_settings.json"
+sPath = "../settings.json"
 
 assert os.path.exists(sPath), "Could not find settings file"
 

@@ -1,15 +1,17 @@
 import base64
 from xmlrpc.server import SimpleXMLRPCServer
-
-from luxonis_camera import getConnectedDevices, Camera
 import logging
 import cv2
 import threading
 import json
 import time
 import numpy as np
-from pose_estimation import Model, Scene, PoseEstimatorFPFH, SettingsManager, TransformVisualizer
 
+from ultralytics import SAM ## Allows model to load at the start of the program
+
+## Custom libraries
+from pose_estimation import Model, Scene, PoseEstimatorFPFH, SettingsManager, TransformVisualizer
+from luxonis_camera import getConnectedDevices, Camera
 
 logger = logging.getLogger("RPC-server")
 
@@ -42,13 +44,13 @@ class RpcServer:
         self.thrServer = threading.Thread(target=self.__run)
 
         self.server = SimpleXMLRPCServer((self.host, self.port), logRequests=False)
-        self.register_methods()
+        self.__register_methods()
 
         ## Set up the pose estimation stuff
         self.__initializePoseEstimation(sPoseSettingsPath)
 
+        ## Attribute initialization
         self.oScene = None
-
         self.dictDetectionResults = {}
         self.imgRender = None
 
@@ -61,7 +63,7 @@ class RpcServer:
         self.oModel = Model(
             sModelPath="./Input/T-stuk-filled.stl",
             settingsManager=self.SettingsManager,
-            picking_pose=(20, 0, 0, 1, 0, 0) # TODO: Define picking pose
+            picking_pose=(20, 0, 0, 1, 0, 0)
         )
 
         ## Create the pose estimator object
@@ -70,7 +72,8 @@ class RpcServer:
             model=self.oModel,
         )
 
-
+        ## Load SAM-model
+        self.oSamModel = SAM('sam2.1_b.pt')
 
     def Run(self):
         """
@@ -132,7 +135,7 @@ class RpcServer:
             logger.error(f"An error occurred while stopping the server: {str(e)}")
 
 
-    def register_methods(self):
+    def __register_methods(self):
         """
         Registers all the necessary RPC methods used by the server.
 
@@ -191,6 +194,7 @@ class RpcServer:
             return devices
         except Exception as e:
             logger.error(f"Error while fetching connecting devices: {str(e)}")
+            raise e
 
     def getCameraPreview(self):
         """
@@ -271,6 +275,7 @@ class RpcServer:
         :param sMxId: The identifier for the camera to connect to.
         :return: Returns 0 upon successful connection of the camera.
         """
+
         logger.info(f"Received request to connect camera with MxId: {sMxId}")
         try:
             self.oCamera.Connect(sMxId)
@@ -288,7 +293,6 @@ class RpcServer:
 
         self.oCamera.loadCalibration(twc, twc_scale)
         logger.info("Succesfully loaded last calibration")
-
 
         return 0
 
@@ -360,15 +364,9 @@ class RpcServer:
         ## 2. Create scene object
         self.oScene = Scene(
             raw_pcd=pcdScene,
-            settingsmanager=self.SettingsManager
+            settingsmanager=self.SettingsManager,
+            samModel=self.oSamModel
         )
-
-        ## Debug visualize:
-        # self.oScene.oMasks.debugSegmentation
-
-        # self.oScene.displayObjectPoints()
-
-        # o3d.visualization.draw_geometries([self.oScene.pcdROI])
 
         ## 3. Find the array of transformations
         dictTransformResults = self.oPoseEstimator.findObjectTransforms(self.oScene)
@@ -399,24 +397,24 @@ class RpcServer:
         return dict_serialized
 
     def imgSelectedObject(self, iId: int):
-        # ## 1. Get mask for selected object
-        # mask = self.oScene.dictMasks[iId]
-        #
-        # ## 2. Get image
-        # img = self.oScene.arrColours.copy()
-        #
-        # ## Define overlay
-        # blue_overlay = np.array([255, 0, 0], dtype=np.uint8)
-        #
-        # overlay = img.copy()
-        # overlay[mask == 1] = (1 - 0.5) * img[mask == 1] + 0.5 * blue_overlay
-        # overlay = overlay.astype(np.uint8)
-        #
-        # _, buff = cv2.imencode('.jpg', overlay)
-        # # noinspection PyTypeChecker
-        # enc_data = base64.b64encode(buff)
+        ## 1. Get mask for selected object
+        mask = self.oScene.dictMasks[iId]
 
-        return None
+        ## 2. Get image
+        img = self.oScene.arrColours.copy()
+
+        ## Define overlay
+        blue_overlay = np.array([255, 0, 0], dtype=np.uint8)
+
+        overlay = img.copy()
+        overlay[mask == 1] = (1 - 0.5) * img[mask == 1] + 0.5 * blue_overlay
+        overlay = overlay.astype(np.uint8)
+
+        _, buff = cv2.imencode('.jpg', overlay)
+        # noinspection PyTypeChecker
+        enc_data = base64.b64encode(buff)
+
+        return enc_data
 
     def imgRender(self):
         if self.imgRender is not None:

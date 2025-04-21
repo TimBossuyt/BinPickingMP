@@ -1,7 +1,6 @@
 import cv2
 import open3d as o3d
 import matplotlib.path as mplpath
-import matplotlib.pyplot as plt
 from scipy.spatial import ConvexHull
 import numpy as np
 import random
@@ -23,7 +22,7 @@ class Scene:
     and reconstructing surfaces.
     """
 
-    def __init__(self, raw_pcd: o3d.geometry.PointCloud, settingsmanager: SettingsManager):
+    def __init__(self, raw_pcd: o3d.geometry.PointCloud, settingsmanager: SettingsManager, samModel):
         ## Set and load the settings manager
         self.oSm = settingsmanager
         self.__loadSettings()
@@ -39,16 +38,23 @@ class Scene:
         self.pcdROI = self.__selectROI()
         self.pcdViz = self.__cropViz()
 
-        logger.info("Trying to find the objects in pointcloud")
-        tStart = time.time()
+        ## Initialize object segmentation
+        oSegmentation = ObjectSegmentation(
+            oSettingsManager=self.oSm,
+            model=samModel
+        )
 
+        self.objectMasks = oSegmentation.getMasksFromImage(self.arrColours)
+
+        logger.info("Applying masks to pointcloud")
+        tStart = time.time()
         ## Create a dictionary with points of each object (using clustering algorithm)
         self.dictObjects = self.__createObjectsDict()
 
         tEnd = time.time()
-        logger.info(f"Clustering objects took {(tEnd - tStart)*1000:.2f} ms")
+        logger.info(f"Applying object masks took {(tEnd - tStart)*1000:.2f} ms")
 
-        ## Process the object point clouds
+        # ## Process the object point clouds
         self.dictProcessedPcds = self.__processObjects()
 
 
@@ -112,7 +118,7 @@ class Scene:
         filtered_pcd = o3d.geometry.PointCloud()
         filtered_pcd.points = o3d.utility.Vector3dVector(filtered_points)
 
-        o3d.visualization.draw_geometries([filtered_pcd], window_name="Scene - ROI")
+        # o3d.visualization.draw_geometries([filtered_pcd], window_name="Scene - ROI")
 
         ## Remove bin plane
         plane_model, inliers = filtered_pcd.segment_plane(
@@ -123,6 +129,8 @@ class Scene:
         ## Only select outliers (not plane) as part of ROI
         filtered_pcd = filtered_pcd.select_by_index(inliers, invert=True)
         # o3d.visualization.draw_geometries([filtered_pcd], window_name="Scene - ROI - Removed Plane")
+
+        display_point_clouds([filtered_pcd], "Scene - ROI", False, True, 100)
 
         return filtered_pcd
 
@@ -216,35 +224,23 @@ class Scene:
         """
         dictObjects = {}
 
-        labels = np.array(
-            self.pcdROI.cluster_dbscan(eps=self.clustEpsilon, min_points=self.clustMinPoints)
-        )
+        arrPoints = np.asarray(self.pcdRaw.points).reshape(self.iHeightImage, self.iWidthImage, 3)
 
-        ## ----------- DEBUG - Visualization -----------
-        max_label = labels.max()
-        colors = plt.get_cmap("tab20")(labels / (max_label if max_label > 0 else 1))
-        colors[labels < 0] = 0
-        self.pcdROI.colors = o3d.utility.Vector3dVector(colors[:, :3])
+        for i, object_mask in enumerate(self.objectMasks):
+            print(f"Creating points collection for object {i}")
 
-        o3d.visualization.draw_geometries([self.pcdROI])
-        ## ---------------------------------------------
+            points = arrPoints[object_mask==True]
 
-        logger.info(f"Found {len(np.unique(labels))} different clusters")
+            ## --- DEBUGGING -----
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(points)
+            if self.bVisualize:
+                display_point_clouds([pcd], "Apply mask: Object " + str(i), False, True, 100)
+            ## -------------------
 
-        ## Create dictionary of objects (clusters)
-        for label in np.unique(labels):
-            if label == -1:
-                continue  # Skip noise points
 
-            # Get indices of points that belong to this label (cluster)
-            cluster_points = np.array(self.pcdROI.points)[labels == label]
+            dictObjects[i] = points
 
-            # Add the cluster points to the dictionary if cluster is large enough
-            logger.debug(f"Cluster {label} counts {len(cluster_points)} points")
-            # print(len(cluster_points))
-
-            if len(cluster_points) >= self.minObjectSize:
-                dictObjects[label] = cluster_points
 
         return dictObjects
 
@@ -295,7 +291,6 @@ class Scene:
 
         ## 3. Perform surface reconstruction
         # logger.debug("Performing surface reconstruction")
-        # TODO: Remove hardcoded parameters
         pcd_reconstructed = self.__surfaceReconstruction(
             pointcloud=pcd_down,
         )

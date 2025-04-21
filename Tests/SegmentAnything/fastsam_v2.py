@@ -17,14 +17,19 @@ upper_blue = np.array([270/360*179, 255, 255])
 
 
 ## Object range
-lower = np.array([0, 0, 0], np.uint8)
-upper = np.array([180, 0.65*255, 0.65*255], np.uint8)
+## MATLAB Settings
+h_min, h_max = 0.112, 0.177
+s_min, s_max = 0.095, 0.315
+v_min, v_max = 0, 1
+
+lower = np.array([h_min*180, s_min*255, v_min*255], np.uint8)
+upper = np.array([h_max*180, s_max*255, v_max*255], np.uint8)
 
 print(lower)
 print(upper)
 
 ## --------------------------------
-image_src = "2025-04-18_10-25-16.jpg"
+image_src = "2025-04-18_13-40-56.jpg"
 image = cv2.imread(image_src)
 
 image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

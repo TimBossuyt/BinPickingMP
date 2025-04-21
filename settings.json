@@ -53,7 +53,7 @@
       "DensityThreshold": 0.3,
       "TaubinIter": 100,
       "NumberOfPoints": 700,
-      "bVisualize": 1
+      "bVisualize": 0
     }
   },
 
@@ -64,7 +64,8 @@
 
   "PoseEstimation": {
     "General": {
-      "VoxelSize": 2
+      "VoxelSize": 2,
+      "bVisualize": 0
     },
 
     "FeatureParams": {
