@@ -190,7 +190,7 @@ class ObjectSegmentation:
         for i, mask in enumerate(processed_masks):
             is_duplicate = False
             for um in unique_masks:
-                if self.compute_iou(mask, um) > 0.8:  # Threshold can be tuned
+                if self.compute_iou(mask, um) > 0.7:  # Threshold can be tuned
                     is_duplicate = True
                     break
             if not is_duplicate:
