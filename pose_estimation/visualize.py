@@ -68,7 +68,7 @@ class TransformVisualizer:
             fitness = result[1]
             inlier_rmse = result[2]
 
-            logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
+            # logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
 
             # print(transform)
 
@@ -128,8 +128,8 @@ class TransformVisualizer:
             pick_position = self.oModel.getPickPosition()
             pick_normal = self.oModel.getPickNormal()
 
-            logger.debug(f"Pick Position: {pick_position}")
-            logger.debug(f"Pick Normal: {pick_normal}")
+            # logger.debug(f"Pick Position: {pick_position}")
+            # logger.debug(f"Pick Normal: {pick_normal}")
 
             mshArrow = create_arrow(pick_position, pick_normal)
 
@@ -137,7 +137,7 @@ class TransformVisualizer:
             fitness = result[1]
             inlier_rmse = result[2]
 
-            logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
+            # logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
 
             pcdObjectTransformed = pcdModelCopy.transform(transform)
             geometries.append(pcdObjectTransformed)
