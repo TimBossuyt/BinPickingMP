@@ -26,7 +26,7 @@ oServer = RpcServer(
     oCamera = oCamera,
     host="127.0.0.1",
     port=8005,
-    sPoseSettingsPath="./pose_settings.json"
+    sPoseSettingsPath="./settings.json"
 )
 ###################################
 

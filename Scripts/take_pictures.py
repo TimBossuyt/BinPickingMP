@@ -32,7 +32,7 @@ def preview_loop(target_fps=5):
             if current_time - last_frame_time >= frame_interval:
                 frame = oCamera.getCvImageFrame()  # Get the frame
                 if frame is not None:
-                    cv2.imshow("Camera Preview", imutils.resize(frame, width=500))  # Show the frame
+                    cv2.imshow("Camera", imutils.resize(frame, width=500))  # Show the frame
                 last_frame_time = current_time
 
             key = cv2.waitKey(1) & 0xFF

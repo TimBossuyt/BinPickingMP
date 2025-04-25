@@ -1,0 +1,73 @@
+{
+  "ObjectSegmentation": {
+    "bVisualize": 0
+  },
+
+  "Scene": {
+    "CameraResolution": {
+      "WidthImage": 1920,
+      "HeightImage": 1080
+    },
+
+    "ROI" : {
+      "p1": [356.331, 434.791],
+      "p2": [192.801, 607.212],
+      "p3": [419.131, 826.673],
+      "p4": [592.422, 665.927],
+      "BinPlaneDistance": 10
+    },
+
+    "Clustering" : {
+      "Epsilon": 6,
+      "min_points": 300,
+      "MinObjectSize": 10000
+    },
+
+    "BasicProcessing": {
+      "VoxelSize": 3,
+      "OutlierNeighbours": 5,
+      "Std": 0.5
+    },
+
+    "SurfaceReconstruction": {
+      "RawNormalRadius": 20,
+      "ProcessedNormalRadius": 10,
+      "PoissonDepth": 6,
+      "DensityThreshold": 0.3,
+      "TaubinIter": 100,
+      "NumberOfPoints": 700,
+      "bVisualize": 0,
+      "ReconstructedOutlierNeighbours": 30,
+      "ReconstructedOutlierStd": 0.5
+    }
+  },
+
+  "Model": {
+    "NumberOfPoints": 3000,
+    "NormalRadius": 20
+  },
+
+  "PoseEstimation": {
+    "General": {
+      "VoxelSize": 4,
+      "bVisualize": 0
+    },
+
+    "FeatureParams": {
+      "FeatureFactor": 20,
+      "MaxNeighbours": 200
+    },
+
+    "Matching": {
+      "MutualFilter": 0,
+      "RansacIterations": 4,
+      "DistanceFactor": 3,
+      "IcpDistanceFactor": 2,
+      "CheckerEdgeLengthThreshold": 0.5,
+      "NormalAngleThreshold": 0.7,
+      "MaxIcpIterations": 200,
+      "InitFitnessThresh": 0.7,
+      "TimeOut": 5000
+    }
+  }
+}

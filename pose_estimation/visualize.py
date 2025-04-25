@@ -62,9 +62,6 @@ class TransformVisualizer:
             pick_position = self.oModel.getPickPosition()
             pick_normal = self.oModel.getPickNormal()
 
-            logger.debug(f"Pick Position: {pick_position}")
-            logger.debug(f"Pick Normal: {pick_normal}")
-
             mshArrow = create_arrow(pick_position, pick_normal)
 
             transform = result[0]
@@ -120,7 +117,6 @@ class TransformVisualizer:
 
         geometries = [pcdViz]
 
-        # display_point_clouds(geometries, "Pointcloud - transformed", False, True, 100)
 
         for _id, result in self.dictResults.items():
             pcdModel = self.oModel.pcdModel

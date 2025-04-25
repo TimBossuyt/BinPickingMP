@@ -15,11 +15,12 @@ print("Torchvision version:", torchvision.__version__)
 print("CUDA is available:", torch.cuda.is_available())
 
 image = cv2.imread('img_box.jpg')
-cv2.imshow("Input", image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+plt.figure(figsize=(20, 20))
+plt.imshow(image)
+plt.axis('off')
+plt.show()
 
 def show_anns(anns, borders=True):
     if len(anns) == 0:
@@ -86,10 +87,10 @@ mask_generator = SAM2AutomaticMaskGenerator(
 print(f"Mask generator loading time: {time.time() - start_time:.2f} seconds")
 
 ## Define ROI
-x1 = 1060
-y1 = 60
-x2 = 1870
-y2 = 950
+x1 = 800
+y1 = 100
+x2 = 1500
+y2 = 940
 image_roi = image[y1:y2, x1:x2]
 
 

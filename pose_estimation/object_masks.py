@@ -8,6 +8,7 @@ import logging
 
 logger = logging.getLogger("ObjectMasks")
 
+## NOT USED
 class ObjectMasks:
     """
     ObjectMasks class provides functionality for handling and visualizing object masks from a segmented image.

@@ -25,7 +25,6 @@ class SettingsManager:
     def get(self, key: str):
         keys = key.split(".")
         value = self.settings
-
         try:
             for k in keys:
                 value = value[k]

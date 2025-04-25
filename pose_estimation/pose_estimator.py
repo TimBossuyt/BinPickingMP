@@ -14,19 +14,27 @@ logger = logging.getLogger("Pose Estimator")
 
 class PoseEstimatorFPFH:
     def __init__(self, settingsManager: SettingsManager , model: Model):
-        self.oModel = model
-
         ## Settings
         self.oSm = settingsManager
         self.__loadSettings()
 
-        ## Calculate model features
+        self.oModel = model
+
+        ## Calculate model features (only 1 time)
         self.__calculateModelFeatures()
 
+    def reload_settings(self):
+        self.__loadSettings()
+        logger.info("Reloaded settings")
 
     def findObjectTransforms(self, scene: Scene) -> dict[int, tuple[np.ndarray, float, float]]:
-        results = {}
+        """
+        Main method for finding object transforms given a scene object
+        :param scene:
+        :return:
+        """
 
+        results = {}
         tStartTotal = time.time()
 
         for _id, pcdObject in scene.dictProcessedPcds.items():
@@ -44,29 +52,33 @@ class PoseEstimatorFPFH:
 
     def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud, timeout: float) -> (np.ndarray, float, float):
         ## REMOVE, DEBUGGING ONLY
-        self.__calculateModelFeatures()
+        # self.__calculateModelFeatures()
 
         ## 1. Voxel down object pointcloud to same density as object model
         pcdObjectDown = pcdObject.voxel_down_sample(voxel_size=self.iVoxelSize)
 
-        # display_point_clouds([pcdObjectDown, self.pcdModelDown], "Model and object used for pose estimation",
-        #                      True, True, 100)
+        if self.bVisualize:
+            display_point_clouds([pcdObjectDown, self.pcdModelDown], "Model and object used for pose estimation",
+                                 True, True, 100)
 
         ## 2. Calculate the FPFH features
         oObjectFPFH = o3d.pipelines.registration.compute_fpfh_feature(
             input=pcdObjectDown,
             search_param=self.oFeatureParams
         )
-
+        if self.bVisualize:
+            display_point_clouds([pcdObjectDown, self.pcdModelDown],
+                                 "Pointclouds src and dst", True, True, 100)
 
         # 3. Find initial transformation using RANSAC
         oInitialMatch = None
         fitness = -1
         start_time = time.time()
+
         while fitness < self.FitnessThreshold:
             elapsed_time = (time.time() - start_time) * 1000
             if elapsed_time > timeout:
-                print("RANSAC timeout reached, returning default transformation")
+                logger.info("RANSAC timeout reached, returning default transformation")
                 return np.eye(4), 0.0, 0.0  # Return identity matrix and zero fitness/RMSE
 
 
@@ -90,7 +102,7 @@ class PoseEstimatorFPFH:
             )
             fitness = oInitialMatch.fitness
 
-        if (self.iMaxIcpIterations == 0):
+        if self.iMaxIcpIterations == 0:
             logger.debug("ICP Was disabled")
             return np.asarray(oInitialMatch.transformation), oInitialMatch.fitness, oInitialMatch.inlier_rmse
 
@@ -110,6 +122,8 @@ class PoseEstimatorFPFH:
     def __loadSettings(self):
         ## General
         self.iVoxelSize = self.oSm.get("PoseEstimation.General.VoxelSize")
+        value = self.oSm.get("PoseEstimation.General.bVisualize")
+        self.bVisualize = (value == 1)
 
         ## Feature params
         self.featureFactor = self.oSm.get("PoseEstimation.FeatureParams.FeatureFactor")
@@ -135,9 +149,6 @@ class PoseEstimatorFPFH:
         self.FitnessThreshold = self.oSm.get("PoseEstimation.Matching.InitFitnessThresh")
         self.MatchingTimeOut = self.oSm.get("PoseEstimation.Matching.TimeOut")
 
-    def reload_settings(self):
-        self.__loadSettings()
-        logger.info("Reloaded settings")
 
     def __calculateModelFeatures(self):
         ## Voxel down (make sure scene model points are same density
