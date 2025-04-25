@@ -91,6 +91,9 @@ class Scene:
         self.iTaubinIter = self.oSm.get("Scene.SurfaceReconstruction.TaubinIter")
         self.iPoints = self.oSm.get("Scene.SurfaceReconstruction.NumberOfPoints")
 
+        self.iOutlierReconstructed = self.oSm.get("Scene.SurfaceReconstruction.ReconstructedOutlierNeighbours")
+        self.iStdReconstructed = self.oSm.get("Scene.SurfaceReconstruction.ReconstructedOutlierStd")
+
         value = self.oSm.get("Scene.SurfaceReconstruction.bVisualize")
         self.bVisualize = (value == 1) ## Sets true if 1 and false if 0
 
@@ -129,8 +132,8 @@ class Scene:
         ## Only select outliers (not plane) as part of ROI
         filtered_pcd = filtered_pcd.select_by_index(inliers, invert=True)
         # o3d.visualization.draw_geometries([filtered_pcd], window_name="Scene - ROI - Removed Plane")
-
-        display_point_clouds([filtered_pcd], "Scene - ROI", False, True, 100)
+        if self.bVisualize:
+            display_point_clouds([filtered_pcd], "Scene - ROI", False, True, 100)
 
         return filtered_pcd
 
@@ -238,9 +241,7 @@ class Scene:
                 display_point_clouds([pcd], "Apply mask: Object " + str(i), False, True, 100)
             ## -------------------
 
-
             dictObjects[i] = points
-
 
         return dictObjects
 
@@ -315,6 +316,10 @@ class Scene:
                                  bShowOrigin=True,
                                  iOriginSize=100
             )
+
+        pointcloud, _ = pointcloud.remove_statistical_outlier(
+            nb_neighbors=self.iOutlierReconstructed,
+            std_ratio=self.iStdReconstructed)
 
         ## 2. Perform poisson surface reconstruction
         mshSurfRec, arrDensities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(

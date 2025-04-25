@@ -122,7 +122,8 @@ class PoseEstimatorFPFH:
     def __loadSettings(self):
         ## General
         self.iVoxelSize = self.oSm.get("PoseEstimation.General.VoxelSize")
-        self.bVisualize = self.oSm.get("PoseEstimation.General.bVisualize")
+        value = self.oSm.get("PoseEstimation.General.bVisualize")
+        self.bVisualize = (value == 1)
 
         ## Feature params
         self.featureFactor = self.oSm.get("PoseEstimation.FeatureParams.FeatureFactor")

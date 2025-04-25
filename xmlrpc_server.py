@@ -61,7 +61,7 @@ class RpcServer:
 
         ## Load model (TODO: Remove hardcoding)
         self.oModel = Model(
-            sModelPath="./Input/T-stuk-filled.stl",
+            sModelPath="./Input/T-stuk-50.stl",
             settingsManager=self.SettingsManager,
             picking_pose=(20, 0, 0, 1, 0, 0)
         )
@@ -398,7 +398,7 @@ class RpcServer:
 
     def imgSelectedObject(self, iId: int):
         ## 1. Get mask for selected object
-        mask = self.oScene.dictMasks[iId]
+        mask = self.oScene.objectMasks[iId]
 
         ## 2. Get image
         img = self.oScene.arrColours.copy()

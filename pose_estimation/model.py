@@ -6,7 +6,6 @@ from .settings import SettingsManager
 
 logger = logging.getLogger("Model object")
 
-
 class Model:
     """
     Manages CAD-model for pose estimation
@@ -50,7 +49,7 @@ class Model:
     def __optimizeModel(self):
         ## MODEL SPECIFIC!!!! TODO: Change model specific optimization
         # Only selects the upper half of the model (remove symmetry)
-        self.pcdModel = filter_points_by_x_range(self.pcdModel, 0, 500)
+        self.pcdModel = filter_points_by_z_range(self.pcdModel, 0, 500)
         # self.pcdModel = filter_points_by_z_range(self.pcdModel, 0, 1000)
 
         ## Re-estimate the surface normals

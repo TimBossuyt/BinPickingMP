@@ -21,11 +21,17 @@ class ObjectSegmentation:
 
     def __loadSettings(self) -> None:
         ## --------------- ROI ---------------
-        logger.debug("Settings set correctly")
+        value = self.oSm.get("ObjectSegmentation.bVisualize")
+        self.bVisualize = (value == 1)
 
+        logger.debug("Settings set correctly")
 
     def getMasksFromImage(self, image):
         ## Thresholding settings
+        # h_min, h_max = 0.502, 0.715
+        # s_min, s_max = 0.000, 0.365
+        # v_min, v_max = 0.100, 0.539
+
         h_min, h_max = 0.112, 0.177
         s_min, s_max = 0.095, 0.315
         v_min, v_max = 0, 1
@@ -36,20 +42,45 @@ class ObjectSegmentation:
         img_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        mask_objects = cv2.inRange(img_hsv, lower, upper)
+        mask_all = cv2.inRange(img_hsv, lower, upper)
 
-        cv2.imshow("Mask", mask_objects)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if self.bVisualize:
+            cv2.imshow("Mask", mask_all)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         ## Filtering
-        kernel = np.ones((15, 15), np.uint8)
-        mask_objects = cv2.morphologyEx(mask_objects, cv2.MORPH_CLOSE, kernel)
-        mask_objects = cv2.morphologyEx(mask_objects, cv2.MORPH_OPEN, kernel)
+        kernel = np.ones((10, 10), np.uint8)
+        mask_all = cv2.morphologyEx(mask_all, cv2.MORPH_CLOSE, kernel)
+        mask_all = cv2.morphologyEx(mask_all, cv2.MORPH_OPEN, kernel)
 
-        cv2.imshow("Enhanced mask", mask_objects)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if self.bVisualize:
+            cv2.imshow("Enhanced mask", mask_all)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        ## Find contours, select all above certain threshold and fill
+        contours, _ = cv2.findContours(mask_all, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        mask_objects = np.zeros_like(mask_all)
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area >= 2000:
+                cv2.drawContours(mask_objects, [cnt], -1, 255, -1)
+
+        if self.bVisualize:
+            cv2.imshow("Contour filtering", mask_objects)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        mask_objects = cv2.erode(mask_objects, kernel, iterations=2)
+
+        if self.bVisualize:
+            cv2.imshow("Eroded", mask_objects)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
 
         ## Apply distance transform
         dist_transform = cv2.distanceTransform(mask_objects, cv2.DIST_L2, 5)
@@ -57,15 +88,17 @@ class ObjectSegmentation:
         dist_transform_norm = cv2.normalize(dist_transform, None, 0, 255, cv2.NORM_MINMAX)
         dist_transform_norm = np.uint8(dist_transform_norm)
 
-        cv2.imshow("Distance Transform", dist_transform_norm)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if self.bVisualize:
+            cv2.imshow("Distance Transform", dist_transform_norm)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
-        _, thresholded_dist_transform = cv2.threshold(dist_transform_norm, 190, 255, cv2.THRESH_BINARY)
+        _, thresholded_dist_transform = cv2.threshold(dist_transform_norm, 200, 255, cv2.THRESH_BINARY)
 
-        cv2.imshow("Thresholded Distance Transform", thresholded_dist_transform)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if self.bVisualize:
+            cv2.imshow("Thresholded Distance Transform", thresholded_dist_transform)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         # Find connected components on the thresholded distance transform to get centroids
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresholded_dist_transform,
@@ -79,12 +112,16 @@ class ObjectSegmentation:
             cv2.circle(image_with_centroids, (cx, cy), 5, (255, 0, 0), -1)  # Draw a red circle at the centroid
 
         # Show the image with centroids
-        cv2.imshow("Centroids", image_with_centroids)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if self.bVisualize:
+            cv2.imshow("Centroids", image_with_centroids)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         centroids = centroids[1:]
         n_objects = len(centroids)
+
+        if n_objects == 0:
+            return []
 
         print(f"Trying to find {n_objects} objects")
 
@@ -99,19 +136,22 @@ class ObjectSegmentation:
 
         img_bgr_enhanced = cv2.cvtColor(img_lab_clahe, cv2.COLOR_LAB2BGR)
 
-        cv2.imshow("Enhanced Image", img_bgr_enhanced)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if self.bVisualize:
+            cv2.imshow("Enhanced Image", img_bgr_enhanced)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
-        smoothed = cv2.GaussianBlur(img_bgr_enhanced, (13, 13), sigmaX=0)
-        cv2.imshow("Smoothed image", smoothed)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        smoothed = cv2.GaussianBlur(img_bgr_enhanced, (19, 19), sigmaX=0)
+
+        if self.bVisualize:
+            cv2.imshow("Smoothed image", smoothed)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         image_enhanced_rgb = cv2.cvtColor(smoothed, cv2.COLOR_BGR2RGB)
 
         results = self.SamModel(image_enhanced_rgb, points=centroids, max_det=n_objects, labels=np.ones(n_objects),
-                        device='cuda', conf=0.2, retina_masks=True)
+                        device='cuda', conf=0.5, retina_masks=False)
 
         masks = results[0].masks.data.cpu().numpy()
 
@@ -137,11 +177,13 @@ class ObjectSegmentation:
             overlay = np.where(mask_bool[..., None], 0.5 * overlay + 0.5 * colored_mask, overlay)
 
         overlay = cv2.cvtColor(np.uint8(overlay), cv2.COLOR_BGR2RGB)
+
         # Show the final result
         plt.figure(figsize=(10, 10))
         plt.imshow(overlay.astype(np.uint8))
         plt.axis("off")
         plt.title("Segmented objects")
+        # plt.show()
         plt.savefig("SegmentObjects.jpg")
 
         unique_masks = []
@@ -157,13 +199,37 @@ class ObjectSegmentation:
 
         print(f"Reduced to {len(unique_masks)} unique masks")
 
+        print("Mask sizes")
+        for i, mask in enumerate(unique_masks):
+            mask_size = np.count_nonzero(mask)
+
+            print(f"Object {i} - {mask_size}")
+
+            if mask_size < 20000:
+                unique_masks.pop(i)
+                print(f"Object {i} was removed")
+
         return unique_masks
+
+    def reload_settings(self):
+        self.__loadSettings()
+        logger.info("Reloaded settings")
 
     @staticmethod
     def compute_iou(mask1, mask2):
         intersection = np.logical_and(mask1, mask2).sum()
         union = np.logical_or(mask1, mask2).sum()
         return intersection / union if union != 0 else 0
+
+if __name__ == '__main__':
+    img = cv2.imread("test_input/50mm.jpg")
+    sm = SettingsManager("../settings.json")
+    model = SAM("../sam2.1_b.pt")
+
+    oSegmentation = ObjectSegmentation(sm, model)
+
+    segm_image = oSegmentation.getMasksFromImage(img)
+
 
     # def getSegmentatedImage(self, cvImg: np.ndarray) -> np.ndarray:
     #     """
