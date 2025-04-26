@@ -66,8 +66,8 @@
       "CheckerEdgeLengthThreshold": 0.5,
       "NormalAngleThreshold": 0.7,
       "MaxIcpIterations": 200,
-      "InitFitnessThresh": 0.7,
-      "TimeOut": 5000
+      "InitFitnessThresh": 0.8,
+      "TimeOut": 500
     }
   }
 }

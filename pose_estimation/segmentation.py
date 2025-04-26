@@ -185,6 +185,7 @@ class ObjectSegmentation:
         plt.title("Segmented objects")
         # plt.show()
         plt.savefig("SegmentObjects.jpg")
+        plt.close()
 
         unique_masks = []
         for i, mask in enumerate(processed_masks):
