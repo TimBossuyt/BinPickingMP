@@ -1,4 +1,6 @@
-from IPython.core.display_functions import display
+import copy
+
+import matplotlib.pyplot as plt
 
 from pose_estimation.utils import display_point_clouds
 from .scene import Scene
@@ -9,6 +11,7 @@ import numpy as np
 from pathlib import Path
 import time
 import logging
+from shapely.geometry import Polygon
 
 logger = logging.getLogger("Pose Estimator")
 
@@ -26,6 +29,7 @@ class PoseEstimatorFPFH:
     def reload_settings(self):
         self.__loadSettings()
         logger.info("Reloaded settings")
+        self.__calculateModelFeatures()
 
     def findObjectTransforms(self, scene: Scene) -> dict[int, tuple[np.ndarray, float, float]]:
         """
@@ -50,7 +54,7 @@ class PoseEstimatorFPFH:
 
         return results
 
-    def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud, timeout: float) -> (np.ndarray, float, float):
+    def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud, timeout: float) -> (np.ndarray, float, float, float):
         ## REMOVE, DEBUGGING ONLY
         # self.__calculateModelFeatures()
 
@@ -66,21 +70,18 @@ class PoseEstimatorFPFH:
             input=pcdObjectDown,
             search_param=self.oFeatureParams
         )
-        if self.bVisualize:
-            display_point_clouds([pcdObjectDown, self.pcdModelDown],
-                                 "Pointclouds src and dst", True, True, 100)
 
         # 3. Find initial transformation using RANSAC
         oInitialMatch = None
         fitness = -1
+        iou_score = -1
         start_time = time.time()
 
-        while fitness < self.FitnessThreshold:
+        while (iou_score < self.IoUThreshold) or (fitness < self.FitnessThreshold):
             elapsed_time = (time.time() - start_time) * 1000
             if elapsed_time > timeout:
                 logger.info("RANSAC timeout reached, returning default transformation")
-                return np.eye(4), 0.0, 0.0  # Return identity matrix and zero fitness/RMSE
-
+                return np.eye(4), 0.0, 0.0, 0.0  # Return identity matrix and zero fitness/RMSE
 
             oInitialMatch = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
                 source=self.pcdModelDown,
@@ -102,9 +103,15 @@ class PoseEstimatorFPFH:
             )
             fitness = oInitialMatch.fitness
 
+            ## 5. Calculate the IoU metric from the bounding boxes in the x, y plane
+            pcd_model = copy.deepcopy(self.pcdModelDown)
+            iou_score = self.__compute_iou(pcd_model, pcdObjectDown, np.asarray(oInitialMatch.transformation))
+
+            print(f"Fitness: {fitness:.4f} | IoU: {iou_score:.4f} | Time: {elapsed_time:.2f} ms")
+
         if self.iMaxIcpIterations == 0:
             logger.debug("ICP Was disabled")
-            return np.asarray(oInitialMatch.transformation), oInitialMatch.fitness, oInitialMatch.inlier_rmse
+            return np.asarray(oInitialMatch.transformation), oInitialMatch.fitness, oInitialMatch.inlier_rmse, 0
 
 
         ## 4. Perform ICP for finer results
@@ -117,7 +124,49 @@ class PoseEstimatorFPFH:
             criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=self.iMaxIcpIterations)
         )
 
-        return np.asarray(oIcpResult.transformation), oIcpResult.fitness, oIcpResult.inlier_rmse
+        ## 5. Calculate the IoU metric from the bounding boxes in the x, y plane
+        pcd_model = copy.deepcopy(self.pcdModelDown)
+        iou_score = self.__compute_iou(pcd_model, pcdObjectDown, np.asarray(oIcpResult.transformation))
+
+        return np.asarray(oIcpResult.transformation), oIcpResult.fitness, oIcpResult.inlier_rmse, iou_score
+
+    @staticmethod
+    def __compute_iou(pcd_model: o3d.geometry.PointCloud,
+                      pcd_scene: o3d.geometry.PointCloud,
+                      transformation: np.ndarray) -> float:
+        bbox_1 = pcd_scene.get_oriented_bounding_box()
+        bbox_1_points = np.asarray(bbox_1.get_box_points())
+
+        pcd_model = pcd_model.transform(transformation)
+        bbox_2 = pcd_model.get_oriented_bounding_box()
+        bbox_2_points = np.asarray(bbox_2.get_box_points())
+
+        # ## Debugging
+        # display_point_clouds([pcd_model, pcd_scene], "Model and object used for IoU calculation"
+        #                      , False, True, 100)
+
+        bbox_1.color = [1, 0, 0]
+        bbox_2.color = [0, 0, 1]
+        # o3d.visualization.draw_geometries([bbox_1, bbox_2])
+
+        xy_1 = [(float(bbox_1_points[i][0]), float(bbox_1_points[i][1])) for i in [0, 1, 7, 2]]
+        xy_2 = [(float(bbox_2_points[i][0]), float(bbox_2_points[i][1])) for i in [0, 1, 7, 2]]
+
+        # print(xy_1)
+        # print(xy_2)
+
+        poly1 = Polygon(xy_1)
+        poly2 = Polygon(xy_2)
+
+        # Compute intersection and union areas
+        intersection = poly1.intersection(poly2).area
+        union = poly1.union(poly2).area
+
+        # Calculate IoU
+        iou = intersection / union
+        # print(iou)
+
+        return iou
 
     def __loadSettings(self):
         ## General
@@ -129,10 +178,14 @@ class PoseEstimatorFPFH:
         self.featureFactor = self.oSm.get("PoseEstimation.FeatureParams.FeatureFactor")
         self.featureMaxNeighbours = self.oSm.get("PoseEstimation.FeatureParams.MaxNeighbours")
 
-        ## Save search parameters
-        self.oFeatureParams = o3d.geometry.KDTreeSearchParamHybrid(
+        # ## Save search parameters
+        # self.oFeatureParams = o3d.geometry.KDTreeSearchParamHybrid(
+        #     radius=self.featureFactor*self.iVoxelSize,
+        #     max_nn=self.featureMaxNeighbours
+        # )
+
+        self.oFeatureParams = o3d.geometry.KDTreeSearchParamRadius(
             radius=self.featureFactor*self.iVoxelSize,
-            max_nn=self.featureMaxNeighbours
         )
 
         ## Matching parameters
@@ -147,6 +200,7 @@ class PoseEstimatorFPFH:
 
         self.iMaxIcpIterations = self.oSm.get("PoseEstimation.Matching.MaxIcpIterations")
         self.FitnessThreshold = self.oSm.get("PoseEstimation.Matching.InitFitnessThresh")
+        self.IoUThreshold = self.oSm.get("PoseEstimation.Matching.InitIoUThresh")
         self.MatchingTimeOut = self.oSm.get("PoseEstimation.Matching.TimeOut")
 
 

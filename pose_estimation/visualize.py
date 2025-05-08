@@ -54,6 +54,8 @@ class TransformVisualizer:
     def renderFoundObjects(self):
         geometries = [self.oScene.pcdViz]
 
+        # display_point_clouds(geometries, "Scene", False, True, 100)
+
         for _id, result in self.dictResults.items():
             pcdModelCopy = o3d.geometry.PointCloud()
             pcdModelCopy.points = self.oModel.pcdModel.points
@@ -67,8 +69,12 @@ class TransformVisualizer:
             transform = result[0]
             fitness = result[1]
             inlier_rmse = result[2]
+            iou = result[3]
 
-            logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
+            logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}, IoU: {iou}")
+
+            if fitness == 0:
+                continue
 
             # print(transform)
 
@@ -78,6 +84,8 @@ class TransformVisualizer:
             ## Transform the arrow and add to geometries
             mshArrow.transform(transform)
             geometries.append(mshArrow)
+
+
 
 
         vis = o3d.visualization.Visualizer()
@@ -109,6 +117,7 @@ class TransformVisualizer:
         vis.destroy_window()
         image_np = (np.asarray(image)*255).astype(np.uint8)
 
+        image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
         cv2.imwrite("render.png", image_np)
         return image_np
 
@@ -128,8 +137,8 @@ class TransformVisualizer:
             pick_position = self.oModel.getPickPosition()
             pick_normal = self.oModel.getPickNormal()
 
-            logger.debug(f"Pick Position: {pick_position}")
-            logger.debug(f"Pick Normal: {pick_normal}")
+            # logger.debug(f"Pick Position: {pick_position}")
+            # logger.debug(f"Pick Normal: {pick_normal}")
 
             mshArrow = create_arrow(pick_position, pick_normal)
 
@@ -137,7 +146,7 @@ class TransformVisualizer:
             fitness = result[1]
             inlier_rmse = result[2]
 
-            logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
+            # logger.info(f"Result for object {_id}; Fitness: {fitness}, RMSE: {inlier_rmse}")
 
             pcdObjectTransformed = pcdModelCopy.transform(transform)
             geometries.append(pcdObjectTransformed)

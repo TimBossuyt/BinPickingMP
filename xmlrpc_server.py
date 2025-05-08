@@ -376,7 +376,7 @@ class RpcServer:
         logger.info(f"Complete object detection took: {(tEnd - tStart)*1000:.2f} ms")
 
         oTransformVisualizer = TransformVisualizer(self.oModel, self.oScene, dictTransformResults)
-        oTransformVisualizer.displayFoundObjects()
+        # oTransformVisualizer.displayFoundObjects()
 
         self.imgRender = oTransformVisualizer.renderFoundObjects()
 
@@ -388,8 +388,9 @@ class RpcServer:
             transform = values[0].tolist()
             fitness = float(values[1])
             inlier_rmse = float(values[2])
+            iou = float(values[3])
 
-            dictSerializeProof[int(key)] = (transform, fitness, inlier_rmse)
+            dictSerializeProof[int(key)] = (transform, fitness, inlier_rmse, iou)
 
         # 2. Dump as JSON string
         dict_serialized = json.dumps(dictSerializeProof)
