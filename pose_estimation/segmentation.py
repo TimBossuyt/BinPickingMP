@@ -32,8 +32,8 @@ class ObjectSegmentation:
         # s_min, s_max = 0.000, 0.365
         # v_min, v_max = 0.100, 0.539
 
-        h_min, h_max = 0.112, 0.177
-        s_min, s_max = 0.095, 0.315
+        h_min, h_max = 0.127, 0.211
+        s_min, s_max = 0.104, 0.305
         v_min, v_max = 0, 1
 
         lower = np.array([h_min * 180, s_min * 255, v_min * 255], np.uint8)
@@ -141,14 +141,14 @@ class ObjectSegmentation:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-        smoothed = cv2.GaussianBlur(img_bgr_enhanced, (19, 19), sigmaX=0)
+        # smoothed = cv2.GaussianBlur(img_bgr_enhanced, (19, 19), sigmaX=0)
 
-        if self.bVisualize:
-            cv2.imshow("Smoothed image", smoothed)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+        # if self.bVisualize:
+        #     cv2.imshow("Smoothed image", smoothed)
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
 
-        image_enhanced_rgb = cv2.cvtColor(smoothed, cv2.COLOR_BGR2RGB)
+        image_enhanced_rgb = cv2.cvtColor(img_bgr_enhanced, cv2.COLOR_BGR2RGB)
 
         results = self.SamModel(image_enhanced_rgb, points=centroids, max_det=n_objects, labels=np.ones(n_objects),
                         device='cuda', conf=0.5, retina_masks=False)

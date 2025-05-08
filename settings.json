@@ -49,25 +49,26 @@
 
   "PoseEstimation": {
     "General": {
-      "VoxelSize": 4,
+      "VoxelSize": 5,
       "bVisualize": 0
     },
 
     "FeatureParams": {
-      "FeatureFactor": 20,
-      "MaxNeighbours": 200
+      "FeatureFactor": 10,
+      "MaxNeighbours": 100
     },
 
     "Matching": {
       "MutualFilter": 0,
       "RansacIterations": 4,
-      "DistanceFactor": 3,
+      "DistanceFactor": 4,
       "IcpDistanceFactor": 2,
-      "CheckerEdgeLengthThreshold": 0.5,
+      "CheckerEdgeLengthThreshold": 0.1,
       "NormalAngleThreshold": 0.7,
       "MaxIcpIterations": 200,
-      "InitFitnessThresh": 0.8,
-      "TimeOut": 500
+      "InitFitnessThresh": 0.5,
+      "InitIoUThresh": 0.7,
+      "TimeOut": 5000
     }
   }
 }
