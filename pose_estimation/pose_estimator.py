@@ -99,7 +99,7 @@ class PoseEstimatorFPFH:
                     o3d.pipelines.registration.CorrespondenceCheckerBasedOnNormal(self.NormalAngleThresh)
 
                 ],
-                criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(10000, 0.999)
+                criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.9999)
             )
             fitness = oInitialMatch.fitness
 

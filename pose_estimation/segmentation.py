@@ -32,7 +32,7 @@ class ObjectSegmentation:
         # s_min, s_max = 0.000, 0.365
         # v_min, v_max = 0.100, 0.539
 
-        h_min, h_max = 0.127, 0.211
+        h_min, h_max = 0.046, 0.321
         s_min, s_max = 0.104, 0.305
         v_min, v_max = 0, 1
 
@@ -82,26 +82,26 @@ class ObjectSegmentation:
             cv2.destroyAllWindows()
 
 
-        ## Apply distance transform
-        dist_transform = cv2.distanceTransform(mask_objects, cv2.DIST_L2, 5)
-
-        dist_transform_norm = cv2.normalize(dist_transform, None, 0, 255, cv2.NORM_MINMAX)
-        dist_transform_norm = np.uint8(dist_transform_norm)
-
-        if self.bVisualize:
-            cv2.imshow("Distance Transform", dist_transform_norm)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-
-        _, thresholded_dist_transform = cv2.threshold(dist_transform_norm, 200, 255, cv2.THRESH_BINARY)
-
-        if self.bVisualize:
-            cv2.imshow("Thresholded Distance Transform", thresholded_dist_transform)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+        # ## Apply distance transform
+        # dist_transform = cv2.distanceTransform(mask_objects, cv2.DIST_L2, 5)
+        #
+        # dist_transform_norm = cv2.normalize(dist_transform, None, 0, 255, cv2.NORM_MINMAX)
+        # dist_transform_norm = np.uint8(dist_transform_norm)
+        #
+        # if self.bVisualize:
+        #     cv2.imshow("Distance Transform", dist_transform_norm)
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
+        #
+        # _, thresholded_dist_transform = cv2.threshold(dist_transform_norm, 200, 255, cv2.THRESH_BINARY)
+        #
+        # if self.bVisualize:
+        #     cv2.imshow("Thresholded Distance Transform", thresholded_dist_transform)
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
 
         # Find connected components on the thresholded distance transform to get centroids
-        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresholded_dist_transform,
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask_objects,
                                                                                 connectivity=8)
         # Display the centroids on the original image (or thresholded distance transform for visualization)
         image_with_centroids = image.copy()
@@ -141,14 +141,14 @@ class ObjectSegmentation:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-        # smoothed = cv2.GaussianBlur(img_bgr_enhanced, (19, 19), sigmaX=0)
+        smoothed = cv2.GaussianBlur(img_bgr_enhanced, (19, 19), sigmaX=0)
 
-        # if self.bVisualize:
-        #     cv2.imshow("Smoothed image", smoothed)
-        #     cv2.waitKey(0)
-        #     cv2.destroyAllWindows()
+        if self.bVisualize:
+            cv2.imshow("Smoothed image", smoothed)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
-        image_enhanced_rgb = cv2.cvtColor(img_bgr_enhanced, cv2.COLOR_BGR2RGB)
+        image_enhanced_rgb = cv2.cvtColor(smoothed, cv2.COLOR_BGR2RGB)
 
         results = self.SamModel(image_enhanced_rgb, points=centroids, max_det=n_objects, labels=np.ones(n_objects),
                         device='cuda', conf=0.5, retina_masks=False)

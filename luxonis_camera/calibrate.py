@@ -1,4 +1,3 @@
-import copy
 import numpy as np
 import cv2
 import logging
@@ -6,8 +5,12 @@ import open3d as o3d
 
 logger = logging.getLogger("Calibration")
 
-def drawDetectedCorners(image, charuco_corners, charuco_ids):
+
+def drawDetectedCorners(image: np.ndarray, charuco_corners: list[tuple[int, int]],
+                        charuco_ids: list[int]) -> np.ndarray:
     """
+    Annotating the detected ChArUco corners on the input image.
+
     :param image: The input image on which the detected ChArUco corners will be drawn.
     :param charuco_corners: The coordinates of the detected ChArUco corners.
     :param charuco_ids: The IDs associated with the detected ChArUco corners.
@@ -27,7 +30,8 @@ def drawDetectedCorners(image, charuco_corners, charuco_ids):
 
     return img_result
 
-def annotate_image(image, arrCamPoints, arrWorldPoints):
+
+def annotate_image(image: np.ndarray, arrCamPoints: np.ndarray, arrWorldPoints: np.ndarray) -> np.ndarray:
     """
     Annotates an image with 2D camera points and their corresponding 3D world coordinates.
 
@@ -59,35 +63,18 @@ def annotate_image(image, arrCamPoints, arrWorldPoints):
 
 class BoardDetector:
     """
-    BoardDetector is a class designed to detect a ChArUco board in a given image using the OpenCV ArUco module.
-
-    It provides functionality to configure the board with specified parameters
-    and detect its corners and IDs from an input image.
-
-    Attributes:
-        oArucoDict: The predefined ArUco dictionary used for marker detection.
-        oChArUcoBoard: The ChArUcoBoard object representing the board to be detected.
-        oDetector: The detector object initialized with the ChArUco board for performing board detection.
-
-    Methods:
-        __init__(iSquareLength, iMarkerLength, size):
-            Initializes the BoardDetector object with the square length of the ChArUco board,
-            marker length, and the dimensions of the board.
-
-        detectBoard(image):
-            Detects the ChArUco board in the provided image.
-            Returns the detected corners and corresponding IDs if a board is successfully detected, otherwise returns None.
+    Class that handles the board detection
     """
-    def __init__(self, iSquareLength, iMarkerLength, size: tuple[int, int]):
+
+    def __init__(self, iSquareLength: float, iMarkerLength: float, size: tuple[int, int]):
         """
         :param iSquareLength: The length of the squares on the ChArUco board, specified as a float or an int.
         :param iMarkerLength: The length of the markers on the ChArUco board, specified as a float or an int.
         :param size: A tuple of two integers representing the number of squares along the board's width and height.
         """
 
-        self.oArucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_50)
-
         ## Define the charuco board
+        self.oArucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_50)
         self.oChArUcoBoard = cv2.aruco.CharucoBoard(
             size=size,
             markerLength=iMarkerLength,
@@ -95,16 +82,18 @@ class BoardDetector:
             dictionary=self.oArucoDict
         )
 
-        ## Initialize the detector
+        ## Initialize the detector object
         self.oDetector = cv2.aruco.CharucoDetector(
             self.oChArUcoBoard
         )
 
-    def detectBoard(self, image):
+    def detectBoard(self, image: np.ndarray) -> tuple[np.ndarray, np.ndarray] | tuple[None, None]:
         """
+        Detect corners and ids of the charuco board in the input image.
+
         :param image: The input image in which the board is to be detected.
         :return: A tuple containing detected charuco corners and their corresponding ids.
-                    Returns (None, None) if no tboard is detected.
+                    Returns (None, None) if no board is detected.
         """
 
         ## Find corners and corresponding ids from the board
@@ -118,7 +107,7 @@ class BoardDetector:
 
 
 class CameraCalibrator:
-    def __init__(self, arrCameraMatrix, arrDistortionCoeffs=None):
+    def __init__(self, arrCameraMatrix: np.ndarray, arrDistortionCoeffs=None | np.ndarray):
         """
         :param arrCameraMatrix: A numpy array representing the intrinsic camera matrix,
                                 defining the internal parameters of the camera.
@@ -129,12 +118,13 @@ class CameraCalibrator:
 
         if arrDistortionCoeffs is None:
             arrDistortionCoeffs = [0, 0, 0, 0, 0]
-        logger.debug("CameraCalibrator initializing")
+        # logger.debug("CameraCalibrator initializing")
 
+        ## Load intrinsics + distortion coefficients as numpy arrays
         self.arrCameraMatrix = np.asarray(arrCameraMatrix)
         self.arrDistortionCoeffs = np.asarray(arrDistortionCoeffs)
 
-        ## TODO: Remove hardcoding
+        ## Initialize the board detector (TODO: Remove hardcoded board parameters)
         self.oBoardDetector = BoardDetector(
             iSquareLength=37.5,
             iMarkerLength=25,
@@ -145,6 +135,7 @@ class CameraCalibrator:
         self.rvec_wc = None
         self.tvec_wc = None
 
+        ## Initialize empty pointcloud
         self.pcd = None
 
         ## Calibrated flag
@@ -158,21 +149,24 @@ class CameraCalibrator:
         self.arrChArUcoIds = None
 
         ## Dictionary of point coordinates with corresponding id as key
-        self.dictWorldPoints = {} # In world coordinates [3D] = (x, y, z)
-        self.dictCameraImagePoints = {} # In camera coordinates [2D] = (u, v)
-        self.dictCamera3DPoints = {} # In camera coordinates [3D] = (x, y, z)
+        self.dictWorldPoints = {}  # In world coordinates [3D] = (x, y, z)
+        self.dictCameraImagePoints = {}  # In camera coordinates [2D] = (u, v)
+        self.dictCamera3DPoints = {}  # In camera coordinates [3D] = (x, y, z)
 
         ## Array of points in each coordinate space to estimate transformation
         # Point in one array should correspond to the point with the same index in the other array
         self.arrWorldPoints = []
         self.arrCamPoints = []
 
-    def runCalibration(self, image: np.ndarray, pointcloud: o3d.geometry.PointCloud, dictWorldPoints: dict, ):
+    def runCalibration(self, image: np.ndarray, pointcloud: o3d.geometry.PointCloud, dictWorldPoints: dict) -> tuple[
+        np.ndarray, float]:
         """
-        :param pointcloud:
-        :param image: Input image used for calibration.
-        :param dictWorldPoints: A dictionary containing world points mapped to their identifiers.
-        :return: Transformation matrix representing the camera-to-world transformation.
+        Runs the calibration algorithm on the provided arguments, returns the transformation matrix and scale factor.
+
+        :param pointcloud: Input pointcloud used for calibration.
+        :param image: Input image used for calibration (should be from same timestamp as pointcloud).
+        :param dictWorldPoints: A dictionary containing world points mapped to their identifiers ((ch)aruco corner ids.)
+        :return: Transformation matrix + scale factor representing the camera-to-world transformation.
         """
 
         logger.info("Starting calibration procedure")
@@ -187,18 +181,13 @@ class CameraCalibrator:
         if self.arrChArUcoCorners is None or self.arrChArUcoIds is None:
             raise Exception("Board was not found")
 
-        logger.info("Board detected")
-
-        # print(self.arrChArUcoCorners)
-        # print(self.arrChArUcoIds)
+        logger.info("Board detected, continuing calibration procedure")
 
         ## 2. Save detected corners as dictionary
         self.dictCameraImagePoints = {}
         for i, charuco_id in enumerate(self.arrChArUcoIds.flatten()):
             board_point = self.arrChArUcoCorners[i].flatten()
             self.dictCameraImagePoints[charuco_id] = np.asarray(board_point)
-
-        # self.annotate_and_display()
 
         ## 3. Get corners in camera coordinates (3D)
         logger.info("Getting 3D points from pointcloud corners")
@@ -207,7 +196,7 @@ class CameraCalibrator:
         kernel_size = 6
         points = np.asarray(self.pcd.points)
 
-        ## Flip to right handed system (X-right, Y-Down, Z-in)
+        ## Flip to right handed system (X-right, Y-Down, Z-in) (Flipping y-axis)
         points[:, 1] = -points[:, 1]
 
         ## Reshape to organized pointcloud 3D-matrix
@@ -241,12 +230,6 @@ class CameraCalibrator:
         ## Depth point = top left corner of aruco
         depth_point = corners[0][0][0]
 
-        # img_aruco = copy.deepcopy(image)
-        # img_aruco = cv2.circle(img_aruco, (int(depth_point[0]), int(depth_point[1])),5, color=(0, 255, 0), thickness=-1)
-        # cv2.imshow('Aruco for depth', img_aruco)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
         ## Get 3D Depth point
         u, v = int(depth_point[0]), int(depth_point[1])
         ## Get the 3D coordinates on that point
@@ -265,9 +248,7 @@ class CameraCalibrator:
         self.dictCamera3DPoints[100] = point_3d
 
         ## 3. Create corresponding points array
-        self.__createCorrespondingPointsArray()
-        # print(self.arrCamPoints)
-        # print(self.arrWorldPoints)
+        self._createCorrespondingPointsArray()
 
         # ## 4. Calculate the extrinsics by solving 3D points to projection points
         # Returns transformation from camera --> world
@@ -286,35 +267,13 @@ class CameraCalibrator:
 
         return trans_mat, scale
 
-
-    def annotate_and_display(self):
-        # Make a copy of the image to avoid modifying the original
-        annotated_image = self.calibrationImage.copy()
-
-        # Iterate over detected points and draw them
-        for charuco_id, (x, y) in self.dictCameraImagePoints.items():
-            # Convert coordinates to integers
-            x, y = int(x), int(y)
-
-            # Draw a small circle at each detected corner
-            cv2.circle(annotated_image, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
-
-            # Put the ID near the point
-            cv2.putText(annotated_image, str(charuco_id), (x + 10, y - 10),
-                        fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5,
-                        color=(255, 0, 0), thickness=2)
-
-        # Display the annotated image
-        cv2.imshow("Annotated Image", annotated_image)
-        cv2.waitKey(0)  # Wait until a key is pressed
-        cv2.destroyAllWindows()
-
     def showDetectedBoard(self):
         """
         Displays the detected ChArUco board on the calibration image if calibration has been performed.
 
         :return: Annotated image showing the detected ChArUco corners and IDs if calibration is done successfully, otherwise None.
         """
+
         if self.bCalibrated:
             ## Call static function to annotate the image
             img = drawDetectedCorners(self.calibrationImage,
@@ -326,8 +285,7 @@ class CameraCalibrator:
             logger.warning("First run calibration")
             return None
 
-
-    def __createCorrespondingPointsArray(self):
+    def _createCorrespondingPointsArray(self):
         """
         Creates corresponding points arrays for world and camera coordinates.
 
@@ -347,5 +305,3 @@ class CameraCalibrator:
         ## Reshape arrays to numpy format
         self.arrWorldPoints = np.array(self.arrWorldPoints, dtype=np.float32).reshape(-1, 3)
         self.arrCamPoints = np.array(self.arrCamPoints, dtype=np.float32).reshape(-1, 3)
-
-

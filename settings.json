@@ -35,7 +35,7 @@
       "PoissonDepth": 6,
       "DensityThreshold": 0.3,
       "TaubinIter": 100,
-      "NumberOfPoints": 700,
+      "NumberOfPoints": 1000,
       "bVisualize": 0,
       "ReconstructedOutlierNeighbours": 30,
       "ReconstructedOutlierStd": 0.5
@@ -49,12 +49,12 @@
 
   "PoseEstimation": {
     "General": {
-      "VoxelSize": 5,
+      "VoxelSize": 3,
       "bVisualize": 0
     },
 
     "FeatureParams": {
-      "FeatureFactor": 10,
+      "FeatureFactor": 15,
       "MaxNeighbours": 100
     },
 
@@ -63,12 +63,12 @@
       "RansacIterations": 4,
       "DistanceFactor": 4,
       "IcpDistanceFactor": 2,
-      "CheckerEdgeLengthThreshold": 0.1,
-      "NormalAngleThreshold": 0.7,
+      "CheckerEdgeLengthThreshold": 0.2,
+      "NormalAngleThreshold": 0.8,
       "MaxIcpIterations": 200,
-      "InitFitnessThresh": 0.5,
-      "InitIoUThresh": 0.7,
-      "TimeOut": 5000
+      "InitFitnessThresh": 0.8,
+      "InitIoUThresh": 0.6,
+      "TimeOut": 2000
     }
   }
 }

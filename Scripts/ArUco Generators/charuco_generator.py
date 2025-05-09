@@ -19,7 +19,7 @@ def create_and_save_new_board():
     )
 
     imBoard = oChArUcoBoard.generateImage((3500, 2500), marginSize=100)
-    cv2.imwrite("../../Drafts/Charuco Calibration Testing/charuco_board.png", imBoard)
+    cv2.imwrite("../../ArucoMarkers/charuco_board.png", imBoard)
     cv2.imshow("ChAruCo", imBoard)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

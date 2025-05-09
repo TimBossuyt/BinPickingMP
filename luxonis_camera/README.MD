@@ -1,5 +1,0 @@
-# Camera module
-under construction...
-
-
-

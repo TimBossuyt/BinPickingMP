@@ -43,9 +43,9 @@ def transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
 
 def getConnectedDevices()-> list[str]:
     """
-    Retrieves the list of MX IDs for all connected DepthAI devices.
+    Retrieve s the list of MX IDs for all connected DepthAI devices.
 
-    :return: List of strings representing the MX IDs of all connected DepthAI devices.
+    :return: List of strings representing theMX IDs of all connected DepthAI devices.
     """
 
     try:
@@ -57,7 +57,6 @@ def getConnectedDevices()-> list[str]:
     except Exception as e:
         logger.error(f"Error while getting connected devices: {e}")
         raise e
-
 
 class Camera:
     """
@@ -94,7 +93,7 @@ class Camera:
         }
 
         ## Configure pipeline
-        self.__configurePipeline()
+        self._configurePipeline()
         ## Save pipeline as .json for debugging
         with open("pipeline_debug.json", "w") as f:
             json.dump(self.oPipeline.serializeToJson(), f, indent=4)
@@ -128,17 +127,13 @@ class Camera:
             ## Update if camera was calibrated
             if self.bIsCalibrated:
                 arrPoints = np.asarray(arrPoints)
-                ## Flip to right handed
+                ## Flip to right handed (flip y-axis)
                 arrPoints[:, 1] = -arrPoints[:, 1]
                 arrPoints = transform_points(arrPoints * self.CamToWorldScale, self.arrCamToWorldMatrix)
 
             oPointCloud = o3d.geometry.PointCloud()
             oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
             oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
-
-
-            # origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=(0, 0, 0))
-            # o3d.visualization.draw_geometries([oPointCloud, origin], window_name="Point from camera object")
 
             return oPointCloud
 
@@ -148,18 +143,16 @@ class Camera:
             logger.error(f"Error while getting colored point cloud: {e}")
 
 
-    def getCvVideoPreview(self):
+    def getCvVideoPreview(self) -> np.ndarray:
         """
         Returns the video preview associated with the current instance.
 
-        :return: The video preview object.
-        :rtype: image in opencv format
+        :return: The video preview frame.
         """
 
-        ## TODO: Add correct type hinting
         return self.cvVideoPreview
 
-    def getCvImageFrame(self):
+    def getCvImageFrame(self) -> np.ndarray:
         """
         Launches a request to fetch the image frame and waits for the corresponding response.
 
@@ -170,7 +163,6 @@ class Camera:
         :return: The image frame retrieved as a response.
         """
 
-        ## TODO: Add correct type hinting
         try:
             ## Launch a request to the Run thread
             self.request_queue.put(CV_IMG_REQUEST)
@@ -223,7 +215,7 @@ class Camera:
         try:
             logger.info(f"Connecting to camera with MxId: {sMxId}")
             ## Re-initialize object to allow multiple restarts
-            self.thrCameraConnect = threading.Thread(target=self.__connect)
+            self.thrCameraConnect = threading.Thread(target=self._connect)
 
             ## Start __connect in separate thread
             self.thrCameraConnect.start()
@@ -232,7 +224,7 @@ class Camera:
         except Exception as ex:
             logger.error(f"Error connecting to camera: {ex}")
 
-    def __connect(self) -> None:
+    def _connect(self) -> None:
         """
         Attempts to establish a connection with a camera device using the specified device MXID and pipeline.
         Upon successful connection, it initializes calibration data, intrinsics, calibrator, output queues, and
@@ -264,7 +256,7 @@ class Camera:
 
                 ## Read and save calibration data
                 calibData = device.readCalibration()
-                calibData.eepromToJsonFile(Path("cam-calibration-data.json"))
+                calibData.eepromToJsonFile(Path("../CalibrationData/cam-calibration-data.json"))
 
                 ## Read camera intrinsics for selected resolution
                 intrinsics1080p = calibData.getCameraIntrinsics(
@@ -273,22 +265,18 @@ class Camera:
                     resizeHeight=1080,
                     keepAspectRatio=True
                 )
-
-                # print(intrinsics1080p)
-
-                self.arrCameraMatrix = intrinsics1080p
+                self.arrCameraMatrix = np.asarray(intrinsics1080p)
 
                 ## Create calibration object
-                self.oCalibrator = CameraCalibrator(intrinsics1080p)
+                self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
 
-                ## Create queue objects
+                ## Create queue objects (size 1 --> always most recent information)
                 qOut = device.getOutputQueue(name="out", maxSize=1,
                                              blocking=False)  # blocking False --> no pipeline freezing
 
                 qRgbPreview = device.getOutputQueue(name="rgb", maxSize=1,
                                                     blocking=False)
 
-                ## Empty output buffer
                 while not self.evStop.is_set():
                     inRgbPreview = qRgbPreview.get()
 
@@ -299,8 +287,6 @@ class Camera:
                     try:
                         ## Get request (FIFO) if any
                         sRequest = self.request_queue.get_nowait()
-
-                        ## TODO: https://docs.luxonis.com/software/depthai/examples/latency_measurement/
 
                         ## Check for correct request type
                         if sRequest == CV_IMG_REQUEST:
@@ -339,13 +325,28 @@ class Camera:
             self.bConnected = False
 
     def loadCalibration(self, twc: np.ndarray, scale_twc: float):
+        """
+        Load known calibration data
+
+        :param twc: 4x4 transformation matrix (world --> camera)
+        :param scale_twc: scale factor (world --> camera)
+        :return:
+        """
+
         ## Set the attributes and flag as calibrated
         self.arrCamToWorldMatrix = twc
         self.CamToWorldScale = scale_twc
-
         self.bIsCalibrated = True
 
-    def calibrateCamera(self, dictWorldPoints: dict[int, list[float, float, float]]) -> np.ndarray | None:
+    def calibrateCamera(self, dictWorldPoints: dict[int, list[float, float, float]]) -> None:
+        """
+        Run the calibration algorithm (using the CameraCalibrator)
+
+        :param dictWorldPoints: dictionary containing the XYZ coordinates of the board corners in the world frame
+        :return: None, saves the calibration data inside the Camera object
+        """
+
+
         ## Initialize calibrator object
         self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
         self.bIsCalibrated = False ## Don't transform the pcd from camera before calibration
@@ -360,7 +361,7 @@ class Camera:
             pcd = self.getColoredPointCloud()
 
             ## DEBUGGING ONLY
-            o3d.visualization.draw_geometries([pcd], window_name="Pointcloud received during calibration")
+            # o3d.visualization.draw_geometries([pcd], window_name="Pointcloud received during calibration")
 
             if pcd is None:
                 logger.error("Received invalid pointcloud")
@@ -406,7 +407,7 @@ class Camera:
 
         return self.imgCalibration
 
-    def __configurePipeline(self) -> None:
+    def _configurePipeline(self) -> None:
         """
         Configures a DepthAI pipeline consisting of multiple cameras, processing nodes, and output streams.
         The pipeline includes components for color image capture,

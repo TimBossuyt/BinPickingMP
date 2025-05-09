@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 
 """
-Generate AruCo marker with given ID (.png) from dictionary and save to folder /ArucoMarkers
+Generate AruCo marker with given ID (.png) from dictionary and save to current directory
 """
 
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_50)
@@ -25,7 +25,7 @@ iMarkerSize = 200
 ## Generate marker image
 oMarkerImage = cv2.aruco.generateImageMarker(aruco_dict, iMarkerID, iMarkerSize)
 
-cv2.imwrite(f"../ArucoMarkers/ArUco_6x6_50_{iMarkerID}", oMarkerImage)
+cv2.imwrite(f"../../ArucoMarkers/ArUco_6x6_50_{iMarkerID}.png", oMarkerImage)
 
 ## Display the marker for verification
 cv2.imshow("ArUco Marker", oMarkerImage)
