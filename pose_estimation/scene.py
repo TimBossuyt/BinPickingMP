@@ -1,4 +1,3 @@
-import cv2
 import open3d as o3d
 import matplotlib.path as mplpath
 from scipy.spatial import ConvexHull
@@ -8,7 +7,6 @@ import logging
 import time
 
 ## ---------- Custom imports ----------
-from .object_masks import ObjectMasks
 from .segmentation import ObjectSegmentation
 from .settings import SettingsManager
 from .utils import visualizeDensities, display_point_clouds
@@ -25,7 +23,7 @@ class Scene:
     def __init__(self, raw_pcd: o3d.geometry.PointCloud, settingsmanager: SettingsManager, samModel):
         ## Set and load the settings manager
         self.oSm = settingsmanager
-        self.__loadSettings()
+        self._loadSettings()
 
         ## Load pointcloud
         self.pcdRaw = raw_pcd
@@ -35,8 +33,8 @@ class Scene:
         self.arrColours = np.uint8(self.arrColours)
 
         ## Save the ROI of the scene
-        self.pcdROI = self.__selectROI()
-        self.pcdViz = self.__cropViz()
+        self.pcdROI = self._selectROI()
+        self.pcdViz = self._cropViz()
 
         ## Initialize object segmentation
         oSegmentation = ObjectSegmentation(
@@ -49,17 +47,17 @@ class Scene:
         logger.info("Applying masks to pointcloud")
         tStart = time.time()
         ## Create a dictionary with points of each object (using clustering algorithm)
-        self.dictObjects = self.__createObjectsDict()
+        self.dictObjects = self._createObjectsDict()
 
         tEnd = time.time()
         logger.info(f"Applying object masks took {(tEnd - tStart)*1000:.2f} ms")
 
         # ## Process the object point clouds
-        self.dictProcessedPcds = self.__processObjects()
+        self.dictProcessedPcds = self._processObjects()
 
 
 
-    def __loadSettings(self) -> None:
+    def _loadSettings(self) -> None:
         ## --------------- ROI Settings ---------------
         self.ptRoi1 = self.oSm.get("Scene.ROI.p1")
         self.ptRoi2 = self.oSm.get("Scene.ROI.p2")
@@ -100,7 +98,7 @@ class Scene:
         logger.debug("Settings set correctly")
 
 
-    def __selectROI(self):
+    def _selectROI(self):
         """
         Returns ROI of pointcloud
         :return:
@@ -137,12 +135,11 @@ class Scene:
 
         return filtered_pcd
 
-    def __cropViz(self):
+    def _cropViz(self):
         """
         Returns pointcloud with only interesting points for visualization
         :return:
         """
-        quad_points = [self.ptRoi1, self.ptRoi2, self.ptRoi3, self.ptRoi4]
 
         ## Add margin to the points
         quad_points = [self.ptRoi1, self.ptRoi2, self.ptRoi3, self.ptRoi4]
@@ -218,7 +215,7 @@ class Scene:
 
         o3d.visualization.draw_geometries(geometries)
 
-    def __createObjectsDict(self) -> dict[int, np.ndarray]:
+    def _createObjectsDict(self) -> dict[int, np.ndarray]:
         """
         Creates a dictionary of objects where each key corresponds to an object's ID and the value
         is a numpy array of XYZ coordinates associated with that object.
@@ -245,7 +242,7 @@ class Scene:
 
         return dictObjects
 
-    def __processObjects(self) -> dict[int, o3d.geometry.PointCloud]:
+    def _processObjects(self) -> dict[int, o3d.geometry.PointCloud]:
         """
         Processes objects by converting their points into PointCloud objects and mapping them to their respective IDs.
 
@@ -257,7 +254,7 @@ class Scene:
 
         for _id, points in self.dictObjects.items():
             tStart = time.time()
-            pcds[_id] = self.__processPoints(points)
+            pcds[_id] = self._processPoints(points)
             tEnd = time.time()
             logger.debug(f"Processing objects {_id} took {(tEnd - tStart) * 1000:.2f} ms")
 
@@ -267,7 +264,7 @@ class Scene:
 
         return pcds
 
-    def __processPoints(self, points: np.ndarray) -> o3d.geometry.PointCloud:
+    def _processPoints(self, points: np.ndarray) -> o3d.geometry.PointCloud:
         """
         Processes a given point cloud by performing a series of operations including down-sampling,
         outlier removal, and surface reconstruction.
@@ -292,14 +289,14 @@ class Scene:
 
         ## 3. Perform surface reconstruction
         # logger.debug("Performing surface reconstruction")
-        pcd_reconstructed = self.__surfaceReconstruction(
+        pcd_reconstructed = self._surfaceReconstruction(
             pointcloud=pcd_down,
         )
 
         return pcd_reconstructed
 
 
-    def __surfaceReconstruction(self, pointcloud: o3d.geometry.PointCloud) -> o3d.geometry.PointCloud:
+    def _surfaceReconstruction(self, pointcloud: o3d.geometry.PointCloud) -> o3d.geometry.PointCloud:
         ## 1. First normal estimation
         # Orient normals to camera (upwards)
         # logger.debug("Initial pointcloud normal estimation")
@@ -364,5 +361,5 @@ class Scene:
         return pointcloud_reconstructed
 
     def reload_settings(self):
-        self.__loadSettings()
+        self._loadSettings()
         logger.info("Reloaded settings")

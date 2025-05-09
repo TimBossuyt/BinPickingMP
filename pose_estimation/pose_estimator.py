@@ -1,14 +1,10 @@
 import copy
-
-import matplotlib.pyplot as plt
-
 from pose_estimation.utils import display_point_clouds
 from .scene import Scene
 from .model import Model
 from .settings import SettingsManager
 import open3d as o3d
 import numpy as np
-from pathlib import Path
 import time
 import logging
 from shapely.geometry import Polygon
@@ -19,17 +15,17 @@ class PoseEstimatorFPFH:
     def __init__(self, settingsManager: SettingsManager , model: Model):
         ## Settings
         self.oSm = settingsManager
-        self.__loadSettings()
+        self._loadSettings()
 
         self.oModel = model
 
         ## Calculate model features (only 1 time)
-        self.__calculateModelFeatures()
+        self._calculateModelFeatures()
 
     def reload_settings(self):
-        self.__loadSettings()
+        self._loadSettings()
         logger.info("Reloaded settings")
-        self.__calculateModelFeatures()
+        self._calculateModelFeatures()
 
     def findObjectTransforms(self, scene: Scene) -> dict[int, tuple[np.ndarray, float, float]]:
         """
@@ -105,7 +101,7 @@ class PoseEstimatorFPFH:
 
             ## 5. Calculate the IoU metric from the bounding boxes in the x, y plane
             pcd_model = copy.deepcopy(self.pcdModelDown)
-            iou_score = self.__compute_iou(pcd_model, pcdObjectDown, np.asarray(oInitialMatch.transformation))
+            iou_score = self._compute_iou(pcd_model, pcdObjectDown, np.asarray(oInitialMatch.transformation))
 
             print(f"Fitness: {fitness:.4f} | IoU: {iou_score:.4f} | Time: {elapsed_time:.2f} ms")
 
@@ -126,14 +122,14 @@ class PoseEstimatorFPFH:
 
         ## 5. Calculate the IoU metric from the bounding boxes in the x, y plane
         pcd_model = copy.deepcopy(self.pcdModelDown)
-        iou_score = self.__compute_iou(pcd_model, pcdObjectDown, np.asarray(oIcpResult.transformation))
+        iou_score = self._compute_iou(pcd_model, pcdObjectDown, np.asarray(oIcpResult.transformation))
 
         return np.asarray(oIcpResult.transformation), oIcpResult.fitness, oIcpResult.inlier_rmse, iou_score
 
     @staticmethod
-    def __compute_iou(pcd_model: o3d.geometry.PointCloud,
-                      pcd_scene: o3d.geometry.PointCloud,
-                      transformation: np.ndarray) -> float:
+    def _compute_iou(pcd_model: o3d.geometry.PointCloud,
+                     pcd_scene: o3d.geometry.PointCloud,
+                     transformation: np.ndarray) -> float:
         bbox_1 = pcd_scene.get_oriented_bounding_box()
         bbox_1_points = np.asarray(bbox_1.get_box_points())
 
@@ -168,7 +164,7 @@ class PoseEstimatorFPFH:
 
         return iou
 
-    def __loadSettings(self):
+    def _loadSettings(self):
         ## General
         self.iVoxelSize = self.oSm.get("PoseEstimation.General.VoxelSize")
         value = self.oSm.get("PoseEstimation.General.bVisualize")
@@ -204,7 +200,7 @@ class PoseEstimatorFPFH:
         self.MatchingTimeOut = self.oSm.get("PoseEstimation.Matching.TimeOut")
 
 
-    def __calculateModelFeatures(self):
+    def _calculateModelFeatures(self):
         ## Voxel down (make sure scene model points are same density
         self.pcdModelDown = self.oModel.pcdModel.voxel_down_sample(voxel_size=self.iVoxelSize)
 
@@ -213,35 +209,5 @@ class PoseEstimatorFPFH:
             input=self.pcdModelDown,
             search_param=self.oFeatureParams
         )
-
-
-
-if __name__ == "__main__":
-    ## Load settings
-    sm = SettingsManager("default_settings.json")
-
-    ## Load model
-    oModel = Model(
-        sModelPath="test_input/T-stuk-filled.stl",
-        settingsManager=sm,
-        picking_pose=None,
-    )
-
-    ## Load scene
-    pcd = o3d.io.read_point_cloud(Path("test_input/2025-02-20_19-46-58.ply"))
-
-    oScene = Scene(
-        raw_pcd = pcd,
-        settingsmanager=sm
-    )
-
-    ## Create pose estimator object
-    oPoseEstimator = PoseEstimatorFPFH(
-        settingsManager=sm,
-        model=oModel
-    )
-
-    print(oPoseEstimator.findObjectTransforms(oScene))
-
 
 

@@ -1,5 +1,4 @@
 import open3d as o3d
-from pathlib import Path
 import cv2
 import logging
 import numpy as np
@@ -7,43 +6,9 @@ import copy
 
 from .model import Model
 from .scene import Scene
-from .settings import SettingsManager
-from .utils import display_point_clouds
-from .pose_estimator import PoseEstimatorFPFH
+from .utils import display_point_clouds, create_arrow
 
 logger = logging.getLogger("Pose Visualizer")
-
-
-def create_arrow(origin, normal):
-    length = 150
-
-    ## LLM GENERATED ##
-    mshArrow = o3d.geometry.TriangleMesh.create_arrow(
-        cylinder_radius=3,
-        cone_radius=6,
-        cylinder_height=length*0.8,
-        cone_height=length*0.2
-    )
-
-    # Normalize the normal vector
-    normal = np.array(normal) ## Inverse to point arrow downwards
-    normal = normal / np.linalg.norm(normal)  # Ensure it's a unit vector
-
-    # Compute the rotation matrix to align the arrow with the normal vector
-    z_axis = np.array([0, 0, 1])  # Default direction of Open3D arrow
-    axis = np.cross(z_axis, normal)
-    angle = np.arccos(np.dot(z_axis, normal))  # Angle between z_axis and normal
-
-    if np.linalg.norm(axis) > 1e-6:  # Avoid division by zero
-        axis = axis / np.linalg.norm(axis)
-        R = o3d.geometry.get_rotation_matrix_from_axis_angle(axis * angle)
-        mshArrow.rotate(R, center=(0, 0, 0))
-
-        # Translate to the origin position
-    mshArrow.translate(origin)
-
-    return mshArrow
-
 
 class TransformVisualizer:
     def __init__(self, model: Model, scene: Scene, dictResults: dict):
@@ -118,7 +83,7 @@ class TransformVisualizer:
         image_np = (np.asarray(image)*255).astype(np.uint8)
 
         image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
-        cv2.imwrite("render.png", image_np)
+        cv2.imwrite("./Output/render.png", image_np)
         return image_np
 
     def displayFoundObjects(self):

@@ -2,7 +2,39 @@ import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
 
-def filter_points_by_x_range(pcd: o3d.geometry.PointCloud, x_min: int, x_max:int) -> o3d.geometry.PointCloud:
+
+def create_arrow(origin, normal):
+    length = 150
+
+    ## LLM GENERATED ##
+    mshArrow = o3d.geometry.TriangleMesh.create_arrow(
+        cylinder_radius=3,
+        cone_radius=6,
+        cylinder_height=length * 0.8,
+        cone_height=length * 0.2
+    )
+
+    # Normalize the normal vector
+    normal = np.array(normal)  ## Inverse to point arrow downwards
+    normal = normal / np.linalg.norm(normal)  # Ensure it's a unit vector
+
+    # Compute the rotation matrix to align the arrow with the normal vector
+    z_axis = np.array([0, 0, 1])  # Default direction of Open3D arrow
+    axis = np.cross(z_axis, normal)
+    angle = np.arccos(np.dot(z_axis, normal))  # Angle between z_axis and normal
+
+    if np.linalg.norm(axis) > 1e-6:  # Avoid division by zero
+        axis = axis / np.linalg.norm(axis)
+        R = o3d.geometry.get_rotation_matrix_from_axis_angle(axis * angle)
+        mshArrow.rotate(R, center=(0, 0, 0))
+
+        # Translate to the origin position
+    mshArrow.translate(origin)
+
+    return mshArrow
+
+
+def filter_points_by_x_range(pcd: o3d.geometry.PointCloud, x_min: int, x_max: int) -> o3d.geometry.PointCloud:
     """
     :param pcd: Input point cloud containing 3D points
     :param x_min: Minimum x-coordinate value to filter the points
@@ -33,7 +65,8 @@ def filter_points_by_x_range(pcd: o3d.geometry.PointCloud, x_min: int, x_max:int
 
     return filtered_pcd
 
-def filter_points_by_z_range(pcd: o3d.geometry.PointCloud, z_min: int, z_max:int) -> o3d.geometry.PointCloud:
+
+def filter_points_by_z_range(pcd: o3d.geometry.PointCloud, z_min: int, z_max: int) -> o3d.geometry.PointCloud:
     """
     :param pcd: Input point cloud containing 3D points
     :param z_min: Minimum x-coordinate value to filter the points
@@ -64,6 +97,7 @@ def filter_points_by_z_range(pcd: o3d.geometry.PointCloud, z_min: int, z_max:int
 
     return filtered_pcd
 
+
 def visualizeDensities(arrDensities: np.ndarray, msh: o3d.geometry.Vertex):
     """
     :param arrDensities: An array containing the density values associated with the vertices of a mesh.
@@ -84,7 +118,7 @@ def visualizeDensities(arrDensities: np.ndarray, msh: o3d.geometry.Vertex):
 
 
 def display_point_clouds(arrPointClouds: [o3d.geometry.PointCloud], sWindowTitle: str,
-                         bShowNormals:bool=False, bShowOrigin:bool=False, iOriginSize:int=0):
+                         bShowNormals: bool = False, bShowOrigin: bool = False, iOriginSize: int = 0):
     """
     :param arrPointClouds: List of open3d.geometry.PointCloud objects to be displayed.
     :param sWindowTitle: Title of the visualization window.

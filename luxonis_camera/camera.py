@@ -256,7 +256,7 @@ class Camera:
 
                 ## Read and save calibration data
                 calibData = device.readCalibration()
-                calibData.eepromToJsonFile(Path("../CalibrationData/cam-calibration-data.json"))
+                calibData.eepromToJsonFile(Path("./CalibrationData/cam-calibration-data.json"))
 
                 ## Read camera intrinsics for selected resolution
                 intrinsics1080p = calibData.getCameraIntrinsics(

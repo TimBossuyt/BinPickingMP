@@ -15,6 +15,9 @@ sMxId = "1844301011B546F500"
 if not os.path.exists("images"):
     os.makedirs("images")
 
+if not os.path.exists("pointclouds"):
+    os.makedirs("pointclouds")
+
 ## Start camera and wait for the camera to connect
 oCamera.Connect(sMxId)
 

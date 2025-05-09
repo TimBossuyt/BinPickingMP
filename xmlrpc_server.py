@@ -71,9 +71,11 @@ class RpcServer:
             settingsManager=self.SettingsManager,
             model=self.oModel,
         )
-
         ## Load SAM-model
-        self.oSamModel = SAM('sam2.1_b.pt')
+        try:
+            self.oSamModel = SAM('./Input/SAM/sam2.1_b.pt')
+        except Exception as e:
+            raise Exception(f"Could not load SAM-model: {e}")
 
     def Run(self):
         """
@@ -227,7 +229,7 @@ class RpcServer:
 
             else:
                 logger.warning("Camera is not connected, returning no-camera.jpg")
-                cvFrame = cv2.imread("no-camera.jpg")
+                cvFrame = cv2.imread("Input/no-camera.jpg")
                 _, encoded_img = cv2.imencode('.jpg', cvFrame)
 
                 # noinspection PyTypeChecker
@@ -261,7 +263,7 @@ class RpcServer:
                     logger.warning("No image frame received from the connected camera")
             else:
                 logger.warning("Camera is not connected, returning no-camera.jpg")
-                cvFrame = cv2.imread("no-camera.jpg")
+                cvFrame = cv2.imread("Input/no-camera.jpg")
                 _, buff = cv2.imencode('.jpg', cvFrame)
 
                 # noinspection PyTypeChecker

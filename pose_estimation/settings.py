@@ -3,16 +3,17 @@ import logging
 
 logger = logging.getLogger("SettingsManager")
 
+
 class SettingsManager:
     def __init__(self, sConfigFile: str):
         self.sPath = sConfigFile
-        self.settings = self.__loadSettings()
+        self.settings = self._loadSettings()
 
     def reload_settings(self):
         logger.info("Reloading settings")
-        self.settings = self.__loadSettings()
+        self.settings = self._loadSettings()
 
-    def __loadSettings(self) -> dict:
+    def _loadSettings(self) -> dict:
         try:
             with open(self.sPath, 'r') as f:
                 settings = json.load(f)
@@ -32,10 +33,3 @@ class SettingsManager:
             return value
         except KeyError:
             logger.error(f"Settings key ({key}) not found:")
-
-
-if __name__ == "__main__":
-    sm = SettingsManager("default_settings.json")
-    print(sm.get("ObjectSegmentation.ROI.x_min"))
-
-

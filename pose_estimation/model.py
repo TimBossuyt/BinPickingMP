@@ -13,7 +13,7 @@ class Model:
 
     def __init__(self, sModelPath, settingsManager: SettingsManager, picking_pose: tuple[float, float, float, float, float, float]):
         self.oSm = settingsManager
-        self.__loadSettings()
+        self._loadSettings()
 
         ## Load model as mesh
         self.mshModel = o3d.io.read_triangle_mesh(sModelPath)
@@ -21,7 +21,7 @@ class Model:
         self.pcdModel = self.mshModel.sample_points_poisson_disk(number_of_points=self.iPoints)
 
         ## Run model preprocessing steps
-        self.__optimizeModel()
+        self._optimizeModel()
 
         ## Picking pose = (x, y, z, NX, NY, NZ)
         self.picking_pose = picking_pose
@@ -32,21 +32,21 @@ class Model:
     def getPickNormal(self):
         return self.picking_pose[3], self.picking_pose[4], self.picking_pose[5]
 
-    def __loadSettings(self):
+    def _loadSettings(self):
         self.iNormalRadius = self.oSm.get("Model.NormalRadius")
         self.iPoints = self.oSm.get("Model.NumberOfPoints")
 
     def reload_settings(self):
-        self.__loadSettings()
+        self._loadSettings()
 
         ## Recalculate model optimizer
-        logger.info("Recalculating model features")
-        self.__optimizeModel()
+        logger.info("Recalculating model optimization")
+        self._optimizeModel()
 
         logger.info("Reloaded settings")
 
 
-    def __optimizeModel(self):
+    def _optimizeModel(self):
         ## MODEL SPECIFIC!!!! TODO: Change model specific optimization
         # Only selects the upper half of the model (remove symmetry)
         self.pcdModel = filter_points_by_z_range(self.pcdModel, 0, 500)
