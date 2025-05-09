@@ -56,13 +56,14 @@ class Scene:
         self.dictProcessedPcds = self._processObjects()
 
 
-
     def _loadSettings(self) -> None:
         ## --------------- ROI Settings ---------------
         self.ptRoi1 = self.oSm.get("Scene.ROI.p1")
         self.ptRoi2 = self.oSm.get("Scene.ROI.p2")
         self.ptRoi3 = self.oSm.get("Scene.ROI.p3")
         self.ptRoi4 = self.oSm.get("Scene.ROI.p4")
+
+        self.iMaxZRoi = self.oSm.get("Scene.ROI.MaxZ")
 
         self.iBinPlaneDistance = self.oSm.get("Scene.ROI.BinPlaneDistance")
 
@@ -169,7 +170,7 @@ class Scene:
         mask_2d = mask_flat.reshape(points.shape[:2])
 
         # Only get points within the x, y region and z coordinate between 0 and 200
-        z_mask = (points[:, :, 2] >= 0) & (points[:, :, 2] <= 200)  # Apply Z condition
+        z_mask = (points[:, :, 2] >= 0) & (points[:, :, 2] <= self.iMaxZRoi)  # Apply Z condition
         combined_mask = mask_2d & z_mask  # Combine x, y mask with z condition
 
         ## Only get points within x, y region

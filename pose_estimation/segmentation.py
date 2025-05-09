@@ -25,25 +25,31 @@ class ObjectSegmentation:
         value = self.oSm.get("ObjectSegmentation.bVisualize")
         self.bVisualize = (value == 1)
 
+        ## --------------- Color thresholds ---------------
+        h_min = self.oSm.get("ObjectSegmentation.HsvThresholding.H.min")
+        h_max = self.oSm.get("ObjectSegmentation.HsvThresholding.H.max")
+        s_min = self.oSm.get("ObjectSegmentation.HsvThresholding.S.min")
+        s_max = self.oSm.get("ObjectSegmentation.HsvThresholding.S.max")
+        v_min = self.oSm.get("ObjectSegmentation.HsvThresholding.V.min")
+        v_max = self.oSm.get("ObjectSegmentation.HsvThresholding.V.max")
+
+        self.lower = np.array([h_min * 180, s_min * 255, v_min * 255], np.uint8)
+        self.upper = np.array([h_max * 180, s_max * 255, v_max * 255], np.uint8)
+
+        ## --------------- SAM ---------------
+        self.fSAM_conf = self.oSm.get("ObjectSegmentation.SAM.confidence")
+        self.bSAM_retina = (self.oSm.get("ObjectSegmentation.SAM.retinaMasks") == 1)
+        self.sSAM_device = self.oSm.get("ObjectSegmentation.SAM.device")
+
+        self.iSizeThresh = self.oSm.get("ObjectSegmentation.SizeThreshold")
+
         logger.debug("Settings set correctly")
 
     def getMasksFromImage(self, image):
-        ## Thresholding settings
-        # h_min, h_max = 0.502, 0.715
-        # s_min, s_max = 0.000, 0.365
-        # v_min, v_max = 0.100, 0.539
-
-        h_min, h_max = 0.046, 0.321
-        s_min, s_max = 0.104, 0.305
-        v_min, v_max = 0, 1
-
-        lower = np.array([h_min * 180, s_min * 255, v_min * 255], np.uint8)
-        upper = np.array([h_max * 180, s_max * 255, v_max * 255], np.uint8)
-
         img_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        mask_all = cv2.inRange(img_hsv, lower, upper)
+        mask_all = cv2.inRange(img_hsv, self.lower, self.upper)
 
         if self.bVisualize:
             cv2.imshow("Mask", mask_all)
@@ -132,9 +138,13 @@ class ObjectSegmentation:
 
         image_enhanced_rgb = cv2.cvtColor(smoothed, cv2.COLOR_BGR2RGB)
 
-        results = self.SamModel(image_enhanced_rgb, points=centroids, max_det=n_objects, labels=np.ones(n_objects),
-                                device='cuda', conf=0.5, retina_masks=False)
+        try:
+            results = self.SamModel(image_enhanced_rgb, points=centroids, max_det=n_objects, labels=np.ones(n_objects),
+                                    device=self.sSAM_device, conf=self.fSAM_conf, retina_masks=self.bSAM_retina)
+        except Exception as e:
+            raise e
 
+        ## Copy results to cpu as numpy array
         masks = results[0].masks.data.cpu().numpy()
 
         overlay = image.copy()
@@ -187,7 +197,7 @@ class ObjectSegmentation:
 
             logger.debug(f"Object {i} - {mask_size}")
 
-            if mask_size < 20000:
+            if mask_size < self.iSizeThresh:
                 unique_masks.pop(i)
                 logger.debug(f"Object {i} was removed")
 

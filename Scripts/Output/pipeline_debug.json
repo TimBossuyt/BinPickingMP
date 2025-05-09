@@ -1,0 +1,1150 @@
+{
+    "assetStorage": [],
+    "assets": {
+        "map": {}
+    },
+    "pipeline": {
+        "connections": [
+            {
+                "node1Id": 0,
+                "node1Output": "preview",
+                "node1OutputGroup": "",
+                "node2Id": 7,
+                "node2Input": "in",
+                "node2InputGroup": ""
+            },
+            {
+                "node1Id": 5,
+                "node1Output": "out",
+                "node1OutputGroup": "",
+                "node2Id": 6,
+                "node2Input": "in",
+                "node2InputGroup": ""
+            },
+            {
+                "node1Id": 3,
+                "node1Output": "depth",
+                "node1OutputGroup": "",
+                "node2Id": 4,
+                "node2Input": "inputDepth",
+                "node2InputGroup": ""
+            },
+            {
+                "node1Id": 4,
+                "node1Output": "outputPointCloud",
+                "node1OutputGroup": "",
+                "node2Id": 5,
+                "node2Input": "pcl",
+                "node2InputGroup": "inputs"
+            },
+            {
+                "node1Id": 0,
+                "node1Output": "isp",
+                "node1OutputGroup": "",
+                "node2Id": 5,
+                "node2Input": "color",
+                "node2InputGroup": "inputs"
+            },
+            {
+                "node1Id": 2,
+                "node1Output": "out",
+                "node1OutputGroup": "",
+                "node2Id": 3,
+                "node2Input": "right",
+                "node2InputGroup": ""
+            },
+            {
+                "node1Id": 1,
+                "node1Output": "out",
+                "node1OutputGroup": "",
+                "node2Id": 3,
+                "node2Input": "left",
+                "node2InputGroup": ""
+            }
+        ],
+        "globalProperties": {
+            "calibData": null,
+            "cameraTuningBlobSize": null,
+            "cameraTuningBlobUri": "",
+            "leonCssFrequencyHz": 700000000.0,
+            "leonMssFrequencyHz": 700000000.0,
+            "pipelineName": null,
+            "pipelineVersion": null,
+            "sippBufferSize": 18432,
+            "sippDmaBufferSize": 16384,
+            "xlinkChunkSize": -1
+        },
+        "nodes": [
+            [
+                0,
+                {
+                    "id": 0,
+                    "ioInfo": [
+                        [
+                            [
+                                "",
+                                "inputConfig"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 1,
+                                "name": "inputConfig",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "raw"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 6,
+                                "name": "raw",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "still"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 7,
+                                "name": "still",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "inputControl"
+                            ],
+                            {
+                                "blocking": true,
+                                "group": "",
+                                "id": 2,
+                                "name": "inputControl",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "video"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 3,
+                                "name": "video",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "isp"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 4,
+                                "name": "isp",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "preview"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 5,
+                                "name": "preview",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "frameEvent"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 8,
+                                "name": "frameEvent",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ]
+                    ],
+                    "name": "ColorCamera",
+                    "properties": {
+                        "boardSocket": 0,
+                        "cameraName": "",
+                        "colorOrder": 0,
+                        "fp16": false,
+                        "fps": 5.0,
+                        "imageOrientation": -1,
+                        "initialControl": {
+                            "aeLockMode": false,
+                            "aeMaxExposureTimeUs": 0,
+                            "aeRegion": {
+                                "height": 0,
+                                "priority": 0,
+                                "width": 0,
+                                "x": 0,
+                                "y": 0
+                            },
+                            "afRegion": {
+                                "height": 0,
+                                "priority": 0,
+                                "width": 0,
+                                "x": 0,
+                                "y": 0
+                            },
+                            "antiBandingMode": 0,
+                            "autoFocusMode": 3,
+                            "awbLockMode": false,
+                            "awbMode": 0,
+                            "brightness": 0,
+                            "captureIntent": 0,
+                            "chromaDenoise": 0,
+                            "cmdMask": 0,
+                            "contrast": 0,
+                            "controlMode": 0,
+                            "effectMode": 0,
+                            "expCompensation": 0,
+                            "expManual": {
+                                "exposureTimeUs": 0,
+                                "frameDurationUs": 0,
+                                "sensitivityIso": 0
+                            },
+                            "frameSyncMode": 0,
+                            "lensPosAutoInfinity": 0,
+                            "lensPosAutoMacro": 0,
+                            "lensPosition": 0,
+                            "lensPositionRaw": 0.0,
+                            "lowPowerNumFramesBurst": 0,
+                            "lowPowerNumFramesDiscard": 0,
+                            "lumaDenoise": 0,
+                            "miscControls": [],
+                            "saturation": 0,
+                            "sceneMode": 0,
+                            "sharpness": 0,
+                            "strobeConfig": {
+                                "activeLevel": 0,
+                                "enable": 0,
+                                "gpioNumber": 0
+                            },
+                            "strobeTimings": {
+                                "durationUs": 0,
+                                "exposureBeginOffsetUs": 0,
+                                "exposureEndOffsetUs": 0
+                            },
+                            "wbColorTemp": 0
+                        },
+                        "interleaved": true,
+                        "isp3aFps": 0,
+                        "ispScale": {
+                            "horizDenominator": 0,
+                            "horizNumerator": 0,
+                            "vertDenominator": 0,
+                            "vertNumerator": 0
+                        },
+                        "numFramesPoolIsp": 3,
+                        "numFramesPoolPreview": 4,
+                        "numFramesPoolRaw": 3,
+                        "numFramesPoolStill": 4,
+                        "numFramesPoolVideo": 4,
+                        "previewHeight": 300,
+                        "previewKeepAspectRatio": true,
+                        "previewWidth": 300,
+                        "rawPacked": null,
+                        "resolution": 0,
+                        "sensorCropX": -1.0,
+                        "sensorCropY": -1.0,
+                        "stillHeight": -1,
+                        "stillWidth": -1,
+                        "videoHeight": -1,
+                        "videoWidth": -1
+                    }
+                }
+            ],
+            [
+                1,
+                {
+                    "id": 1,
+                    "ioInfo": [
+                        [
+                            [
+                                "",
+                                "inputControl"
+                            ],
+                            {
+                                "blocking": true,
+                                "group": "",
+                                "id": 9,
+                                "name": "inputControl",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "out"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 10,
+                                "name": "out",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "raw"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 11,
+                                "name": "raw",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "frameEvent"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 12,
+                                "name": "frameEvent",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ]
+                    ],
+                    "name": "MonoCamera",
+                    "properties": {
+                        "boardSocket": -1,
+                        "cameraName": "left",
+                        "fps": 5.0,
+                        "imageOrientation": -1,
+                        "initialControl": {
+                            "aeLockMode": false,
+                            "aeMaxExposureTimeUs": 0,
+                            "aeRegion": {
+                                "height": 0,
+                                "priority": 0,
+                                "width": 0,
+                                "x": 0,
+                                "y": 0
+                            },
+                            "afRegion": {
+                                "height": 0,
+                                "priority": 0,
+                                "width": 0,
+                                "x": 0,
+                                "y": 0
+                            },
+                            "antiBandingMode": 0,
+                            "autoFocusMode": 3,
+                            "awbLockMode": false,
+                            "awbMode": 0,
+                            "brightness": 0,
+                            "captureIntent": 0,
+                            "chromaDenoise": 0,
+                            "cmdMask": 0,
+                            "contrast": 0,
+                            "controlMode": 0,
+                            "effectMode": 0,
+                            "expCompensation": 0,
+                            "expManual": {
+                                "exposureTimeUs": 0,
+                                "frameDurationUs": 0,
+                                "sensitivityIso": 0
+                            },
+                            "frameSyncMode": 0,
+                            "lensPosAutoInfinity": 0,
+                            "lensPosAutoMacro": 0,
+                            "lensPosition": 0,
+                            "lensPositionRaw": 0.0,
+                            "lowPowerNumFramesBurst": 0,
+                            "lowPowerNumFramesDiscard": 0,
+                            "lumaDenoise": 0,
+                            "miscControls": [],
+                            "saturation": 0,
+                            "sceneMode": 0,
+                            "sharpness": 0,
+                            "strobeConfig": {
+                                "activeLevel": 0,
+                                "enable": 0,
+                                "gpioNumber": 0
+                            },
+                            "strobeTimings": {
+                                "durationUs": 0,
+                                "exposureBeginOffsetUs": 0,
+                                "exposureEndOffsetUs": 0
+                            },
+                            "wbColorTemp": 0
+                        },
+                        "isp3aFps": 0,
+                        "numFramesPool": 3,
+                        "numFramesPoolRaw": 3,
+                        "rawPacked": null,
+                        "resolution": 1
+                    }
+                }
+            ],
+            [
+                2,
+                {
+                    "id": 2,
+                    "ioInfo": [
+                        [
+                            [
+                                "",
+                                "inputControl"
+                            ],
+                            {
+                                "blocking": true,
+                                "group": "",
+                                "id": 13,
+                                "name": "inputControl",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "out"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 14,
+                                "name": "out",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "raw"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 15,
+                                "name": "raw",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "frameEvent"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 16,
+                                "name": "frameEvent",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ]
+                    ],
+                    "name": "MonoCamera",
+                    "properties": {
+                        "boardSocket": -1,
+                        "cameraName": "right",
+                        "fps": 5.0,
+                        "imageOrientation": -1,
+                        "initialControl": {
+                            "aeLockMode": false,
+                            "aeMaxExposureTimeUs": 0,
+                            "aeRegion": {
+                                "height": 0,
+                                "priority": 0,
+                                "width": 0,
+                                "x": 0,
+                                "y": 0
+                            },
+                            "afRegion": {
+                                "height": 0,
+                                "priority": 0,
+                                "width": 0,
+                                "x": 0,
+                                "y": 0
+                            },
+                            "antiBandingMode": 0,
+                            "autoFocusMode": 3,
+                            "awbLockMode": false,
+                            "awbMode": 0,
+                            "brightness": 0,
+                            "captureIntent": 0,
+                            "chromaDenoise": 0,
+                            "cmdMask": 0,
+                            "contrast": 0,
+                            "controlMode": 0,
+                            "effectMode": 0,
+                            "expCompensation": 0,
+                            "expManual": {
+                                "exposureTimeUs": 0,
+                                "frameDurationUs": 0,
+                                "sensitivityIso": 0
+                            },
+                            "frameSyncMode": 0,
+                            "lensPosAutoInfinity": 0,
+                            "lensPosAutoMacro": 0,
+                            "lensPosition": 0,
+                            "lensPositionRaw": 0.0,
+                            "lowPowerNumFramesBurst": 0,
+                            "lowPowerNumFramesDiscard": 0,
+                            "lumaDenoise": 0,
+                            "miscControls": [],
+                            "saturation": 0,
+                            "sceneMode": 0,
+                            "sharpness": 0,
+                            "strobeConfig": {
+                                "activeLevel": 0,
+                                "enable": 0,
+                                "gpioNumber": 0
+                            },
+                            "strobeTimings": {
+                                "durationUs": 0,
+                                "exposureBeginOffsetUs": 0,
+                                "exposureEndOffsetUs": 0
+                            },
+                            "wbColorTemp": 0
+                        },
+                        "isp3aFps": 0,
+                        "numFramesPool": 3,
+                        "numFramesPoolRaw": 3,
+                        "rawPacked": null,
+                        "resolution": 1
+                    }
+                }
+            ],
+            [
+                3,
+                {
+                    "id": 3,
+                    "ioInfo": [
+                        [
+                            [
+                                "",
+                                "inputConfig"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 17,
+                                "name": "inputConfig",
+                                "queueSize": 4,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "left"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 18,
+                                "name": "left",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": true
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "debugExtDispLrCheckIt1"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 30,
+                                "name": "debugExtDispLrCheckIt1",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "right"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 19,
+                                "name": "right",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": true
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "syncedLeft"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 20,
+                                "name": "syncedLeft",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "depth"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 21,
+                                "name": "depth",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "disparity"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 22,
+                                "name": "disparity",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "syncedRight"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 23,
+                                "name": "syncedRight",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "debugDispCostDump"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 28,
+                                "name": "debugDispCostDump",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "debugDispLrCheckIt2"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 29,
+                                "name": "debugDispLrCheckIt2",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "rectifiedLeft"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 24,
+                                "name": "rectifiedLeft",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "debugExtDispLrCheckIt2"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 31,
+                                "name": "debugExtDispLrCheckIt2",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "rectifiedRight"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 25,
+                                "name": "rectifiedRight",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "confidenceMap"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 32,
+                                "name": "confidenceMap",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "outConfig"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 26,
+                                "name": "outConfig",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "debugDispLrCheckIt1"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 27,
+                                "name": "debugDispLrCheckIt1",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ]
+                    ],
+                    "name": "StereoDepth",
+                    "properties": {
+                        "alphaScaling": null,
+                        "baseline": null,
+                        "depthAlignCamera": 0,
+                        "depthAlignmentUseSpecTranslation": null,
+                        "disparityToDepthUseSpecTranslation": null,
+                        "enableRectification": true,
+                        "enableRuntimeStereoModeSwitch": false,
+                        "focalLength": null,
+                        "focalLengthFromCalibration": true,
+                        "height": null,
+                        "initialConfig": {
+                            "algorithmControl": {
+                                "centerAlignmentShiftFactor": null,
+                                "customDepthUnitMultiplier": 1000.0,
+                                "depthAlign": 0,
+                                "depthUnit": 2,
+                                "disparityShift": 0,
+                                "enableExtended": true,
+                                "enableLeftRightCheck": true,
+                                "enableSubpixel": true,
+                                "leftRightCheckThreshold": 10,
+                                "numInvalidateEdgePixels": 0,
+                                "subpixelFractionalBits": 5
+                            },
+                            "censusTransform": {
+                                "enableMeanMode": true,
+                                "kernelMask": 0,
+                                "kernelSize": -1,
+                                "threshold": 0
+                            },
+                            "costAggregation": {
+                                "divisionFactor": 1,
+                                "horizontalPenaltyCostP1": 250,
+                                "horizontalPenaltyCostP2": 500,
+                                "verticalPenaltyCostP1": 250,
+                                "verticalPenaltyCostP2": 500
+                            },
+                            "costMatching": {
+                                "confidenceThreshold": 245,
+                                "disparityWidth": 1,
+                                "enableCompanding": false,
+                                "invalidDisparityValue": 0,
+                                "linearEquationParameters": {
+                                    "alpha": 0,
+                                    "beta": 2,
+                                    "threshold": 127
+                                }
+                            },
+                            "postProcessing": {
+                                "bilateralSigmaValue": 0,
+                                "brightnessFilter": {
+                                    "maxBrightness": 256,
+                                    "minBrightness": 0
+                                },
+                                "decimationFilter": {
+                                    "decimationFactor": 1,
+                                    "decimationMode": 0
+                                },
+                                "filteringOrder": [
+                                    3,
+                                    1,
+                                    2,
+                                    4,
+                                    5
+                                ],
+                                "median": 0,
+                                "spatialFilter": {
+                                    "alpha": 0.5,
+                                    "delta": 0,
+                                    "enable": false,
+                                    "holeFillingRadius": 2,
+                                    "numIterations": 1
+                                },
+                                "speckleFilter": {
+                                    "differenceThreshold": 2,
+                                    "enable": false,
+                                    "speckleRange": 50
+                                },
+                                "temporalFilter": {
+                                    "alpha": 0.4000000059604645,
+                                    "delta": 0,
+                                    "enable": false,
+                                    "persistencyMode": 3
+                                },
+                                "thresholdFilter": {
+                                    "maxRange": 65535,
+                                    "minRange": 0
+                                }
+                            }
+                        },
+                        "mesh": {
+                            "meshLeftUri": "",
+                            "meshRightUri": "",
+                            "meshSize": null,
+                            "stepHeight": 16,
+                            "stepWidth": 16
+                        },
+                        "numFramesPool": 3,
+                        "numPostProcessingMemorySlices": -1,
+                        "numPostProcessingShaves": -1,
+                        "outHeight": null,
+                        "outKeepAspectRatio": true,
+                        "outWidth": null,
+                        "rectificationUseSpecTranslation": null,
+                        "rectifyEdgeFillColor": 0,
+                        "useHomographyRectification": null,
+                        "width": null
+                    }
+                }
+            ],
+            [
+                4,
+                {
+                    "id": 4,
+                    "ioInfo": [
+                        [
+                            [
+                                "",
+                                "inputConfig"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 33,
+                                "name": "inputConfig",
+                                "queueSize": 4,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "inputDepth"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 34,
+                                "name": "inputDepth",
+                                "queueSize": 4,
+                                "type": 3,
+                                "waitForMessage": true
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "outputPointCloud"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 35,
+                                "name": "outputPointCloud",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "passthroughDepth"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 36,
+                                "name": "passthroughDepth",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ]
+                    ],
+                    "name": "PointCloud",
+                    "properties": {
+                        "initialConfig": {
+                            "sparse": false,
+                            "transformationMatrix": [
+                                [
+                                    1.0,
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                [
+                                    0.0,
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                [
+                                    0.0,
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ],
+                                [
+                                    0.0,
+                                    0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            ]
+                        },
+                        "numFramesPool": 4
+                    }
+                }
+            ],
+            [
+                5,
+                {
+                    "id": 5,
+                    "ioInfo": [
+                        [
+                            [
+                                "inputs",
+                                "pcl"
+                            ],
+                            {
+                                "blocking": true,
+                                "group": "inputs",
+                                "id": 37,
+                                "name": "pcl",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "inputs",
+                                "color"
+                            ],
+                            {
+                                "blocking": true,
+                                "group": "inputs",
+                                "id": 38,
+                                "name": "color",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": false
+                            }
+                        ],
+                        [
+                            [
+                                "",
+                                "out"
+                            ],
+                            {
+                                "blocking": false,
+                                "group": "",
+                                "id": 39,
+                                "name": "out",
+                                "queueSize": 8,
+                                "type": 0,
+                                "waitForMessage": false
+                            }
+                        ]
+                    ],
+                    "name": "Sync",
+                    "properties": {
+                        "syncAttempts": -1,
+                        "syncThresholdNs": 50000000
+                    }
+                }
+            ],
+            [
+                6,
+                {
+                    "id": 6,
+                    "ioInfo": [
+                        [
+                            [
+                                "",
+                                "in"
+                            ],
+                            {
+                                "blocking": true,
+                                "group": "",
+                                "id": 40,
+                                "name": "in",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": true
+                            }
+                        ]
+                    ],
+                    "name": "XLinkOut",
+                    "properties": {
+                        "maxFpsLimit": -1.0,
+                        "metadataOnly": false,
+                        "streamName": "out"
+                    }
+                }
+            ],
+            [
+                7,
+                {
+                    "id": 7,
+                    "ioInfo": [
+                        [
+                            [
+                                "",
+                                "in"
+                            ],
+                            {
+                                "blocking": true,
+                                "group": "",
+                                "id": 41,
+                                "name": "in",
+                                "queueSize": 8,
+                                "type": 3,
+                                "waitForMessage": true
+                            }
+                        ]
+                    ],
+                    "name": "XLinkOut",
+                    "properties": {
+                        "maxFpsLimit": -1.0,
+                        "metadataOnly": false,
+                        "streamName": "rgb"
+                    }
+                }
+            ]
+        ]
+    }
+}

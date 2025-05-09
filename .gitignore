@@ -182,3 +182,5 @@ cython_debug/
 /Tests/test_input/
 /Input/SAM/sam2.1_b.pt
 /Output/
+/Scripts/Output/
+/Tests/Camera/Output/

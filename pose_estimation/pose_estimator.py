@@ -51,9 +51,6 @@ class PoseEstimatorFPFH:
         return results
 
     def __calculateTransform(self, pcdObject: o3d.geometry.PointCloud, timeout: float) -> (np.ndarray, float, float, float):
-        ## REMOVE, DEBUGGING ONLY
-        # self.__calculateModelFeatures()
-
         ## 1. Voxel down object pointcloud to same density as object model
         pcdObjectDown = pcdObject.voxel_down_sample(voxel_size=self.iVoxelSize)
 
@@ -87,7 +84,7 @@ class PoseEstimatorFPFH:
                 mutual_filter= self.bMutualFilter,
                 max_correspondence_distance=self.distanceFactor*self.iVoxelSize,
                 estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-                ransac_n=self.iRansacIterations,
+                ransac_n=self.iRansacCorrespondences,
                 checkers=[
                     # o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
                     #     self.distanceFactor*self.iVoxelSize),
@@ -95,7 +92,7 @@ class PoseEstimatorFPFH:
                     o3d.pipelines.registration.CorrespondenceCheckerBasedOnNormal(self.NormalAngleThresh)
 
                 ],
-                criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.9999)
+                criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(self.iRansacMaxIterations, 0.9999)
             )
             fitness = oInitialMatch.fitness
 
@@ -172,22 +169,17 @@ class PoseEstimatorFPFH:
 
         ## Feature params
         self.featureFactor = self.oSm.get("PoseEstimation.FeatureParams.FeatureFactor")
-        self.featureMaxNeighbours = self.oSm.get("PoseEstimation.FeatureParams.MaxNeighbours")
-
-        # ## Save search parameters
-        # self.oFeatureParams = o3d.geometry.KDTreeSearchParamHybrid(
-        #     radius=self.featureFactor*self.iVoxelSize,
-        #     max_nn=self.featureMaxNeighbours
-        # )
 
         self.oFeatureParams = o3d.geometry.KDTreeSearchParamRadius(
             radius=self.featureFactor*self.iVoxelSize,
         )
 
         ## Matching parameters
-        self.iRansacIterations = self.oSm.get("PoseEstimation.Matching.RansacIterations")
+        self.iRansacCorrespondences = self.oSm.get("PoseEstimation.Matching.RansacCorrespondences")
+        self.iRansacMaxIterations = self.oSm.get("PoseEstimation.Matching.RansacIterations")
         self.distanceFactor = self.oSm.get("PoseEstimation.Matching.DistanceFactor")
         self.icpDistanceFactor = self.oSm.get("PoseEstimation.Matching.IcpDistanceFactor")
+
         value = self.oSm.get("PoseEstimation.Matching.MutualFilter")
         self.bMutualFilter = (value == 1)
 

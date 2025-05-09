@@ -1,6 +1,28 @@
 {
   "ObjectSegmentation": {
-    "bVisualize": 0
+    "bVisualize": 0,
+    "SizeThreshold": 20000,
+
+    "HsvThresholding": {
+      "H" : {
+        "min": 0.046,
+        "max": 0.321
+      },
+      "S" : {
+        "min": 0.104,
+        "max": 0.305
+      },
+      "V" : {
+        "min": 0,
+        "max": 1
+      }
+    },
+
+    "SAM": {
+      "confidence": 0.5,
+      "retinaMasks": 0,
+      "device": "cuda"
+    }
   },
 
   "Scene": {
@@ -14,6 +36,7 @@
       "p2": [192.801, 607.212],
       "p3": [419.131, 826.673],
       "p4": [592.422, 665.927],
+      "MaxZ": 200,
       "BinPlaneDistance": 10
     },
 
@@ -54,13 +77,12 @@
     },
 
     "FeatureParams": {
-      "FeatureFactor": 15,
-      "MaxNeighbours": 100
+      "FeatureFactor": 15
     },
 
     "Matching": {
       "MutualFilter": 0,
-      "RansacIterations": 4,
+      "RansacCorrespondences": 4,
       "DistanceFactor": 4,
       "IcpDistanceFactor": 2,
       "CheckerEdgeLengthThreshold": 0.2,
@@ -68,7 +90,8 @@
       "MaxIcpIterations": 200,
       "InitFitnessThresh": 0.8,
       "InitIoUThresh": 0.6,
-      "TimeOut": 2000
+      "TimeOut": 2000,
+      "RansacIterations": 100000
     }
   }
 }

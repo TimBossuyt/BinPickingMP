@@ -243,8 +243,6 @@ class Camera:
                 logger.info(f"Connected cameras: {device.getConnectedCameras()}")
                 logger.info("------------------------------------")
 
-                self.bConnected = True
-
                 ret = device.setIrLaserDotProjectorIntensity(1)
 
                 if ret:
@@ -266,6 +264,8 @@ class Camera:
                 )
                 self.arrCameraMatrix = np.asarray(intrinsics1080p)
 
+                self.distortion = calibData.getDistortionCoefficients(cameraId=dai.CameraBoardSocket.CAM_A)
+
                 ## Create calibration object
                 self.oCalibrator = CameraCalibrator(self.arrCameraMatrix)
 
@@ -275,6 +275,8 @@ class Camera:
 
                 qRgbPreview = device.getOutputQueue(name="rgb", maxSize=1,
                                                     blocking=False)
+
+                self.bConnected = True
 
                 while not self.evStop.is_set():
                     inRgbPreview = qRgbPreview.get()
