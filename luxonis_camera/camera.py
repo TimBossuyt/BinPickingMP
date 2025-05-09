@@ -95,9 +95,8 @@ class Camera:
         ## Configure pipeline
         self._configurePipeline()
         ## Save pipeline as .json for debugging
-        with open("pipeline_debug.json", "w") as f:
+        with open("./Output/pipeline_debug.json", "w") as f:
             json.dump(self.oPipeline.serializeToJson(), f, indent=4)
-
 
         self.oCalibrator = None
 

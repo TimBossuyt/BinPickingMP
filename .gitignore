@@ -181,3 +181,4 @@ cython_debug/
 /pose_estimation/test_input/
 /Tests/test_input/
 /Input/SAM/sam2.1_b.pt
+/Output/

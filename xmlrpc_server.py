@@ -61,7 +61,7 @@ class RpcServer:
 
         ## Load model (TODO: Remove hardcoding)
         self.oModel = Model(
-            sModelPath="./Input/T-stuk-50.stl",
+            sModelPath="./Input/CAD/T-stuk-50.stl",
             settingsManager=self.SettingsManager,
             picking_pose=(20, 0, 0, 1, 0, 0)
         )

@@ -2,8 +2,6 @@ from luxonis_camera import Camera
 import logging.config
 import datetime
 from xmlrpc_server import RpcServer
-import open3d as o3d
-import time
 
 ########## Logging setup ##########
 ## Generate ISO 8601 timestamped filename
@@ -12,7 +10,7 @@ log_filename = datetime.datetime.now().strftime("log_%Y-%m-%dT%H-%M-%S.log")
 ## Read config file
 logging.config.fileConfig("logging.conf",
                           disable_existing_loggers=False ,
-                          defaults={'filename':f"logs/{log_filename}"})
+                          defaults={'filename':f"./Output/logs/{log_filename}"})
 
 logger = logging.getLogger("Main")
 ###################################
