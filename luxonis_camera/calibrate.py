@@ -183,89 +183,28 @@ class CameraCalibrator:
 
         logger.info("Board detected, continuing calibration procedure")
 
-        ## 2. Save detected corners as dictionary
-        self.dictCameraImagePoints = {}
-        for i, charuco_id in enumerate(self.arrChArUcoIds.flatten()):
-            board_point = self.arrChArUcoCorners[i].flatten()
-            self.dictCameraImagePoints[charuco_id] = np.asarray(board_point)
-
-        ## 3. Get corners in camera coordinates (3D)
-        logger.info("Getting 3D points from pointcloud corners")
-        self.dictCamera3DPoints = {}
-
-        kernel_size = 6
-        points = np.asarray(self.pcd.points)
-
-        ## Flip to right handed system (X-right, Y-Down, Z-in) (Flipping y-axis)
-        points[:, 1] = -points[:, 1]
-
-        ## Reshape to organized pointcloud 3D-matrix
-        pcd_points = points.reshape(1080, 1920, 3)
-
-        for id, coords in self.dictCameraImagePoints.items():
-            u, v = int(coords[0]), int(coords[1])
-            ## Get the 3D coordinates on that point
-            # Get window with given kernel size
-            # = all surrounding points (Don't hit the boundaries of the image!)
-            u_min = int(u - kernel_size / 2)
-            u_max = int(u + kernel_size / 2)
-            v_min = int(v - kernel_size / 2)
-            v_max = int(v + kernel_size / 2)
-
-            ## Returns shape 6, 6, 3
-            point_window = pcd_points[v_min:v_max, u_min:u_max]
-            # print(point_window)
-
-            point_3d = np.mean(point_window.reshape(-1, 3), axis=0)
-            self.dictCamera3DPoints[id] = point_3d
-
-        ## 4. Add the depth information
-        logger.info("Incorporate depth info")
-        # Detect extra - aruco code
-        oDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
-        detector = cv2.aruco.ArucoDetector(oDict, cv2.aruco.DetectorParameters())
-
-        corners, ids, rejected = detector.detectMarkers(image=image)
-
-        ## Depth point = top left corner of aruco
-        depth_point = corners[0][0][0]
-
-        ## Get 3D Depth point
-        u, v = int(depth_point[0]), int(depth_point[1])
-        ## Get the 3D coordinates on that point
-        # Get window with given kernel size
-        # = all surrounding points (Don't hit the boundaries of the image!)
-        u_min = int(u - kernel_size / 2)
-        u_max = int(u + kernel_size / 2)
-        v_min = int(v - kernel_size / 2)
-        v_max = int(v + kernel_size / 2)
-        ## Returns shape 6, 6, 3
-        point_window = pcd_points[v_min:v_max, u_min:u_max]
-        # print(point_window)
-        point_3d = np.mean(point_window.reshape(-1, 3), axis=0)
-
-        ## Save depth point at index 100
-        self.dictCamera3DPoints[100] = point_3d
-
         ## 3. Create corresponding points array
         self._createCorrespondingPointsArray()
 
         # ## 4. Calculate the extrinsics by solving 3D points to projection points
         # Returns transformation from camera --> world
         logger.info("Trying to calculate the transformation")
-        trans_mat, scale = cv2.estimateAffine3D(
-            src=np.asarray(self.arrCamPoints),
-            dst=np.asarray(self.arrWorldPoints),
-            force_rotation=True
-        )
 
-        # trans_mat = scale*trans_mat
+        _, rvec, tvec = cv2.solvePnP(self.arrWorldPoints, self.arrCamPoints, self.arrCameraMatrix, None)
+
+        R, _ = cv2.Rodrigues(rvec)
+        t = tvec.reshape(3, 1)
+
+        trans_mat = np.eye(4)
+        trans_mat[:3, :3] = R
+        trans_mat[:3, 3] = t.flatten()
+        trans_mat = np.linalg.inv(trans_mat)
+
         logger.info("Transformation found")
-        trans_mat = np.vstack((trans_mat, np.array([0, 0, 0, 1])))
 
         self.bCalibrated = True
 
-        return trans_mat, scale
+        return trans_mat, 1
 
     def showDetectedBoard(self):
         """
@@ -300,8 +239,8 @@ class CameraCalibrator:
         # + find point with corresponding id in the camera points list and add it to the array
         for (_id, point) in self.dictWorldPoints.items():
             self.arrWorldPoints.append(point)
-            self.arrCamPoints.append(self.dictCamera3DPoints[_id].tolist())
+            self.arrCamPoints.append(self.arrChArUcoCorners[_id].tolist())
 
         ## Reshape arrays to numpy format
         self.arrWorldPoints = np.array(self.arrWorldPoints, dtype=np.float32).reshape(-1, 3)
-        self.arrCamPoints = np.array(self.arrCamPoints, dtype=np.float32).reshape(-1, 3)
+        self.arrCamPoints = np.array(self.arrCamPoints, dtype=np.float32).reshape(-1, 2)

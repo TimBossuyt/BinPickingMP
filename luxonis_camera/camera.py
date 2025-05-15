@@ -134,6 +134,9 @@ class Camera:
             oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
             oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
 
+            coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=[0, 0, 0])
+            o3d.visualization.draw_geometries([oPointCloud, coord_frame], window_name="Pointcloud received")
+
             return oPointCloud
 
         except queue.Empty:

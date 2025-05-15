@@ -83,15 +83,15 @@
     "Matching": {
       "MutualFilter": 0,
       "RansacCorrespondences": 4,
-      "DistanceFactor": 4,
+      "DistanceFactor": 6,
       "IcpDistanceFactor": 2,
       "CheckerEdgeLengthThreshold": 0.2,
       "NormalAngleThreshold": 0.8,
-      "MaxIcpIterations": 200,
-      "InitFitnessThresh": 0.8,
-      "InitIoUThresh": 0.6,
-      "TimeOut": 2000,
-      "RansacIterations": 10000
+      "MaxIcpIterations": 500,
+      "InitFitnessThresh": 0.9,
+      "InitIoUThresh": 0.1,
+      "TimeOut": 1000,
+      "RansacIterations": 100000
     }
   }
 }
