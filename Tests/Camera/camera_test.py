@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import open3d as o3d
 from mpl_toolkits.mplot3d import Axes3D
 
-TEST_IMG = "./scheef_test.jpg"
-TEST_PCD = "./scheef_test.ply"
+TEST_IMG = "./2025-05-15_10-46-56.jpg"
+TEST_PCD = "./2025-05-15_10-46-56.ply"
 
 
 def load_organized_pointcloud(ply_path):
@@ -112,10 +112,11 @@ oCamera.Disconnect()
 
 ## Check undistortion of the images
 K_factory = np.asarray(oCamera.arrCameraMatrix)
-D_factory = np.asarray(oCamera.distortion)
+D_factory = np.zeros_like(oCamera.distortion)
 
 K_charuco = np.asarray(camera_matrix)
-D_charuco = np.asarray(dist_coeffs)
+# D_charuco = np.asarray(dist_coeffs)
+D_charuco = np.zeros_like(D_factory)
 
 object_points = charuco_board.getChessboardCorners()
 # print(object_points)
@@ -295,3 +296,4 @@ ax.grid(True)
 ax.view_init(elev=30, azim=-60)
 plt.tight_layout()
 plt.show()
+

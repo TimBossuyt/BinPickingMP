@@ -91,7 +91,7 @@
       "InitFitnessThresh": 0.8,
       "InitIoUThresh": 0.6,
       "TimeOut": 2000,
-      "RansacIterations": 100000
+      "RansacIterations": 10000
     }
   }
 }
