@@ -81,7 +81,7 @@ class ObjectSegmentation:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-        mask_objects = cv2.erode(mask_objects, kernel, iterations=2)
+        mask_objects = cv2.erode(mask_objects, kernel, iterations=6)
 
         if self.bVisualize:
             cv2.imshow("Eroded", mask_objects)

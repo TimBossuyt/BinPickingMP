@@ -183,6 +183,19 @@ class CameraCalibrator:
 
         logger.info("Board detected, continuing calibration procedure")
 
+        # Refine corners to subpixel accuracy
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        cv2.cornerSubPix(
+            gray,
+            self.arrChArUcoCorners,
+            winSize=(5, 5),
+            zeroZone=(-1, -1),
+            criteria=criteria
+        )
+
+        # print(self.arrChArUcoCorners)
+
         ## 3. Create corresponding points array
         self._createCorrespondingPointsArray()
 
