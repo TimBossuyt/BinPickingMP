@@ -128,6 +128,7 @@ for i in range(5):
 
     _, tool_base = oCobot.GetActualTCPPose()
     print("Getting TCP:", _)
+    print("Tool Base:", tool_base)
     x, y, z, rx, ry, rz = tool_base
 
     T_camera2base = pose_to_homogeneous_matrix(x, y, z, rx, ry, rz)
