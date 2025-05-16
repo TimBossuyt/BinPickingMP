@@ -95,8 +95,8 @@ class Camera:
         ## Configure pipeline
         self._configurePipeline()
         ## Save pipeline as .json for debugging
-        with open("./Output/pipeline_debug.json", "w") as f:
-            json.dump(self.oPipeline.serializeToJson(), f, indent=4)
+        # with open("./Output/pipeline_debug.json", "w") as f:
+        #     json.dump(self.oPipeline.serializeToJson(), f, indent=4)
 
         self.oCalibrator = None
 
@@ -133,6 +133,9 @@ class Camera:
             oPointCloud = o3d.geometry.PointCloud()
             oPointCloud.points = o3d.utility.Vector3dVector(arrPoints)
             oPointCloud.colors = o3d.utility.Vector3dVector(arrColors)
+
+            coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=100, origin=[0, 0, 0])
+            o3d.visualization.draw_geometries([oPointCloud, coord_frame], window_name="Pointcloud received")
 
             return oPointCloud
 
@@ -249,6 +252,7 @@ class Camera:
                     logger.info("Successfully turned on dot projector")
                 else:
                     logger.warning("Failed to enable laser dot projector")
+
 
 
                 ## Read and save calibration data
@@ -422,6 +426,7 @@ class Camera:
         nodeCamColor.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
         nodeCamColor.setBoardSocket(dai.CameraBoardSocket.CAM_A)
         nodeCamColor.setFps(self.iFPS)
+        nodeCamColor.initialControl.setManualFocus(129)
 
         ## Mono camera (left) ##
         nodeCamLeft = self.oPipeline.create(dai.node.MonoCamera)
